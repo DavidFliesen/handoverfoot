@@ -1,1 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hand Over Foot</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,700&family=Oswald:wght@600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --felt:#1a5c35;--felt2:#16502e;--felt3:#0f3d22;
+  --gold:#c9a030;--gold2:#f0d060;--gold3:#8a6a10;
+  --cream:#fdf8ee;--red:#c0392b;--red2:#e74c3c;
+  --blue:#1a3a8a;--purple:#5a2d82;
+  --shadow:rgba(0,0,0,0.6);--card-bg:#fdfaf2;
+  --clean-col:#1e6fb5;--dirty-col:#7b3fa0;--wild-col:#c06010;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:radial-gradient(ellipse at 50% 30%,#1e6b3c 0%,#0f3d22 70%);font-family:'DM Mono',monospace;color:var(--cream);}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 50%,rgba(255,255,255,0.03) 1px,transparent 1px),radial-gradient(circle at 80% 20%,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:40px 40px,60px 60px;pointer-events:none;}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;transition:opacity .4s;}
+.screen.hidden{opacity:0;pointer-events:none;}
 
+/* SPLASH */
+#splash{background:radial-gradient(ellipse at 50% 35%,#247a45 0%,#0d3320 80%);gap:18px;padding:20px;}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;}
+.logo-cards{display:flex;justify-content:center;margin-bottom:-20px;z-index:2;position:relative;}
+.logo-card{width:58px;height:82px;border-radius:7px;background:var(--card-bg);border:2px solid #ddd;box-shadow:3px 6px 16px rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:space-between;padding:5px;font-weight:700;font-size:.95rem;}
+.logo-card:nth-child(1){transform:rotate(-18deg) translateX(10px);color:#222;}
+.logo-card:nth-child(2){transform:rotate(-6deg) translateX(5px);color:#c0392b;}
+.logo-card:nth-child(3){transform:rotate(6deg) translateX(-5px);color:#222;}
+.logo-card:nth-child(4){transform:rotate(18deg) translateX(-10px);color:#c0392b;}
+.logo-card .cs{font-size:1.3rem;text-align:center;}
+.logo-shield{background:linear-gradient(160deg,#1a5c35 0%,#0d3820 100%);border:3px solid var(--gold);border-radius:12px 12px 40% 40%;padding:16px 36px 20px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.1);position:relative;z-index:1;}
+.logo-shield::before{content:'';position:absolute;inset:3px;border:1px solid rgba(201,160,48,.3);border-radius:10px 10px 38% 38%;pointer-events:none;}
+.logo-title{font-family:'Oswald',sans-serif;font-size:clamp(2.2rem,7vw,4rem);font-weight:700;color:var(--cream);text-shadow:3px 3px 0 #0a2510,0 0 30px rgba(201,160,48,.4);line-height:.95;letter-spacing:.02em;text-transform:uppercase;}
+.logo-title .over{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(1rem,3vw,1.8rem);color:var(--gold2);display:block;letter-spacing:.1em;font-weight:700;text-shadow:2px 2px 0 #4a2a00;margin:2px 0;}
+.gold-banner{background:linear-gradient(90deg,transparent,var(--gold3) 15%,var(--gold) 35%,var(--gold2) 50%,var(--gold) 65%,var(--gold3) 85%,transparent);padding:7px 28px;font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:.2em;color:#1a0e00;font-weight:600;text-transform:uppercase;margin-top:6px;clip-path:polygon(8px 0%,calc(100% - 8px) 0%,100% 50%,calc(100% - 8px) 100%,8px 100%,0% 50%);}
+.hf-icons{display:flex;gap:36px;align-items:center;}
+.hf-circle{width:72px;height:72px;border-radius:50%;border:2px solid var(--gold3);background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:2rem;filter:opacity(0.6);}
+.splash-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:560px;}
+.splash-btn{flex:1;min-width:120px;max-width:150px;padding:12px 8px;border-radius:10px;border:2px solid;font-family:'Oswald',sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.08em;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:transform .12s,filter .12s;text-transform:uppercase;}
+.splash-btn:hover{transform:translateY(-2px);filter:brightness(1.12);}
+.splash-btn .icon{font-size:1.3rem;}
+.btn-play{background:linear-gradient(160deg,#2e8b52,#1a6b38);border-color:var(--gold);color:var(--cream);box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.btn-how{background:linear-gradient(160deg,#1a3a8a,#122d6e);border-color:#4a7acc;color:var(--cream);box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.btn-score{background:linear-gradient(160deg,#5a2d82,#3d1a5c);border-color:#9b59b6;color:var(--cream);box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.feature-strip{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;border-top:1px solid rgba(201,160,48,.2);padding-top:10px;width:100%;max-width:560px;}
+.fi-item{text-align:center;flex:1;min-width:100px;}
+.fi-item .fi{font-size:1.3rem;margin-bottom:3px;}
+.fi-item .ft{font-family:'Oswald',sans-serif;font-size:.58rem;letter-spacing:.12em;color:var(--gold);font-weight:600;}
+.fi-item .fd{font-size:.52rem;color:rgba(253,248,238,.55);line-height:1.4;margin-top:2px;}
+
+/* GAME */
+#game{display:flex;flex-direction:column;background:transparent;padding:0;justify-content:flex-start;z-index:5;}
+#game.hidden{opacity:0;pointer-events:none;}
+#top-bar{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:rgba(0,0,0,.4);border-bottom:2px solid var(--gold3);flex-shrink:0;}
+.game-logo-small{font-family:'Oswald',sans-serif;font-size:.85rem;font-weight:700;color:var(--gold2);letter-spacing:.05em;}
+.game-logo-small span{font-style:italic;color:var(--cream);font-size:.7rem;}
+.score-chips{display:flex;gap:6px;}
+.score-chip{background:rgba(0,0,0,.4);border:1px solid var(--gold3);border-radius:20px;padding:2px 10px;text-align:center;}
+.score-chip .sc-name{font-size:.48rem;color:rgba(253,248,238,.5);text-transform:uppercase;letter-spacing:.1em;}
+.score-chip .sc-val{font-size:.9rem;color:var(--gold2);font-weight:500;}
+.score-chip.act{border-color:var(--gold);box-shadow:0 0 8px rgba(201,160,48,.4);}
+#round-info{display:flex;gap:6px;align-items:center;}
+.round-tag{background:var(--gold);color:#1a0e00;border-radius:4px;padding:2px 7px;font-family:'Oswald',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.1em;}
+.meld-req{border:1px solid var(--gold3);color:var(--gold);border-radius:4px;padding:2px 7px;font-size:.58rem;}
+
+#game-body{flex:1;display:grid;grid-template-rows:auto auto 1fr auto auto;overflow:hidden;padding:5px 7px;gap:4px;height:calc(100vh - 46px);}
+.pzone{background:rgba(0,0,0,.22);border:1px solid rgba(201,160,48,.15);border-radius:8px;padding:5px 7px;transition:border-color .3s,box-shadow .3s;}
+.pzone.active{border-color:var(--gold);box-shadow:0 0 14px rgba(201,160,48,.2);}
+.pzone-header{display:flex;align-items:center;gap:7px;margin-bottom:4px;}
+.pzone-name{font-family:'Oswald',sans-serif;font-size:.75rem;font-weight:600;color:var(--gold);letter-spacing:.05em;}
+.turn-tag{background:var(--gold);color:#1a0e00;border-radius:3px;padding:1px 5px;font-size:.52rem;font-weight:700;font-family:'Oswald',sans-serif;}
+.foot-tag{background:var(--red);color:white;border-radius:3px;padding:1px 5px;font-size:.52rem;font-family:'Oswald',sans-serif;}
+.card-ct{margin-left:auto;font-size:.58rem;color:rgba(253,248,238,.38);}
+.hand-row{display:flex;flex-wrap:wrap;gap:3px;min-height:48px;}
+
+.card{width:36px;height:52px;border-radius:5px;background:var(--card-bg);border:1px solid #ccc;display:flex;flex-direction:column;justify-content:space-between;padding:2px 3px;cursor:pointer;box-shadow:1px 2px 5px rgba(0,0,0,.4);transition:transform .1s,box-shadow .1s,border-color .1s;flex-shrink:0;user-select:none;}
+.card:hover{transform:translateY(-5px);box-shadow:1px 6px 12px rgba(0,0,0,.5);}
+.card.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),1px 8px 14px rgba(0,0,0,.5);transform:translateY(-8px);}
+.card.red{color:var(--red);}.card.black{color:#1a1a2e;}.card.wild{color:#6c3483;}
+.card .cr{font-size:.58rem;font-weight:700;line-height:1;}
+.card .cs{font-size:.75rem;text-align:center;line-height:1;margin:auto 0;}
+.card.back{background:repeating-linear-gradient(135deg,#1a4d8e,#1a4d8e 3px,#2266bb 3px,#2266bb 6px);border:1px solid #3a7acc;cursor:default;}
+.card.back:hover{transform:none;}
+
+#center{display:grid;grid-template-columns:50px 50px 1fr 50px;gap:5px;align-items:start;}
+.pile-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.pile-lbl{font-size:.48rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(253,248,238,.38);}
+.pile-card{width:36px;height:52px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s;position:relative;box-shadow:1px 2px 8px rgba(0,0,0,.5);}
+.pile-card:hover{transform:scale(1.07);}
+.stock-pile{background:repeating-linear-gradient(135deg,#1a4d8e,#1a4d8e 3px,#2266bb 3px,#2266bb 6px);border:2px solid #4a7acc;}
+.stock-badge{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);background:#2266bb;color:white;border-radius:8px;padding:1px 5px;font-size:.48rem;white-space:nowrap;}
+.discard-pile{background:var(--card-bg);border:1px solid #bbb;}
+.foot-pile{background:repeating-linear-gradient(135deg,#5c1a1a,#5c1a1a 3px,#8b2c2c 3px,#8b2c2c 6px);border:2px solid var(--red);cursor:default!important;}
+.foot-pile:hover{transform:none!important;}
+
+#melds-section{overflow-y:auto;padding:2px;}
+.melds-header{font-size:.52rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(253,248,238,.32);margin-bottom:3px;}
+.melds-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px;}
+.meld-block{background:rgba(0,0,0,.3);border:1px dashed rgba(201,160,48,.18);border-radius:5px;padding:3px 5px;min-width:44px;cursor:pointer;transition:border-color .15s,background .15s;}
+.meld-block:hover{border-color:var(--gold);background:rgba(201,160,48,.06);}
+.meld-block.mclean{border-color:rgba(30,111,181,.45);}
+.meld-block.mdirty{border-color:rgba(123,63,160,.45);}
+.meld-block.book-clean{border-color:var(--clean-col);background:rgba(30,111,181,.1);}
+.meld-block.book-dirty{border-color:var(--dirty-col);background:rgba(123,63,160,.1);}
+.meld-block.book-wild{border-color:var(--wild-col);background:rgba(192,96,16,.1);}
+.meld-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
+.meld-rl{font-size:.58rem;font-weight:600;color:var(--gold);}
+.bpip{font-size:.45rem;padding:1px 4px;border-radius:3px;color:white;font-family:'Oswald',sans-serif;}
+.bp-clean{background:var(--clean-col);}.bp-dirty{background:var(--dirty-col);}.bp-wild{background:var(--wild-col);}
+.meld-minis{display:flex;flex-wrap:wrap;gap:1px;}
+.mmini{width:18px;height:25px;border-radius:2px;background:var(--card-bg);border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:.44rem;font-weight:700;flex-shrink:0;}
+.mmini.mr{color:var(--red);}.mmini.mb{color:#1a1a2e;}.mmini.mw{color:#6c3483;border-color:#9b59b6;}
+.r3-block{border-color:rgba(192,57,43,.4)!important;}.r3-rl{color:var(--red)!important;}
+
+#msg-bar{padding:4px 10px;background:rgba(0,0,0,.35);border-radius:5px;font-size:.6rem;color:var(--gold2);font-style:italic;text-align:center;min-height:20px;border:1px solid rgba(201,160,48,.1);flex-shrink:0;}
+#action-bar{display:flex;gap:4px;flex-wrap:wrap;padding:5px 3px;background:rgba(0,0,0,.35);border-top:1px solid rgba(201,160,48,.15);border-radius:0 0 8px 8px;flex-shrink:0;}
+.abtn{font-family:'Oswald',sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.07em;border-radius:6px;border:2px solid;padding:6px 9px;cursor:pointer;transition:transform .1s,filter .1s;text-transform:uppercase;}
+.abtn:hover{transform:translateY(-1px);filter:brightness(1.12);}
+.abtn:disabled{opacity:.32;cursor:not-allowed;transform:none;filter:none;}
+.abtn-green{background:linear-gradient(160deg,#2e8b52,#1a6b38);border-color:var(--gold);color:var(--cream);}
+.abtn-blue{background:linear-gradient(160deg,#1a3a8a,#122d6e);border-color:#4a7acc;color:var(--cream);}
+.abtn-outline{background:transparent;border-color:var(--gold3);color:var(--gold);}
+.abtn-outline:hover{border-color:var(--gold);background:rgba(201,160,48,.08);}
+.abtn-red{background:linear-gradient(160deg,#8b1a1a,#6b1212);border-color:#c0392b;color:var(--cream);}
+.abtn-dim{background:transparent;border-color:rgba(253,248,238,.18);color:rgba(253,248,238,.38);}
+.abtn-dim:hover{border-color:rgba(253,248,238,.5);color:var(--cream);}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;}
+.overlay.hidden{display:none;}
+.modal-box{background:linear-gradient(160deg,#1e6b3c,#0d3820);border:2px solid var(--gold);border-radius:14px;padding:22px 18px;max-width:400px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,.7);text-align:center;}
+.modal-box h2{font-family:'Oswald',sans-serif;color:var(--gold2);font-size:1.3rem;margin-bottom:10px;letter-spacing:.05em;}
+.modal-box p{font-size:.68rem;line-height:1.7;color:var(--cream);margin-bottom:5px;}
+.modal-box p strong{color:var(--gold);}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;}
+.sg-cell{background:rgba(0,0,0,.3);border-radius:8px;padding:9px;}
+.sg-name{font-size:.58rem;color:rgba(253,248,238,.5);font-family:'Oswald',sans-serif;letter-spacing:.1em;}
+.sg-pts{font-size:1.6rem;color:var(--gold2);font-weight:700;font-family:'Oswald',sans-serif;}
+.sg-total{font-size:.62rem;color:var(--gold3);}
+.modal-btns{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+<div class="screen" id="splash">
+  <div class="logo-wrap">
+    <div class="logo-cards">
+      <div class="logo-card"><span class="cr">3</span><span class="cs">♣</span><span class="cr">3</span></div>
+      <div class="logo-card"><span class="cr">A</span><span class="cs">♥</span><span class="cr">A</span></div>
+      <div class="logo-card black"><span class="cr">K</span><span class="cs">♠</span><span class="cr">K</span></div>
+      <div class="logo-card"><span class="cr">10</span><span class="cs">♦</span><span class="cr">10</span></div>
+    </div>
+    <div class="logo-shield">
+      <div class="logo-title">HAND<br><span class="over">over</span>FOOT</div>
+    </div>
+    <div class="gold-banner">✦ A Classic Rummy Card Game ✦</div>
+  </div>
+  <div class="hf-icons">
+    <div class="hf-circle">✋</div>
+    <div style="font-size:.58rem;color:rgba(253,248,238,.28);">vs</div>
+    <div class="hf-circle">🦶</div>
+  </div>
+  <div class="splash-btns">
+    <button class="splash-btn btn-play" onclick="startGame()"><span class="icon">🃏</span>PLAY NOW</button>
+    <button class="splash-btn btn-how" onclick="showHowToPlay()"><span class="icon">📖</span>HOW TO PLAY</button>
+    <button class="splash-btn btn-score" onclick="showScoreGuide()"><span class="icon">🏆</span>SCORING</button>
+  </div>
+  <div class="feature-strip">
+    <div class="fi-item"><div class="fi">👥</div><div class="ft">2 Players</div><div class="fd">Pass &amp; play on one device</div></div>
+    <div class="fi-item"><div class="fi">🃏</div><div class="ft">Strategic Play</div><div class="fd">Use Hand &amp; Foot to build melds</div></div>
+    <div class="fi-item"><div class="fi">✨</div><div class="ft">4 Rounds</div><div class="fd">Score big each round</div></div>
+    <div class="fi-item"><div class="fi">🏅</div><div class="ft">Score &amp; Win</div><div class="fd">Go out, earn bonuses!</div></div>
+  </div>
+</div>
+
+<div class="screen hidden" id="game">
+  <div id="top-bar">
+    <div class="game-logo-small">HAND <span>over</span> FOOT</div>
+    <div id="round-info">
+      <span class="round-tag" id="rd-tag">ROUND 1</span>
+      <span class="meld-req" id="meld-req">MIN 50 PTS</span>
+    </div>
+    <div class="score-chips">
+      <div class="score-chip" id="p1-chip"><div class="sc-name">P1</div><div class="sc-val" id="p1-disp">0</div></div>
+      <div class="score-chip" id="p2-chip"><div class="sc-name">P2</div><div class="sc-val" id="p2-disp">0</div></div>
+    </div>
+  </div>
+  <div id="game-body">
+    <div class="pzone" id="p2-zone">
+      <div class="pzone-header"><span class="pzone-name" id="p2-hdr">Player 2</span><span class="card-ct" id="p2-ct">11 cards</span></div>
+      <div class="hand-row" id="p2-hand"></div>
+    </div>
+    <div id="center">
+      <div class="pile-wrap">
+        <div class="pile-card stock-pile" id="stock-btn" onclick="drawFromStock()"><span class="stock-badge" id="stock-cnt">?</span></div>
+        <div class="pile-lbl">Stock</div>
+      </div>
+      <div class="pile-wrap">
+        <div class="pile-card discard-pile card" id="dc-card" onclick="takeDiscard()">
+          <span class="cr" id="dc-rank" style="font-size:.65rem;font-weight:700;">—</span>
+          <span class="cs" id="dc-suit" style="font-size:.85rem;text-align:center;"></span>
+        </div>
+        <div class="pile-lbl">Discard</div>
+      </div>
+      <div id="melds-section">
+        <div class="melds-header">P1 Melds</div><div class="melds-row" id="p1-melds"></div>
+        <div class="melds-header" style="margin-top:4px;">P2 Melds</div><div class="melds-row" id="p2-melds"></div>
+      </div>
+      <div class="pile-wrap">
+        <div class="pile-card foot-pile"><span style="font-size:.46rem;color:rgba(255,100,100,.75);text-align:center;padding:2px;">FOOT<br>PILE</span></div>
+        <div class="pile-lbl" id="foot-lbl">Foot</div>
+      </div>
+    </div>
+    <div id="msg-bar">Welcome! Player 1 goes first.</div>
+    <div class="pzone" id="p1-zone">
+      <div class="pzone-header"><span class="pzone-name" id="p1-hdr">Player 1</span><span class="card-ct" id="p1-ct">11 cards</span></div>
+      <div class="hand-row" id="p1-hand"></div>
+    </div>
+    <div id="action-bar">
+      <button class="abtn abtn-green" id="btn-draw" onclick="drawFromStock()">🂠 Draw 2</button>
+      <button class="abtn abtn-blue" id="btn-take" onclick="takeDiscard()">⬆ Take Pile</button>
+      <button class="abtn abtn-outline" id="btn-meld" onclick="doNewMeld()">✦ New Meld</button>
+      <button class="abtn abtn-outline" id="btn-add" onclick="doAddMeld()">＋ Add</button>
+      <button class="abtn abtn-red" id="btn-disc" onclick="doDiscard()">✕ Discard</button>
+      <button class="abtn abtn-dim" id="btn-out" onclick="tryGoOut()">🏁 Go Out</button>
+      <button class="abtn abtn-dim" onclick="goHome()">⌂</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal-box">
+    <h2 id="m-title"></h2>
+    <div id="m-body"></div>
+    <div class="modal-btns" id="m-btns"></div>
+  </div>
+</div>
+
+<script>
+const MELD_RANKS=['4','5','6','7','8','9','10','J','Q','K','A'];
+const RPTS={'3':5,'4':5,'5':5,'6':5,'7':5,'8':10,'9':10,'10':10,'J':10,'Q':10,'K':10,'A':20,'2':20,'JK':50};
+const RMINS=[50,90,120,150];
+const SUITS=['spades','hearts','diamonds','clubs'];
+const SCHAR={'spades':'♠','hearts':'♥','diamonds':'♦','clubs':'♣'};
+let cid=0;
+let G={};
+
+function initGame(){
+  G={round:0,cp:0,drew:false,tookPile:false,sel:[],stock:[],discard:[],
+    p:[mk('Player 1'),mk('Player 2')]};
+  dealRound();
+}
+function mk(n){return{name:n,hand:[],foot:[],onFoot:false,melded:false,melds:[],total:0};}
+
+function buildDecks(n){
+  const d=[];
+  for(let i=0;i<n;i++){
+    for(const s of SUITS){
+      for(const r of ['A','2','3','4','5','6','7','8','9','10','J','Q','K']){
+        d.push({id:cid++,rank:r,suit:SCHAR[s],red:s==='hearts'||s==='diamonds'});
+      }
+    }
+    d.push({id:cid++,rank:'JK',suit:'★',red:false});
+    d.push({id:cid++,rank:'JK',suit:'★',red:false});
+  }
+  return d;
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];}}
+function isWild(c){return c.rank==='2'||c.rank==='JK';}
+function isR3(c){return c.rank==='3'&&c.red;}
+function isB3(c){return c.rank==='3'&&!c.red;}
+function pts(c){return RPTS[c.rank]||5;}
+
+function dealRound(){
+  G.drew=false;G.tookPile=false;G.sel=[];
+  for(const p of G.p){p.hand=[];p.foot=[];p.onFoot=false;p.melded=false;p.melds=[];}
+  const deck=buildDecks(5);shuffle(deck);
+  for(let i=0;i<2;i++){G.p[i].hand=deck.splice(0,11);G.p[i].foot=deck.splice(0,11);}
+  G.stock=deck;G.discard=[G.stock.pop()];
+  while(G.discard[0]&&(isWild(G.discard[0])||isR3(G.discard[0]))){G.stock.unshift(G.discard.pop());G.discard=[G.stock.pop()];}
+  for(let i=0;i<2;i++)doR3s(i);
+  G.cp=G.round%2;render();
+  msg('Round '+(G.round+1)+' begins! '+G.p[G.cp].name+' goes first — draw or take pile.');
+}
+
+function doR3s(pi){
+  const p=G.p[pi];const rem=[];
+  p.hand.forEach((c,i)=>{
+    if(isR3(c)){rem.push(i);addToR3Meld(p,c);if(G.stock.length)p.hand.push(G.stock.pop());}
+  });
+  for(let i=rem.length-1;i>=0;i--)p.hand.splice(rem[i],1);
+}
+function addToR3Meld(p,c){let m=p.melds.find(m=>m.rank==='R3');if(!m){m={rank:'R3',cards:[],wilds:0,complete:false};p.melds.push(m);}m.cards.push(c);}
+
+function drawFromStock(){
+  if(G.drew){msg('Already drew this turn.');return;}
+  if(!G.stock.length){msg('Stock is empty!');endRound(-1);return;}
+  const p=G.p[G.cp];const n=Math.min(2,G.stock.length);
+  for(let i=0;i<n;i++){
+    const c=G.stock.pop();
+    if(isR3(c)){addToR3Meld(p,c);if(G.stock.length)p.hand.push(G.stock.pop());}
+    else p.hand.push(c);
+  }
+  G.drew=true;msg('Drew '+n+' card(s). Meld or discard.');render();
+}
+
+function takeDiscard(){
+  if(G.drew){msg('Already drew this turn.');return;}
+  if(!G.discard.length){msg('Discard pile is empty.');return;}
+  const top=G.discard[G.discard.length-1];
+  if(isB3(top)){msg('Cannot take — top is a Black 3.');return;}
+  const p=G.p[G.cp];
+  if(p.hand.filter(c=>c.rank===top.rank&&!isWild(c)).length<2){msg('Need 2 matching '+top.rank+'s in hand to take pile.');return;}
+  const pile=G.discard.splice(0);p.hand.push(...pile);
+  G.drew=true;G.tookPile=true;doR3s(G.cp);
+  msg('Took pile ('+pile.length+' cards)! Must meld the '+top.rank+'.');render();
+}
+
+function doNewMeld(){
+  if(!G.drew){msg('Draw first.');return;}
+  const sel=getSel();
+  if(sel.length<3){msg('Select 3+ cards for a new meld.');return;}
+  const nat=sel.filter(c=>!isWild(c)&&!isB3(c)&&!isR3(c));
+  if(!nat.length){msg('Need at least one natural card.');return;}
+  const ranks=[...new Set(nat.map(c=>c.rank))];
+  if(ranks.length!==1){msg('Natural cards must be same rank.');return;}
+  const rank=ranks[0];
+  if(!MELD_RANKS.includes(rank)){msg('Cannot meld '+rank+'s.');return;}
+  const wilds=sel.filter(c=>isWild(c));
+  if(wilds.length>=nat.length){msg('Wilds cannot outnumber naturals.');return;}
+  const p=G.p[G.cp];
+  if(p.melds.find(m=>m.rank===rank)){msg('Already have '+rank+' meld — click it or use Add.');return;}
+  const sp=sel.reduce((s,c)=>s+pts(c),0);
+  if(!p.melded&&sp<RMINS[G.round]){msg('First meld needs '+RMINS[G.round]+'pts. Selection: '+sp+'pts.');return;}
+  const meld={rank,cards:[...sel],wilds:wilds.length,complete:sel.length>=7};
+  p.melds.push(meld);p.melded=true;
+  rmHand(G.cp,sel);G.sel=[];
+  msg('Melded '+sel.length+' '+rank+'s!'+(meld.complete?' BOOK COMPLETE!':''));
+  chkFoot();render();
+}
+
+function doAddMeld(){
+  if(!G.drew){msg('Draw first.');return;}
+  const sel=getSel();if(!sel.length){msg('Select cards then use Add or click a meld.');return;}
+  const nat=sel.filter(c=>!isWild(c));const wilds=sel.filter(c=>isWild(c));
+  if(!nat.length){msg('Select natural cards matching a meld rank.');return;}
+  const ranks=[...new Set(nat.map(c=>c.rank))];
+  if(ranks.length!==1){msg('Can only add one rank at a time.');return;}
+  addToRank(ranks[0],sel);
+}
+
+function addToRank(rank,sel){
+  const p=G.p[G.cp];
+  const tgt=p.melds.find(m=>m.rank===rank);
+  if(!tgt){msg('No '+rank+' meld yet — use New Meld.');return;}
+  if(tgt.complete){msg(rank+' book is already complete.');return;}
+  const bad=sel.filter(c=>c.rank!==rank&&!isWild(c));
+  if(bad.length){msg('Can only add '+rank+'s and wilds here.');return;}
+  const wilds=sel.filter(c=>isWild(c));
+  const newW=tgt.wilds+wilds.length;
+  const newN=tgt.cards.filter(c=>!isWild(c)).length+sel.filter(c=>!isWild(c)).length;
+  if(newW>=newN){msg('Wilds would outnumber naturals.');return;}
+  if(tgt.cards.length+sel.length>7){msg('Only '+(7-tgt.cards.length)+' more fit.');return;}
+  tgt.cards.push(...sel);tgt.wilds=newW;tgt.complete=tgt.cards.length>=7;
+  rmHand(G.cp,sel);G.sel=[];
+  msg('Added to '+rank+'.'+(tgt.complete?' BOOK COMPLETE!':''));
+  chkFoot();render();
+}
+
+function doDiscard(){
+  if(!G.drew){msg('Draw first.');return;}
+  const sel=getSel();if(sel.length!==1){msg('Select exactly 1 card to discard.');return;}
+  const c=sel[0];
+  if(isR3(c)){msg('Cannot discard Red 3.');return;}
+  if(G.tookPile&&!G.p[G.cp].melded){msg('Must meld before discarding after taking pile.');return;}
+  G.discard.push(c);rmHand(G.cp,[c]);G.sel=[];chkFoot();
+  if(!G.p[G.cp].hand.length&&G.p[G.cp].onFoot&&canGoOut(G.cp)){endRound(G.cp);return;}
+  nextTurn();
+}
+
+function chkFoot(){
+  const p=G.p[G.cp];
+  if(!p.hand.length&&!p.onFoot&&p.foot.length){
+    p.hand=[...p.foot];p.foot=[];p.onFoot=true;doR3s(G.cp);
+    msg(p.name+' picked up their FOOT! Keep playing.');render();
+  }
+}
+
+function canGoOut(pi){
+  const p=G.p[pi];if(!p.onFoot)return false;
+  const done=p.melds.filter(m=>m.complete&&m.rank!=='R3');
+  return done.filter(m=>m.wilds===0).length>=1&&done.filter(m=>m.wilds>0&&m.wilds<m.cards.length).length>=1;
+}
+
+function tryGoOut(){
+  if(!G.drew){msg('Draw first.');return;}
+  if(!canGoOut(G.cp)){
+    const p=G.p[G.cp];const done=p.melds.filter(m=>m.complete&&m.rank!=='R3');
+    msg('Need: on Foot ('+(p.onFoot?'yes':'no')+'), 1 clean book (have '+done.filter(m=>m.wilds===0).length+'), 1 dirty book (have '+done.filter(m=>m.wilds>0&&m.wilds<m.cards.length).length+').');return;
+  }
+  const p=G.p[G.cp];
+  if(p.hand.length===1){G.discard.push(p.hand[0]);p.hand=[];}
+  else if(p.hand.length>1){msg('Meld or discard remaining cards first.');return;}
+  endRound(G.cp);
+}
+
+function nextTurn(){G.cp=1-G.cp;G.drew=false;G.tookPile=false;G.sel=[];msg(G.p[G.cp].name+"'s turn — draw or take pile.");render();}
+
+function endRound(winner){
+  const sc=[0,0];
+  for(let pi=0;pi<2;pi++){
+    const p=G.p[pi];
+    for(const m of p.melds){
+      if(m.rank==='R3'){sc[pi]+=m.cards.length*100;continue;}
+      for(const c of m.cards)sc[pi]+=pts(c);
+      if(m.complete){if(m.wilds===m.cards.length)sc[pi]+=1500;else if(m.wilds>0)sc[pi]+=300;else sc[pi]+=500;}
+    }
+    for(const c of p.hand)sc[pi]-=pts(c);
+    for(const c of p.foot)sc[pi]-=pts(c);
+  }
+  if(winner>=0)sc[winner]+=100;
+  G.p[0].total+=sc[0];G.p[1].total+=sc[1];
+  const wt=winner>=0?G.p[winner].name+' went out!':'Stock ran out!';
+  showModal('Round '+(G.round+1)+' Complete',
+    '<p>'+wt+'</p><div class="score-grid"><div class="sg-cell"><div class="sg-name">PLAYER 1</div><div class="sg-pts">'+(sc[0]>0?'+':'')+sc[0]+'</div><div class="sg-total">Total: '+G.p[0].total+'</div></div><div class="sg-cell"><div class="sg-name">PLAYER 2</div><div class="sg-pts">'+(sc[1]>0?'+':'')+sc[1]+'</div><div class="sg-total">Total: '+G.p[1].total+'</div></div></div>',
+    [{lbl:G.round<3?'Start Round '+(G.round+2):'Final Results',cls:'abtn-green',fn:()=>{if(G.round<3){G.round++;dealRound();}else showFinal();}}]
+  );
+}
+
+function showFinal(){
+  const a=G.p[0].total,b=G.p[1].total;
+  const w=a>b?'🏆 Player 1 Wins!':b>a?'🏆 Player 2 Wins!':'🤝 Tie!';
+  showModal('Game Over',
+    '<p style="font-size:1rem;color:var(--gold2);margin-bottom:8px;">'+w+'</p><div class="score-grid"><div class="sg-cell"><div class="sg-name">PLAYER 1</div><div class="sg-pts">'+a+'</div></div><div class="sg-cell"><div class="sg-name">PLAYER 2</div><div class="sg-pts">'+b+'</div></div></div>',
+    [{lbl:'Play Again',cls:'abtn-green',fn:()=>{closeModal();initGame();}},{lbl:'Home',cls:'abtn-dim',fn:()=>{closeModal();goHome();}}]
+  );
+}
+
+function getSel(){return G.sel.map(i=>G.p[G.cp].hand[i]).filter(Boolean);}
+function rmHand(pi,cards){const ids=new Set(cards.map(c=>c.id));G.p[pi].hand=G.p[pi].hand.filter(c=>!ids.has(c.id));G.sel=[];}
+function toggleSel(pi,ci){if(pi!==G.cp)return;const i=G.sel.indexOf(ci);if(i>=0)G.sel.splice(i,1);else G.sel.push(ci);renderHands();}
+
+function render(){renderTopBar();renderHands();renderCenter();renderMelds();renderBtns();}
+
+function renderTopBar(){
+  document.getElementById('rd-tag').textContent='ROUND '+(G.round+1)+' OF 4';
+  document.getElementById('meld-req').textContent='MIN '+RMINS[G.round]+' PTS';
+  document.getElementById('p1-disp').textContent=G.p[0].total;
+  document.getElementById('p2-disp').textContent=G.p[1].total;
+  document.getElementById('p1-chip').className='score-chip'+(G.cp===0?' act':'');
+  document.getElementById('p2-chip').className='score-chip'+(G.cp===1?' act':'');
+  document.getElementById('p1-zone').className='pzone'+(G.cp===0?' active':'');
+  document.getElementById('p2-zone').className='pzone'+(G.cp===1?' active':'');
+}
+
+function renderHands(){
+  for(let pi=0;pi<2;pi++){
+    const p=G.p[pi];const isCur=G.cp===pi;
+    const hdr=document.getElementById('p'+(pi+1)+'-hdr');
+    hdr.innerHTML=p.name+(isCur?' <span class="turn-tag">YOUR TURN</span>':'')+
+      (p.onFoot?' <span class="foot-tag">ON FOOT</span>':'');
+    document.getElementById('p'+(pi+1)+'-ct').textContent=p.hand.length+' cards';
+    const row=document.getElementById('p'+(pi+1)+'-hand');row.innerHTML='';
+    if(!isCur){
+      for(let i=0;i<p.hand.length;i++){const d=document.createElement('div');d.className='card back';row.appendChild(d);}
+    } else {
+      const sorted=[...p.hand].map((c,i)=>({c,i}));
+      sorted.sort((a,b)=>{
+        const aw=isWild(a.c)?1:0,bw=isWild(b.c)?1:0;
+        if(aw!==bw)return aw-bw;
+        return MELD_RANKS.indexOf(a.c.rank)-MELD_RANKS.indexOf(b.c.rank)||0;
+      });
+      sorted.forEach(({c,i})=>{
+        const d=document.createElement('div');
+        d.className='card '+(isWild(c)?'wild':c.red?'red':'black')+(G.sel.includes(i)?' sel':'');
+        d.innerHTML='<span class="cr">'+c.rank+'</span><span class="cs">'+c.suit+'</span><span class="cr" style="transform:rotate(180deg)">'+c.rank+'</span>';
+        d.onclick=()=>toggleSel(pi,i);row.appendChild(d);
+      });
+    }
+  }
+}
+
+function renderCenter(){
+  document.getElementById('stock-cnt').textContent=G.stock.length;
+  const top=G.discard[G.discard.length-1];
+  const dc=document.getElementById('dc-card');
+  if(top){
+    dc.className='pile-card discard-pile card '+(isWild(top)?'wild':top.red?'red':'black');
+    document.getElementById('dc-rank').textContent=top.rank;
+    document.getElementById('dc-suit').textContent=top.suit;
+  } else {
+    dc.className='pile-card discard-pile';
+    document.getElementById('dc-rank').textContent='—';
+    document.getElementById('dc-suit').textContent='';
+  }
+  const cp=G.p[G.cp];
+  document.getElementById('foot-lbl').textContent=cp.onFoot?'On Foot':'Foot ('+cp.foot.length+')';
+}
+
+function renderMelds(){
+  for(let pi=0;pi<2;pi++){
+    const grid=document.getElementById('p'+(pi+1)+'-melds');grid.innerHTML='';
+    const p=G.p[pi];const isCur=G.cp===pi;
+    p.melds.filter(m=>m.rank!=='R3').forEach(m=>{
+      const d=document.createElement('div');
+      let cls='meld-block';
+      if(m.complete)cls+=m.wilds===m.cards.length?' book-wild':m.wilds>0?' book-dirty':' book-clean';
+      else cls+=m.wilds>0?' mdirty':' mclean';
+      d.className=cls;
+      let pip='';
+      if(m.complete){if(m.wilds===m.cards.length)pip='<span class="bpip bp-wild">★WILD</span>';else if(m.wilds>0)pip='<span class="bpip bp-dirty">✓DIRTY</span>';else pip='<span class="bpip bp-clean">✓CLEAN</span>';}
+      d.innerHTML='<div class="meld-top"><span class="meld-rl">'+m.rank+'s</span>'+pip+'</div><div class="meld-minis"></div>';
+      const row=d.querySelector('.meld-minis');
+      m.cards.forEach(c=>{const mm=document.createElement('div');mm.className='mmini '+(isWild(c)?'mw':c.red?'mr':'mb');mm.textContent=c.rank==='JK'?'★':c.rank;row.appendChild(mm);});
+      if(isCur&&!m.complete){d.onclick=()=>addToRank(m.rank,getSel());d.title='Add selected cards to '+m.rank+' meld';}
+      grid.appendChild(d);
+    });
+    const r3=p.melds.find(m=>m.rank==='R3');
+    if(r3&&r3.cards.length){
+      const d=document.createElement('div');d.className='meld-block r3-block';
+      d.innerHTML='<div class="meld-top"><span class="meld-rl r3-rl">Red 3s</span></div><div class="meld-minis">'+r3.cards.map(()=>'<div class="mmini mr">3</div>').join('')+'</div>';
+      grid.appendChild(d);
+    }
+  }
+}
+
+function renderBtns(){
+  document.getElementById('btn-draw').disabled=G.drew;
+  document.getElementById('btn-take').disabled=G.drew||!G.discard.length;
+  document.getElementById('btn-meld').disabled=!G.drew;
+  document.getElementById('btn-add').disabled=!G.drew;
+  document.getElementById('btn-disc').disabled=!G.drew;
+  document.getElementById('btn-out').disabled=!G.drew||!canGoOut(G.cp);
+}
+
+function msg(t){document.getElementById('msg-bar').textContent=t;}
+
+function showModal(title,body,btns){
+  document.getElementById('m-title').textContent=title;
+  document.getElementById('m-body').innerHTML=body;
+  const bc=document.getElementById('m-btns');bc.innerHTML='';
+  btns.forEach(b=>{const btn=document.createElement('button');btn.className='abtn '+b.cls;btn.textContent=b.lbl;btn.onclick=()=>{closeModal();b.fn();};bc.appendChild(btn);});
+  document.getElementById('overlay').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('overlay').classList.add('hidden');}
+
+function showHowToPlay(){
+  showModal('How to Play',
+    '<p><strong>Goal:</strong> Score the most points over 4 rounds.</p><p><strong>Setup:</strong> Each player gets 11 Hand cards + 11 Foot cards (face-down).</p><p><strong>Your Turn:</strong> Draw 2 from stock, OR take the discard pile (need 2 matching naturals in hand).</p><p><strong>Meld:</strong> Play 3–7 same-rank cards. Wilds (2s, Jokers) OK but naturals must outnumber them.</p><p><strong>Books:</strong> 7-card completed melds. Clean (no wilds) or Dirty (has wilds).</p><p><strong>Foot:</strong> When Hand runs out, pick up Foot and keep going!</p><p><strong>Go Out:</strong> On Foot, complete 1 clean + 1 dirty book, then discard last card.</p><p><strong>Black 3s:</strong> Discard to block opponent. Cannot be melded.</p><p><strong>Red 3s:</strong> Auto-play for 100pts each. Draw a replacement.</p>',
+    [{lbl:'Got It!',cls:'abtn-green',fn:()=>{}}]
+  );
+}
+function showScoreGuide(){
+  showModal('Scoring Guide',
+    '<p><strong>Clean Book (7 naturals):</strong> +500 pts</p><p><strong>Dirty Book (has wilds):</strong> +300 pts</p><p><strong>Wild Book (all wilds):</strong> +1500 pts</p><p><strong>Red Three:</strong> +100 pts each</p><p><strong>Going Out:</strong> +100 pts bonus</p><p><strong>Cards in hand/foot:</strong> Deducted from score</p><p style="margin-top:8px;"><strong>Min First Meld:</strong> R1=50 | R2=90 | R3=120 | R4=150</p>',
+    [{lbl:'Got It!',cls:'abtn-green',fn:()=>{}}]
+  );
+}
+
+function startGame(){
+  document.getElementById('splash').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+  initGame();
+}
+function goHome(){
+  document.getElementById('game').classList.add('hidden');
+  document.getElementById('splash').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
