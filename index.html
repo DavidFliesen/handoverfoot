@@ -383,7 +383,7 @@ function deal(){
   G.cp=G.round%2;
   render();
   msg('Round '+(G.round+1)+' begins! '+G.p[G.cp].name+' goes first.');
-  if(AI_MODE&&G.cp===1)setTimeout(aiTurn,900);
+  if(AI_MODE&&G.cp===1)setTimeout(aiTurn,1200);
 }
 
 // ══ PLAYER ACTIONS ══
@@ -462,7 +462,9 @@ function doNewMeld(){
   p.melds.push(meld);p.melded=true;
   rmHand(G.cp,sel);G.sel=[];
   msg('Melded '+sel.length+' '+rank+'s!'+(meld.complete?' BOOK COMPLETE!':''));
-  chkFoot();render();
+  chkFoot();
+  if(!G.p[G.cp].hand.length&&G.p[G.cp].onFoot&&canGoOut(G.cp)){endRound(G.cp);return;}
+  render();
   if(MP_MODE)syncState();
 }
 
@@ -492,7 +494,9 @@ function addToRank(rank,sel){
   tgt.cards.push(...sel);tgt.wilds=newW;tgt.complete=tgt.cards.length>=7;
   rmHand(G.cp,sel);G.sel=[];
   msg('Added to '+rank+'.'+(tgt.complete?' BOOK COMPLETE!':''));
-  chkFoot();render();
+  chkFoot();
+  if(!G.p[G.cp].hand.length&&G.p[G.cp].onFoot&&canGoOut(G.cp)){endRound(G.cp);return;}
+  render();
   if(MP_MODE)syncState();
 }
 
@@ -535,15 +539,16 @@ function canGoOut(pi){
 
 function tryGoOut(){
   if(!G.drew){msg('Draw first.');return;}
+  const p=G.p[G.cp];
+  // If hand is empty and on foot and books complete — go out automatically
+  if(p.hand.length===0&&p.onFoot&&canGoOut(G.cp)){endRound(G.cp);return;}
   if(!canGoOut(G.cp)){
-    const p=G.p[G.cp];
     const done=p.melds.filter(m=>m.complete);
     msg('Cannot go out yet. Need: on Foot ('+(p.onFoot?'yes':'no')+
         '), 1 clean book (have '+done.filter(m=>m.wilds===0).length+
         '), 1 dirty book (have '+done.filter(m=>m.wilds>0&&m.wilds<m.cards.length).length+').');
     return;
   }
-  const p=G.p[G.cp];
   if(p.hand.length===0){endRound(G.cp);return;}
   if(p.hand.length===1){G.disc.push(p.hand[0]);p.hand=[];}
   else{msg('Meld or discard down to 1 card, then tap Go Out.');return;}
@@ -555,7 +560,7 @@ function nextTurn(){
   G.cp=1-G.cp;G.drew=false;G.tookPile=false;G.sel=[];
   msg(G.p[G.cp].name+"'s turn — draw or take pile.");
   render();
-  if(AI_MODE&&G.cp===1)setTimeout(aiTurn,700);
+  if(AI_MODE&&G.cp===1)setTimeout(aiTurn,1000);
 }
 
 // ══ SCORING ══
@@ -688,6 +693,7 @@ function aiEasy(){
   AI_BUSY=true;
   setTimeout(()=>{
     aiDraw();
+    render();
     setTimeout(()=>{
       // Meld 3+ naturals of same rank only, no wilds
       const snapshot=[...p.hand];
@@ -716,9 +722,9 @@ function aiEasy(){
         let disc=p.hand.find(c=>isR3(c))||p.hand.find(c=>isB3(c));
         if(!disc){const picks=p.hand.filter(c=>!isWild(c));disc=picks[Math.floor(Math.random()*picks.length)]||p.hand[0];}
         aiDiscardCard(disc);render();aiFinishTurn();
-      },400);
-    },500);
-  },300);
+      },700);
+    },900);
+  },600);
 }
 
 // ══ AI MID — Club Player ══
@@ -734,11 +740,12 @@ function aiMid(){
       if(match>=2||(hasMeld&&G.disc.length>=3))took=aiTakeDiscard();
     }
     if(!took)aiDraw();
+    render();
     setTimeout(()=>{
       aiMidMeld(p);
-      setTimeout(()=>{aiMidDiscard(p);},400);
-    },500);
-  },300);
+      setTimeout(()=>{aiMidDiscard(p);},700);
+    },900);
+  },600);
 }
 function aiMidMeld(p){
   // Add to existing melds first
@@ -801,7 +808,8 @@ function aiHard(){
       const b3=p.hand.find(c=>isB3(c));
       if(b3){
         aiDraw();
-        setTimeout(()=>{aiDiscardCard(b3);render();aiFinishTurn();},400);
+        render();
+        setTimeout(()=>{aiDiscardCard(b3);render();aiFinishTurn();},700);
         return;
       }
     }
@@ -814,11 +822,12 @@ function aiHard(){
       if(match>=2||hasMeld||G.disc.length>=5)took=aiTakeDiscard();
     }
     if(!took)aiDraw();
+    render();
     setTimeout(()=>{
       aiHardMeld(p,oppRanks);
-      setTimeout(()=>{aiHardDiscard(p,oppRanks,oppNearOut);},400);
-    },500);
-  },300);
+      setTimeout(()=>{aiHardDiscard(p,oppRanks,oppNearOut);},700);
+    },900);
+  },600);
 }
 function aiHardMeld(p,oppRanks){
   // Complete existing melds first — closest to book gets priority
