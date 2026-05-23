@@ -398,7 +398,21 @@ function drawStock(){
   if(!G.stock.length){endRound(-1);return;}
   const p=G.p[G.cp];const n=Math.min(2,G.stock.length);
   for(let i=0;i<n;i++)p.hand.push(G.stock.pop());
-  G.drew=true;msg('Drew '+n+' card(s). Meld or discard.');render();
+  G.drew=true;
+  // Show meld hint if player hasn't opened yet
+  const p0=G.p[G.cp];
+  if(!p0.melded){
+    const best=bestMeldPts(p0.hand);
+    const need=MINS[G.round];
+    if(best>=need){
+      msg('Drew '+n+' card(s). Need '+need+' pts to open — your best meld: ~'+best+' pts. Select cards + New Meld.');
+    } else {
+      msg('Drew '+n+' card(s). Need '+need+' pts to open — best available: '+best+' pts. Keep drawing or discard.');
+    }
+  } else {
+    msg('Drew '+n+' card(s). Meld or discard.');
+  }
+  render();
   if(MP_MODE)syncState();
 }
 function takePile(){
@@ -413,7 +427,20 @@ function takePile(){
   }
   const pile=G.disc.splice(0);p.hand.push(...pile);
   G.drew=true;G.tookPile=true;
-  msg('Took pile ('+pile.length+' cards)! Must meld the '+top.rank+'.');render();
+  const pAfter=G.p[G.cp];
+  const bestAfter=bestMeldPts(pAfter.hand);
+  const needAfter=MINS[G.round];
+  if(!pAfter.melded){
+    if(bestAfter>=needAfter){
+      msg('Took pile ('+pile.length+' cards)! Need '+needAfter+' pts to open — your best meld: ~'+bestAfter+' pts.');
+    } else {
+      msg('Took pile ('+pile.length+' cards)! Cannot open (need '+needAfter+' pts, best: '+bestAfter+' pts) — you may discard.');
+      G.tookPile=false; // release immediately so they aren't trapped
+    }
+  } else {
+    msg('Took pile ('+pile.length+' cards)! Meld '+top.rank+'s or discard.');
+  }
+  render();
   if(MP_MODE)syncState();
 }
 function doNewMeld(){
@@ -922,12 +949,26 @@ function renderMelds(){
 }
 function renderBtns(){
   const aiTurn=AI_MODE&&G.cp===1;
+  const p=G.p[G.cp];
   document.getElementById('bdraw').disabled=G.drew||aiTurn;
   document.getElementById('btake').disabled=G.drew||!G.disc.length||aiTurn;
   document.getElementById('bnew').disabled=!G.drew||aiTurn;
   document.getElementById('badd').disabled=!G.drew||aiTurn;
   document.getElementById('bdisc').disabled=!G.drew||aiTurn;
   document.getElementById('bout').disabled=!G.drew||!canGoOut(G.cp)||aiTurn;
+  // Update New Meld button label to show requirement when not yet opened
+  const bnew=document.getElementById('bnew');
+  if(!p.melded&&G.drew){
+    const need=MINS[G.round];
+    const best=bestMeldPts(p.hand);
+    bnew.textContent='✦ Open (need '+need+'pts)';
+    bnew.style.borderColor=best>=need?'var(--gold)':'rgba(253,248,238,.2)';
+    bnew.title='Need '+need+' pts to open. Your best possible meld: ~'+best+' pts.';
+  } else {
+    bnew.textContent='✦ New Meld';
+    bnew.style.borderColor='';
+    bnew.title='';
+  }
 }
 function msg(t){document.getElementById('msgbar').textContent=t;}
 
