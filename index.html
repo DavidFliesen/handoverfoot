@@ -94,14 +94,14 @@ body{background:radial-gradient(ellipse at 50% 30%,#1e6b3c 0%,#0f3d22 70%);font-
 .diff-badge{display:inline-block;border-radius:4px;padding:1px 7px;font-size:clamp(.42rem,.78vw,.56rem);font-family:'Oswald',sans-serif;letter-spacing:.08em;color:white;margin-left:4px;vertical-align:middle;}
 .db-easy{background:#27ae60;}.db-mid{background:var(--gold3);}.db-hard{background:#c0392b;}
 #play{flex:1;display:grid;grid-template-rows:1fr auto 1fr;padding:clamp(4px,.8vh,8px) clamp(6px,1.2vw,12px);gap:clamp(4px,.8vh,8px);overflow:hidden;min-height:0;}
-.pzone{background:rgba(0,0,0,.22);border:2px solid rgba(201,160,48,.18);border-radius:12px;padding:clamp(6px,1.2vh,12px) clamp(8px,1.5vw,14px);display:flex;flex-direction:column;overflow:hidden;min-height:0;transition:border-color .3s,box-shadow .3s;}
+.pzone{background:rgba(0,0,0,.22);border:2px solid rgba(201,160,48,.18);border-radius:12px;padding:clamp(5px,1vh,10px) clamp(8px,1.5vw,14px) clamp(3px,.5vh,6px);display:flex;flex-direction:column;overflow:hidden;min-height:0;transition:border-color .3s,box-shadow .3s;}
 .pzone.active{border-color:var(--gold);box-shadow:0 0 18px rgba(201,160,48,.25);}
 .pzone-hdr{display:flex;align-items:center;gap:8px;margin-bottom:clamp(4px,.8vh,8px);flex-shrink:0;}
 .pname{font-family:'Oswald',sans-serif;font-size:clamp(.82rem,1.9vw,1.2rem);font-weight:600;color:var(--gold);letter-spacing:.05em;}
 .ttag{background:var(--gold);color:#1a0e00;border-radius:4px;padding:1px 7px;font-size:clamp(.5rem,.95vw,.68rem);font-weight:700;font-family:'Oswald',sans-serif;}
 .ftag{background:var(--red);color:white;border-radius:4px;padding:1px 7px;font-size:clamp(.5rem,.95vw,.68rem);font-family:'Oswald',sans-serif;}
 .pct{margin-left:auto;font-size:clamp(.56rem,1vw,.72rem);color:rgba(253,248,238,.38);}
-.hand-row{display:flex;flex-wrap:nowrap;gap:clamp(2px,.5vw,6px);overflow-x:auto;overflow-y:visible;padding-bottom:8px;padding-top:4px;flex:1;align-items:flex-start;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.hand-row{display:flex;flex-wrap:nowrap;gap:clamp(2px,.5vw,6px);overflow-x:auto;overflow-y:visible;padding-bottom:8px;padding-top:4px;flex:0 0 auto;align-items:flex-start;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .hand-row::-webkit-scrollbar{display:none;}
 .card{width:var(--cw);height:var(--ch);border-radius:clamp(5px,.9vw,8px);background:var(--card-bg);border:2px solid #ccc;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(2px,.4vw,5px);cursor:pointer;flex-shrink:0;box-shadow:2px 3px 8px rgba(0,0,0,.4);transition:transform .12s,box-shadow .12s,border-color .12s;user-select:none;-webkit-user-select:none;}
 .card:hover{transform:translateY(-5px);}
@@ -125,21 +125,34 @@ body{background:radial-gradient(ellipse at 50% 30%,#1e6b3c 0%,#0f3d22 70%);font-
 .discard-p{background:var(--card-bg);border:2px solid #bbb;flex-direction:column;justify-content:space-between;padding:clamp(2px,.4vw,5px);}
 .meld-panel{display:flex;flex-direction:column;gap:4px;min-width:0;overflow:hidden;}
 .mpanel-hdr{font-size:clamp(.5rem,.9vw,.64rem);text-transform:uppercase;letter-spacing:.12em;color:rgba(253,248,238,.32);margin-bottom:2px;padding:0 2px;}
-.mrow{display:flex;flex-wrap:wrap;gap:4px;overflow-y:auto;max-height:clamp(80px,14vh,140px);scrollbar-width:none;}
-.mrow::-webkit-scrollbar{display:none;}
-.mblock{background:rgba(0,0,0,.3);border:1px dashed rgba(201,160,48,.2);border-radius:6px;padding:clamp(3px,.6vh,6px) clamp(4px,.7vw,8px);cursor:pointer;min-width:46px;transition:border-color .15s,background .15s;}
-.mblock:hover{border-color:var(--gold);background:rgba(201,160,48,.07);}
-.mblock.mclean{border-color:rgba(30,111,181,.45);}.mblock.mdirty{border-color:rgba(123,63,160,.45);}
-.mblock.bk-clean{border-color:var(--clean-col);background:rgba(30,111,181,.1);}
-.mblock.bk-dirty{border-color:var(--dirty-col);background:rgba(123,63,160,.1);}
-.mblock.bk-wild{border-color:var(--wild-col);background:rgba(192,96,16,.1);}
-.mtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
-.mrl{font-size:clamp(.55rem,1vw,.72rem);font-weight:600;color:var(--gold);}
-.bpip{font-size:clamp(.42rem,.78vw,.56rem);padding:1px 4px;border-radius:3px;color:white;font-family:'Oswald',sans-serif;}
-.bp-clean{background:var(--clean-col);}.bp-dirty{background:var(--dirty-col);}.bp-wild{background:var(--wild-col);}
-.mminis{display:flex;flex-wrap:wrap;gap:2px;}
-.mm{width:clamp(16px,2.3vw,24px);height:clamp(22px,3.2vw,34px);border-radius:3px;background:var(--card-bg);border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:clamp(.4rem,.72vw,.55rem);font-weight:700;flex-shrink:0;}
-.mm.mr{color:var(--red);}.mm.mb{color:#1a1a2e;}.mm.mw{color:#6c3483;border-color:#9b59b6;}.mm.mbad{color:#b7950b;}
+/* mrow defined above */
+.mblock{
+  width:clamp(42px,5.8vw,66px);height:clamp(60px,8.2vw,92px);
+  border-radius:clamp(4px,.7vw,7px);border:3px solid #ccc;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:clamp(2px,.4vw,5px);cursor:pointer;flex-shrink:0;
+  background:var(--card-bg);box-shadow:2px 3px 8px rgba(0,0,0,.45);
+  transition:transform .12s,box-shadow .12s,border-color .12s;position:relative;
+}
+.mblock:hover{transform:translateY(-4px);box-shadow:2px 7px 14px rgba(0,0,0,.5);}
+.mblock:active{transform:translateY(-2px);}
+.mblock.clean{color:var(--red);border-color:var(--red);}
+.mblock.dirty{color:#1a1a2e;border-color:#555;}
+.mblock.book{box-shadow:0 0 0 2px var(--gold),2px 3px 8px rgba(0,0,0,.45);}
+.mblock.wildbook{color:#6c3483;border-color:#9b59b6;box-shadow:0 0 0 2px #9b59b6,2px 3px 8px rgba(0,0,0,.45);}
+.mrank{font-size:clamp(.62rem,1.1vw,.88rem);font-weight:700;line-height:1;}
+.msuit{font-size:clamp(.85rem,1.5vw,1.3rem);text-align:center;line-height:1;margin:auto 0;}
+.mcount{position:absolute;top:-8px;right:-8px;background:var(--felt3);border:1px solid var(--gold3);
+  color:var(--gold2);border-radius:50%;width:clamp(15px,2vw,22px);height:clamp(15px,2vw,22px);
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(.38rem,.68vw,.54rem);font-weight:700;font-family:'Oswald',sans-serif;}
+.mbook-pip{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);
+  background:var(--gold);color:#1a0e00;border-radius:3px;
+  padding:1px 5px;font-size:clamp(.35rem,.6vw,.48rem);font-weight:700;
+  font-family:'Oswald',sans-serif;white-space:nowrap;}
+.mblock.wildbook .mbook-pip{background:#9b59b6;color:white;}
+.mrow{display:flex;flex-wrap:wrap;gap:clamp(8px,1.2vw,16px);overflow:visible;padding:4px 2px 12px;}
+.mminis{display:none;}.mm{display:none;}
 #msgbar{flex-shrink:0;padding:clamp(4px,.8vh,8px) clamp(10px,2vw,16px);background:rgba(0,0,0,.35);border-top:1px solid rgba(201,160,48,.12);font-size:clamp(.6rem,1.2vw,.82rem);color:var(--gold2);font-style:italic;text-align:center;min-height:clamp(24px,3.5vh,38px);display:flex;align-items:center;justify-content:center;}
 #actbar{flex-shrink:0;display:flex;gap:clamp(3px,.6vw,8px);flex-wrap:wrap;padding:clamp(5px,1vh,10px) clamp(6px,1.2vw,14px);background:rgba(0,0,0,.4);border-top:2px solid var(--gold3);}
 .abtn{font-family:'Oswald',sans-serif;font-size:clamp(.6rem,1.2vw,.85rem);font-weight:600;letter-spacing:.07em;border-radius:7px;border:2px solid;padding:clamp(7px,1.3vh,11px) clamp(7px,1.3vw,14px);cursor:pointer;transition:transform .1s,filter .1s;text-transform:uppercase;flex:1;min-width:0;white-space:nowrap;}
@@ -278,22 +291,22 @@ body{background:radial-gradient(ellipse at 50% 30%,#1e6b3c 0%,#0f3d22 70%);font-
 
 <script>
 // ══ CONSTANTS ══
-const MR=['4','5','6','7','8','9','10','J','Q','K','A','JK'];
+const MR=['4','5','6','7','8','9','10','J','Q','K','A'];
 const RP={'3':5,'4':5,'5':5,'6':5,'7':5,'8':10,'9':10,'10':10,'J':10,'Q':10,'K':10,'A':20,'2':20,'JK':50};
 const MINS=[50,90,120,150];
 const SUITS=['spades','hearts','diamonds','clubs'];
 const SC={'spades':'\u2660','hearts':'\u2665','diamonds':'\u2666','clubs':'\u2663'};
 const DIFF={
   easy:{name:"Grandma&#39;s Pace",short:'EASY',badge:'db-easy',icon:'\U0001F60A'},
-  mid:{name:'Club Player',short:'CLUB',badge:'db-mid',icon:'\U0001F0CF'},
-  hard:{name:'Card Shark',short:'SHARK',badge:'db-hard',icon:'\U0001F988'}
+  mid:{name:'Club Player',short:'CLUB',badge:'db-mid',icon:'🎴'},
+  hard:{name:'Card Shark',short:'SHARK',badge:'db-hard',icon:'🦈'}
 };
 
 let uid=0, G={}, AI_MODE=false, AI_DIFF='mid', AI_BUSY=false;
 let PEER=null, CONN=null, IS_HOST=false, MP_MODE=false;
 
 // ══ CARD HELPERS ══
-function isWild(c){return c.rank==='2';}
+function isWild(c){return c.rank==='2'||c.rank==='JK';}
 function isR3(c){return c.rank==='3'&&c.red;}
 function isB3(c){return c.rank==='3'&&!c.red;}
 function is3(c){return c.rank==='3';}
@@ -669,7 +682,7 @@ function aiMeldDirect(p,rank,cards){
   p.hand=p.hand.filter(c=>!ids.has(c.id));
 }
 
-// ══ AI EASY — Grandma&#39;s Pace ══
+// ══ AI EASY — Grandma's Pace ══
 function aiEasy(){
   const p=G.p[1];
   AI_BUSY=true;
@@ -1018,11 +1031,7 @@ function hostGame(){
   });
   PEER.on('error',e=>{ps.innerHTML='<span class="status-dot dot-err"></span>Error: '+e.type;});
 }
-function copyLink(btn){
-  const box=document.querySelector('.invite-box');
-  const url=box?box.textContent.replace('INVITE LINK','').trim():'';
-  if(navigator.clipboard&&url){navigator.clipboard.writeText(url).then(()=>{btn.textContent='Copied!';});}
-}
+function copyLink(url){navigator.clipboard&&navigator.clipboard.writeText(url).then(()=>msg('Link copied!'));}
 function showJoin(){
   document.getElementById('lobby-extra').innerHTML=
     '<p>Paste the invite link or room code:</p>'+
@@ -1077,23 +1086,22 @@ function showDiffSelect(){
   document.getElementById('lobby-title').textContent='Choose AI Difficulty';
   document.getElementById('lobby-main').innerHTML=
     '<div class="diff-grid">'+
-    '<div class="diff-btn diff-easy" id="d-easy" onclick="selectDiff(this,&#39;easy&#39;)">'+
+    '<div class="diff-btn diff-easy" id="d-easy" data-diff="easy" onclick="selectDiff(this)">'+
       '<div class="diff-icon">&#128522;</div><div class="diff-name">EASY</div>'+
       '<div style="font-family:Oswald,sans-serif;font-size:clamp(.6rem,1.1vw,.76rem);color:#2ecc71;margin-bottom:4px;">Grandma&#39;s Pace</div>'+
       '<div class="diff-desc">Draws from stock only. Melds obvious sets. Discards randomly. Great for learning.</div></div>'+
-    '<div class="diff-btn diff-mid" id="d-mid" onclick="selectDiff(this,&#39;mid&#39;)">'+
+    '<div class="diff-btn diff-mid" id="d-mid" data-diff="mid" onclick="selectDiff(this)">'+
       '<div class="diff-icon">&#127921;</div><div class="diff-name">CLUB</div>'+
       '<div style="font-family:Oswald,sans-serif;font-size:clamp(.6rem,1.1vw,.76rem);color:var(--gold);margin-bottom:4px;">Club Player</div>'+
       '<div class="diff-desc">Completes melds before starting new ones. Takes pile strategically. Dumps 3s first.</div></div>'+
-    '<div class="diff-btn diff-hard" id="d-hard" onclick="selectDiff(this,&#39;hard&#39;)">'+
+    '<div class="diff-btn diff-hard" id="d-hard" data-diff="hard" onclick="selectDiff(this)">'+
       '<div class="diff-icon">&#129416;</div><div class="diff-name">SHARK</div>'+
       '<div style="font-family:Oswald,sans-serif;font-size:clamp(.6rem,1.1vw,.76rem);color:#e74c3c;margin-bottom:4px;">Card Shark</div>'+
       '<div class="diff-desc">Watches your melds. Blocks with Black 3s. Saves wilds for books. Strikes fast.</div></div>'+
     '</div>';
-  document.getElementById('lobby-back').innerHTML=
-    '<button class="lbtn lbtn-d" onclick="resetLobby()" style="padding:7px 14px;font-size:.68rem;">&#8592; Back</button>';
+  document.getElementById('lobby-back').innerHTML='<button class="lbtn lbtn-d" onclick="resetLobby()" style="padding:7px 14px;font-size:.68rem;">&#8592; Back</button>';
 }
-function selectDiff(el,d){
+function selectDiff(el){
   AI_DIFF=d;MP_MODE=false;AI_BUSY=false;
   document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
   if(el)el.classList.add('selected');
@@ -1113,16 +1121,16 @@ function resetLobby(){
     '</div>';
   document.getElementById('lobby-extra').innerHTML='';
   document.getElementById('peer-status').innerHTML='';
-  document.getElementById('lobby-back').innerHTML=
-    '<button class="lbtn lbtn-d" onclick="goSplash()" style="padding:7px 14px;font-size:.68rem;">&#8592; Back</button>';
+  const lb=document.getElementById('lobby-back');
+  if(lb)lb.innerHTML='<button class="lbtn lbtn-d" onclick="goSplash()" style="padding:7px 14px;font-size:.68rem;">&#8592; Back</button>';
 }
 function goLobby(){
   document.getElementById('splash').classList.add('off');
   document.getElementById('lobby').classList.remove('off');
-  resetLobby(); // also sets the lobby-back button
+  resetLobby();
 }
 function goSplash(){
-  AI_BUSY=false;
+  AI_BUSY=false; // already present
   ['game','lobby'].forEach(id=>document.getElementById(id).classList.add('off'));
   document.getElementById('splash').classList.remove('off');
   if(PEER){PEER.destroy();PEER=null;CONN=null;}
@@ -1147,7 +1155,7 @@ function closeModal(){document.getElementById('ov').classList.add('off');}
 function showHowTo(){
   showModal('How to Play',
     '<p><strong>Goal:</strong> Most points after 4 rounds wins.</p>'+
-    '<p><strong>Wilds:</strong> Only 2s are wild. Jokers are natural 50-pt cards.</p>'+
+    '<p><strong>Wilds:</strong> Both 2s and Jokers are wild — substitute for any natural rank in a meld.</p>'+
     '<p><strong>3s — Avoid!</strong> Red 3 = -200 pts. Black 3 = -100 pts if left in hand. Discard them fast!</p>'+
     '<p><strong>Black 3 discard</strong> blocks next player from taking the pile.</p>'+
     '<p><strong>Turn:</strong> Draw 2 from stock OR take discard pile (need 2 matching naturals for top card).</p>'+
@@ -1173,12 +1181,11 @@ function showScoring(){
 }
 
 function joinWithCode(){
-  if(!window._pendingJoinCode)return;
+  const code=window._pendingJoinCode;if(!code)return;
   const ps=document.getElementById('peer-status');
   ps.innerHTML='<span class="status-dot dot-wait"></span>Connecting...';
   IS_HOST=false;MP_MODE=true;AI_MODE=false;
   PEER=new Peer(undefined,{debug:0});
-  const code=window._pendingJoinCode;
   PEER.on('open',()=>{
     CONN=PEER.connect(code,{reliable:true});setupConn();
     CONN.on('open',()=>{ps.innerHTML='<span class="status-dot dot-ok"></span>Connected! Waiting for host...';});
@@ -1186,19 +1193,16 @@ function joinWithCode(){
   });
   PEER.on('error',e=>{ps.innerHTML='<span class="status-dot dot-err"></span>'+e.type;});
 }
-
 // ══ AUTO-JOIN FROM URL ══
 window.addEventListener('load',()=>{
   const m=window.location.search.match(/[?&]join=([^&\s]+)/);
   if(m){
+    window._pendingJoinCode=m[1];
     document.getElementById('splash').classList.add('off');
     document.getElementById('lobby').classList.remove('off');
-    // Store peer ID globally for join
-    window._pendingJoinCode = m[1];
     document.getElementById('lobby-extra').innerHTML=
       '<p>Invite link detected!</p>'+
-      '<button class="lbtn lbtn-b" style="width:100%;margin-top:6px;" '+
-      'onclick="joinWithCode()">Join Game Now</button>';
+      '<button class="lbtn lbtn-b" style="width:100%;margin-top:6px;" onclick="joinWithCode()">Join Game Now</button>';
   }
 });
 </script>
