@@ -1,5 +1,7 @@
 # Hand Over Foot 🃏
 
+![Hand Over Foot Game Preview](preview.svg)
+
 > A classic rummy-style card game for 1–2 players — playable in any modern browser on tablet, phone, or desktop.
 
 -----
