@@ -212,9 +212,7 @@ body{background:radial-gradient(ellipse at 50% 30%,#1e6b3c 0%,#0f3d22 70%);font-
     </div>
     <div id="lobby-extra" style="margin-top:8px;"></div>
     <div id="peer-status"></div>
-    <div style="margin-top:12px;">
-      <button class="lbtn lbtn-d" onclick="goSplash()" style="padding:7px 16px;font-size:.68rem;">&#8592; Back</button>
-    </div>
+    <div id="lobby-back" style="margin-top:12px;"></div>
   </div>
 </div>
 
@@ -1079,25 +1077,26 @@ function showDiffSelect(){
   document.getElementById('lobby-title').textContent='Choose AI Difficulty';
   document.getElementById('lobby-main').innerHTML=
     '<div class="diff-grid">'+
-    '<div class="diff-btn diff-easy" id="d-easy" onclick="selectDiff(\"easy\")">'+
+    '<div class="diff-btn diff-easy" id="d-easy" onclick="selectDiff(this,&#39;easy&#39;)">'+
       '<div class="diff-icon">&#128522;</div><div class="diff-name">EASY</div>'+
       '<div style="font-family:Oswald,sans-serif;font-size:clamp(.6rem,1.1vw,.76rem);color:#2ecc71;margin-bottom:4px;">Grandma&#39;s Pace</div>'+
       '<div class="diff-desc">Draws from stock only. Melds obvious sets. Discards randomly. Great for learning.</div></div>'+
-    '<div class="diff-btn diff-mid" id="d-mid" onclick="selectDiff(\"mid\")">'+
+    '<div class="diff-btn diff-mid" id="d-mid" onclick="selectDiff(this,&#39;mid&#39;)">'+
       '<div class="diff-icon">&#127921;</div><div class="diff-name">CLUB</div>'+
       '<div style="font-family:Oswald,sans-serif;font-size:clamp(.6rem,1.1vw,.76rem);color:var(--gold);margin-bottom:4px;">Club Player</div>'+
       '<div class="diff-desc">Completes melds before starting new ones. Takes pile strategically. Dumps 3s first.</div></div>'+
-    '<div class="diff-btn diff-hard" id="d-hard" onclick="selectDiff(\"hard\")">'+
+    '<div class="diff-btn diff-hard" id="d-hard" onclick="selectDiff(this,&#39;hard&#39;)">'+
       '<div class="diff-icon">&#129416;</div><div class="diff-name">SHARK</div>'+
       '<div style="font-family:Oswald,sans-serif;font-size:clamp(.6rem,1.1vw,.76rem);color:#e74c3c;margin-bottom:4px;">Card Shark</div>'+
       '<div class="diff-desc">Watches your melds. Blocks with Black 3s. Saves wilds for books. Strikes fast.</div></div>'+
-    '</div>'+
-    '<button class="lbtn lbtn-d" onclick="resetLobby()" style="margin-top:8px;padding:7px 14px;font-size:.68rem;">Back</button>';
+    '</div>';
+  document.getElementById('lobby-back').innerHTML=
+    '<button class="lbtn lbtn-d" onclick="resetLobby()" style="padding:7px 14px;font-size:.68rem;">&#8592; Back</button>';
 }
-function selectDiff(d){
+function selectDiff(el,d){
   AI_DIFF=d;MP_MODE=false;AI_BUSY=false;
   document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
-  const el=document.getElementById('d-'+d);if(el)el.classList.add('selected');
+  if(el)el.classList.add('selected');
   setTimeout(()=>{
     document.getElementById('lobby').classList.add('off');
     document.getElementById('game').classList.remove('off');
@@ -1114,11 +1113,13 @@ function resetLobby(){
     '</div>';
   document.getElementById('lobby-extra').innerHTML='';
   document.getElementById('peer-status').innerHTML='';
+  document.getElementById('lobby-back').innerHTML=
+    '<button class="lbtn lbtn-d" onclick="goSplash()" style="padding:7px 14px;font-size:.68rem;">&#8592; Back</button>';
 }
 function goLobby(){
   document.getElementById('splash').classList.add('off');
   document.getElementById('lobby').classList.remove('off');
-  resetLobby();
+  resetLobby(); // also sets the lobby-back button
 }
 function goSplash(){
   AI_BUSY=false;
