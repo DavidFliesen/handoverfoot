@@ -11,7 +11,7 @@ const bookBonus = { red:500, black:300 };
 const penalty3 = { red:-500, black:-300 };
 let UID=0;
 const state = {
-  view:'home', mode:'ai', zoom:1, difficulty:'club', askPartner:true, requireBooks:false,
+  view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.35, difficulty:'club', askPartner:true, requireBooks:false,
   handNo:1, current:0, phase:'draw', selected:new Set(), selectedMeld:null,
   stock:[], discard:[], players:[], teams:[], gameEnded:false, handEnded:false, pileIntent:false
 };
@@ -85,6 +85,7 @@ function dealHand(){
 }
 function drawTwo(){
   if(state.phase!=='draw' || state.current!==0) return;
+  sound('draw');
   drawFor(currentPlayer(),2); state.phase='play'; state.pileIntent=false; render(); message('You drew 2. Make sets, add to books, then discard.');
 }
 function drawFor(p,n){ for(let i=0;i<n;i++){ if(!state.stock.length) recycleDiscard(); if(state.stock.length) liveCards(p).push(state.stock.pop()); } sortCards(liveCards(p)); }
@@ -103,6 +104,7 @@ function canTakePile(playerIndex){
 }
 function takePile(){
   if(state.current!==0) return;
+  sound('draw');
   const chk=canTakePile(0); if(!chk.ok){ message(chk.reason); return; }
   const take = state.discard.splice(Math.max(0,state.discard.length-7));
   liveCards(currentPlayer()).push(...take); sortCards(liveCards(currentPlayer()));
@@ -188,7 +190,7 @@ function makeSet(){
   const team=currentTeam();
 
   const v=analyzeSelectedSets(cards, team);
-  if(!v.ok){ message(v.reason); return; }
+  if(!v.ok){ sound('error'); message(v.reason); return; }
 
   for(const set of v.sets){
     removeCards(currentPlayer(), set.cards);
@@ -206,7 +208,7 @@ function makeSet(){
   render();
 
   const label = v.sets.map(s => `${s.rank}s`).join(', ');
-  message(`Melded ${label} for ${v.meldPoints} points.`);
+  sound('meld'); message(`Melded ${label} for ${v.meldPoints} points.`);
   checkHumanEmpty();
 }
 function removeCards(p,cards){ const ids=new Set(cards.map(c=>c.id)); p.hand=p.hand.filter(c=>!ids.has(c.id)); p.foot=p.foot.filter(c=>!ids.has(c.id)); }
@@ -235,6 +237,7 @@ function addToMeld(){
 }
 function discardSelected(){
   if(state.current!==0 || state.phase!=='play') return;
+  sound('discard');
   const cards=selectedCards(); if(cards.length!==1){ message('Select exactly one card to discard.'); return; }
   const c=cards[0]; removeCards(currentPlayer(),[c]); state.discard.push(c); state.selected.clear(); state.selectedMeld=null;
   const p=currentPlayer();
@@ -265,13 +268,41 @@ function nextTurn(){
   for(let i=1;i<=4;i++){ const n=(state.current+i)%4; if(!state.players[n].out){ state.current=n; break; } }
   render(); message(`${state.players[state.current].name}'s turn. Draw 2 or take the pile.`); maybeRobotTurn();
 }
+
+function showRoundWinner(playerIndex){
+  const my = state.teams[0];
+  const opp = state.teams[1];
+  const winningTeam = my.handScore >= opp.handScore ? my : opp;
+  const isGameOver = state.handNo >= 4;
+  sound('win');
+  showModal(`
+    <section class="winner-card">
+      <div class="winner-badge">${winningTeam === my ? '🏆' : '🤖'}</div>
+      <h2>${isGameOver ? 'Game Complete' : `Hand ${state.handNo} Complete`}</h2>
+      <p>${state.players[playerIndex].name} went out. <b>${winningTeam.name}</b> won this hand.</p>
+      <div class="winner-score">
+        <div>Your Team<strong>${my.handScore}</strong><small>Total: ${my.score}</small></div>
+        <div>Opponents<strong>${opp.handScore}</strong><small>Total: ${opp.score}</small></div>
+      </div>
+      <p>${isGameOver ? finalWinnerText() : 'Close this window, then press Next Hand when ready.'}</p>
+    </section>
+  `);
+}
+function finalWinnerText(){
+  const my = state.teams[0], opp = state.teams[1];
+  if(my.score === opp.score) return `Final score is tied at ${my.score}.`;
+  const winner = my.score > opp.score ? my : opp;
+  return `${winner.name} wins the game, ${my.score} to ${opp.score}.`;
+}
+
 function finishHand(playerIndex){
   state.handEnded=true; state.teams[teamOf(playerIndex)].wentOut=true;
   scoreHand(); render();
   const winner = state.teams[0].handScore >= state.teams[1].handScore ? state.teams[0] : state.teams[1];
   message(`${state.players[playerIndex].name} went out. ${winner.name} won this hand.`);
   $('nextHandBtn').classList.toggle('hidden', state.handNo>=4);
-  if(state.handNo>=4) showFinalScores();
+  showRoundWinner(playerIndex);
+  if(state.handNo>=4) setTimeout(showFinalScores, 600);
 }
 function scoreHand(){
   state.teams.forEach((t,ti)=>{
@@ -393,15 +424,68 @@ function bindClicks(){
 function sortHuman(){ sortCards(liveCards(state.players[0])); render(); }
 function clearSelection(){ state.selected.clear(); state.selectedMeld=null; render(); }
 function showRules(){
-  openModal(`<h2>Hand Over Foot Rules</h2>
-  <p>This version follows a familiar four-player partner Hand and Foot Canasta style: you and your robot partner play against two robot opponents over four hands.</p>
-  <table><tr><th>Hand</th><th>Opening Meld</th></tr><tr><td>1</td><td>50</td></tr><tr><td>2</td><td>90</td></tr><tr><td>3</td><td>120</td></tr><tr><td>4</td><td>150</td></tr></table>
-  <h3>Turn</h3><p>Draw 2 cards from stock or take the top 7 cards from the discard pile. To take the pile, you need two natural cards matching the top discard. You cannot take the pile if the top card is a 3 or wild card, or if your team already has that set/book.</p>
-  <h3>Sets and Books</h3><p>Sets are 3 or more cards of the same rank from 4 through Ace. 2s and Jokers are wild. You cannot make a wild-only set and you cannot make sets of 3s. A 7-card clean set is a red book worth 500. A book containing wilds is a black book worth 300.</p>
-  <h3>Foot and Going Out</h3><p>Each player gets 11 cards in hand and 11 in foot. Empty your hand to pick up your foot. Empty your foot to go out and end the hand.</p>
-  <h3>Scoring</h3><p>4-7 are 5 points, 8-K are 10, A/2 are 20, Jokers are 50. Black 3s left in hand or foot are -300. Red 3s left in hand or foot are -500.</p>`);
+  sound('click');
+  showModal(`
+    <section class="rules-panel">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">🃏</div>
+        <div>
+          <h2>Hand Over Foot Rules</h2>
+          <p>Build team sets, complete red and black books, then empty your hand and foot before the other team.</p>
+        </div>
+      </div>
+
+      <div class="rules-grid">
+        <article class="rule-card">
+          <h3>🎯 Opening Meld</h3>
+          <table class="opening-table">
+            <tr><th>Hand</th><th>Minimum</th></tr>
+            <tr><td>1</td><td>50</td></tr>
+            <tr><td>2</td><td>90</td></tr>
+            <tr><td>3</td><td>120</td></tr>
+            <tr><td>4</td><td>150</td></tr>
+          </table>
+        </article>
+
+        <article class="rule-card">
+          <h3>🔄 Your Turn</h3>
+          <ul>
+            <li>Draw 2 from the stock, or take up to 7 from discard.</li>
+            <li>To take discard, you need 2 natural cards matching the top card.</li>
+            <li>You cannot take a pile topped by a 3 or wild card.</li>
+          </ul>
+        </article>
+
+        <article class="rule-card">
+          <h3>📚 Sets & Books</h3>
+          <ul>
+            <li>Sets need 3+ cards of the same rank, 4 through Ace.</li>
+            <li>2s and Jokers are wild.</li>
+            <li>7 cards completes a book.</li>
+            <li>Clean red books score 500. Black books score 300.</li>
+          </ul>
+        </article>
+
+        <article class="rule-card">
+          <h3>👣 Foot & Going Out</h3>
+          <ul>
+            <li>Each player gets 11 hand cards and 11 foot cards.</li>
+            <li>Empty your hand to pick up your foot.</li>
+            <li>Empty your foot to end the hand and score the round.</li>
+          </ul>
+        </article>
+
+        <article class="rule-card full">
+          <h3>💰 Scoring</h3>
+          <p><b>4–7:</b> 5 points · <b>8–K:</b> 10 · <b>A/2:</b> 20 · <b>Jokers:</b> 50</p>
+          <p><b>Penalty:</b> Black 3s left in hand/foot are −300. Red 3s are −500.</p>
+        </article>
+      </div>
+
+      <div class="rules-tip"><b>Tip:</b> Your first meld can combine multiple legal sets. Four Kings plus four Aces can open a 90-point hand because the total counts together.</div>
+    </section>
+  `);
 }
-function showSettings(){ show('setup'); }
 function showScores(){
   openModal(`<h2>Scores</h2><p><b>${state.teams[0]?.name || 'Your Team'}:</b> ${state.teams[0]?.score || 0}</p><p><b>${state.teams[1]?.name || 'Opponents'}:</b> ${state.teams[1]?.score || 0}</p><p>Scores appear after each completed hand.</p>`);
 }
@@ -411,6 +495,55 @@ function hint(){
   if(state.current!==0){ message('Wait for your turn.'); return; }
   if(state.phase==='draw'){ const chk=canTakePile(0); message(chk.ok ? 'You can take the discard pile if you want those cards.' : 'Best move: draw 2. ' + chk.reason); return; }
   const cards=liveCards(state.players[0]); const team=state.teams[0]; const candidate=bestRobotSet(cards,team); if(candidate){ message(`Hint: you can make a set with ${candidate.map(c=>c.rank+c.suit).join(', ')}.`); } else { message('Hint: add to existing melds if possible, then discard a 3 or a low card.'); }
+}
+
+
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+}
+function tone(freq=440, duration=.08, type='sine', gain=.08){
+  if(!state.audioOn) return;
+  try{
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    const vol = Math.max(0, Math.min(1, state.audioVolume ?? .35));
+    g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(gain * vol, audioCtx.currentTime + .015);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.connect(g).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration + .02);
+  }catch(e){}
+}
+function sound(name){
+  if(!state.audioOn) return;
+  if(name === 'click') tone(520,.045,'sine',.045);
+  if(name === 'draw') { tone(320,.06,'triangle',.05); setTimeout(()=>tone(370,.055,'triangle',.04),55); }
+  if(name === 'meld') { tone(520,.07,'sine',.045); setTimeout(()=>tone(660,.08,'sine',.045),70); }
+  if(name === 'discard') tone(240,.075,'triangle',.045);
+  if(name === 'error') tone(150,.1,'sawtooth',.035);
+  if(name === 'win') { tone(440,.1,'sine',.055); setTimeout(()=>tone(554,.12,'sine',.055),110); setTimeout(()=>tone(659,.16,'sine',.055),235); }
+}
+function setAudio(on){
+  state.audioOn = !!on;
+  try{ localStorage.setItem('hofAudioOn', state.audioOn ? '1':'0'); }catch(e){}
+}
+function setVolume(v){
+  state.audioVolume = Math.max(0, Math.min(1, Number(v)));
+  try{ localStorage.setItem('hofAudioVolume', String(state.audioVolume)); }catch(e){}
+}
+function loadAudioPrefs(){
+  try{
+    const on = localStorage.getItem('hofAudioOn');
+    const vol = localStorage.getItem('hofAudioVolume');
+    if(on !== null) state.audioOn = on === '1';
+    if(vol !== null && !Number.isNaN(Number(vol))) state.audioVolume = Number(vol);
+  }catch(e){}
 }
 
 function applyZoom(){
@@ -426,6 +559,7 @@ function zoomBy(delta){
 }
 
 function init(){
+  loadAudioPrefs();
   const playAiBtn = $('playAiBtn');
   const playHumanBtn = $('playHumanBtn');
   const playBtn = $('playBtn'); // backward compatibility only
