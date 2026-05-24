@@ -12,7 +12,7 @@ Built by David Fliesen / Cibola Studios.
 
 ## 🎮 Play Online
 
-👉 https://davidfliesen.github.io/hand-over-foot/
+👉 https://davidfliesen.github.io/handoverfoot/
 
 No installs. No accounts. No subscriptions.
 
@@ -219,7 +219,7 @@ index.html
 Recommended repository name:
 
 ```text
-hand-over-foot
+handoverfoot
 ```
 
 ---
