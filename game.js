@@ -263,10 +263,15 @@ function goOutClick(){
   finishHand(0);
 }
 function partnerApproves(){ const team=state.teams[0]; return team.melds.filter(m=>m.booked).length>=2 || liveCards(state.players[2]).length<8; }
+
+function aiDelay(min=650,max=1500){
+  return Math.floor(Math.random() * (max-min+1)) + min;
+}
+
 function nextTurn(){
   state.phase='draw'; state.pileIntent=false; state.selected.clear(); state.selectedMeld=null;
   for(let i=1;i<=4;i++){ const n=(state.current+i)%4; if(!state.players[n].out){ state.current=n; break; } }
-  render(); message(state.current===0 ? 'Your turn. Draw 2 or take the pile.' : `${state.players[state.current].name}'s turn. Draw 2 or take the pile.`); maybeRobotTurn();
+  render(); message(`${state.players[state.current].name}'s turn. Draw 2 or take the pile.`); maybeRobotTurn();
 }
 
 function showRoundWinner(playerIndex){
@@ -532,15 +537,59 @@ function tone(freq=440, duration=.08, type='sine', gain=.08){
     osc.stop(audioCtx.currentTime + duration + .02);
   }catch(e){}
 }
+
 function sound(name){
   if(!state.audioOn) return;
-  if(name === 'click') tone(520,.045,'sine',.045);
-  if(name === 'draw') { tone(320,.06,'triangle',.05); setTimeout(()=>tone(370,.055,'triangle',.04),55); }
-  if(name === 'meld') { tone(520,.07,'sine',.045); setTimeout(()=>tone(660,.08,'sine',.045),70); }
-  if(name === 'discard') tone(240,.075,'triangle',.045);
-  if(name === 'error') tone(150,.1,'sawtooth',.035);
-  if(name === 'win') { tone(440,.1,'sine',.055); setTimeout(()=>tone(554,.12,'sine',.055),110); setTimeout(()=>tone(659,.16,'sine',.055),235); }
+  try{
+    ensureAudio();
+    const now = audioCtx.currentTime;
+    const vol = Math.max(0, Math.min(1, state.audioVolume ?? .35));
+
+    const play = (freq, dur, type='triangle', gain=.03, delay=0) => {
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, now + delay);
+      g.gain.exponentialRampToValueAtTime(gain * vol, now + delay + .015);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + delay + dur);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + dur + .03);
+    };
+
+    if(name === 'click'){
+      play(700,.025,'sine',.018);
+    }
+
+    if(name === 'draw'){
+      play(180,.05,'triangle',.025);
+      play(240,.045,'triangle',.02,.045);
+    }
+
+    if(name === 'meld'){
+      play(392,.08,'sine',.025);
+      play(523,.11,'sine',.03,.07);
+      play(659,.13,'sine',.03,.14);
+    }
+
+    if(name === 'discard'){
+      play(160,.045,'triangle',.022);
+    }
+
+    if(name === 'error'){
+      play(140,.08,'sawtooth',.018);
+    }
+
+    if(name === 'win'){
+      play(392,.12,'sine',.03);
+      play(523,.16,'sine',.035,.12);
+      play(659,.22,'sine',.04,.26);
+      play(784,.28,'sine',.045,.46);
+    }
+  }catch(e){}
 }
+
 function setAudio(on){
   state.audioOn = !!on;
   try{ localStorage.setItem('hofAudioOn', state.audioOn ? '1':'0'); }catch(e){}
