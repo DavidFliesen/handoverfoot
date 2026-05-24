@@ -1,5 +1,9 @@
 # Hand Over Foot 🃏
 
+<p align="center">
+  <img src="assets/splash-reference.png" alt="Hand Over Foot opening screen" width="100%">
+</p>
+
 A polished browser-based **Hand and Foot Canasta** experience inspired by classic virtual-world tabletop games.
 
 Built by David Fliesen / Cibola Studios.
@@ -10,28 +14,23 @@ Built by David Fliesen / Cibola Studios.
 
 👉 https://davidfliesen.github.io/hand-over-foot/
 
-No installs. No accounts. No subscriptions.  
-Playable directly in your browser on:
+No installs. No accounts. No subscriptions.
 
-- iPad / iPhone
-- Android tablets & phones
-- Mac
-- Windows
-- Linux
-- ChromeOS
+Playable directly in your browser on iPad, iPhone, Android, Mac, Windows, Linux, and ChromeOS.
 
 ---
 
-# ✨ Features
+## ✨ Features
 
 - Beautiful casino-style green felt interface
 - Classic Hand and Foot gameplay
 - 4-player team format
 - AI teammates and opponents
-- Multiple AI difficulty levels
+- Three AI difficulty levels
+- AI players pause between actions so turns feel more natural
 - Responsive tablet-friendly layout
 - Zoom controls for large hands
-- Red & black book scoring
+- Red and black book scoring
 - Hand + Foot gameplay system
 - Round winner splash screens
 - Subtle audio effects with volume controls
@@ -39,15 +38,13 @@ Playable directly in your browser on:
 
 ---
 
-# 🃏 Game Rules Overview
+## 🃏 Game Rules Overview
 
-## The Goal
+### Goal
 
 Work with your partner to create melds and books while scoring more points than the opposing team over four hands.
 
----
-
-## Starting the Game
+### Starting the Game
 
 Each player receives:
 
@@ -56,12 +53,10 @@ Each player receives:
 
 You must finish your hand before picking up your foot.
 
----
-
-## Opening Meld Requirements
+### Opening Meld Requirements
 
 | Hand | Minimum Meld |
-|------|------|
+|---|---:|
 | 1 | 50 |
 | 2 | 90 |
 | 3 | 120 |
@@ -73,16 +68,14 @@ Example:
 
 - 4 Kings = 40
 - 4 Aces = 60
-- Total = 100 → valid for Hand 2
+- Total = 100, which is valid for Hand 2
 
----
-
-## Turn Flow
+### Turn Flow
 
 On your turn:
 
 1. Draw 2 cards from the stock pile  
-OR
+   **or**
 2. Take the top 7 cards from the discard pile
 
 To take the discard pile:
@@ -98,14 +91,14 @@ Then:
 
 ---
 
-# 📚 Sets & Books
+## 📚 Sets & Books
 
-## Natural (Red) Books
+### Natural / Red Books
 
 - No wild cards
 - Worth 500 points
 
-## Wild (Black) Books
+### Wild / Black Books
 
 - Contain wild cards
 - Worth 300 points
@@ -119,10 +112,10 @@ Wild cards:
 
 ---
 
-# 💰 Card Values
+## 💰 Card Values
 
 | Cards | Points |
-|------|------|
+|---|---:|
 | 4–7 | 5 |
 | 8–K | 10 |
 | Aces & 2s | 20 |
@@ -135,7 +128,7 @@ Penalty cards:
 
 ---
 
-# 🏆 Going Out
+## 🏆 Going Out
 
 You may go out after:
 
@@ -152,11 +145,12 @@ Highest score after 4 hands wins.
 
 ---
 
-# 🔊 Audio
+## 🔊 Audio
 
-Hand Over Foot includes subtle browser-generated audio effects:
+Hand Over Foot includes subtle browser-generated audio effects for:
 
 - Card draws
+- Card movement
 - Melds
 - Discards
 - Victory sounds
@@ -165,7 +159,23 @@ Audio can be adjusted or disabled in Settings.
 
 ---
 
-# 🛠 Technology
+## 🤖 AI Timing
+
+AI turns are intentionally paced so the game feels less instant and more like playing at a table.
+
+Approximate robot pacing:
+
+| Difficulty | Timing Feel |
+|---|---|
+| Easy | Slower, more casual |
+| Club | Balanced |
+| Shark | Faster, more decisive |
+
+AI players take between about 2 and 5 seconds depending on move difficulty and selected AI level.
+
+---
+
+## 🛠 Technology
 
 Built with:
 
@@ -178,14 +188,16 @@ No frameworks. No backend servers. No tracking.
 
 ---
 
-# 📂 Repository Structure
+## 📂 Repository Structure
 
 ```text
 /
 ├── index.html
 ├── styles.css
 ├── game.js
+├── README.md
 ├── assets/
+│   ├── splash-reference.png
 │   ├── hof-logo.png
 │   ├── hand-badge.png
 │   ├── foot-badge.png
@@ -194,7 +206,7 @@ No frameworks. No backend servers. No tracking.
 
 ---
 
-# 🚀 GitHub Pages Deployment
+## 🚀 GitHub Pages Deployment
 
 This project is designed for GitHub Pages hosting.
 
@@ -212,29 +224,10 @@ hand-over-foot
 
 ---
 
-# 🎨 Design Notes
-
-The visual style was inspired by:
-
-- Casino tabletop games
-- Virtual world card tables
-- Green felt poker layouts
-- Classic gold-trimmed game interfaces
-
-The interface was optimized specifically for touch devices and tablets.
-
----
-
-# 👤 Creator
+## 👤 Creator
 
 Created by David Fliesen  
 Cibola Studios
 
 Portfolio:  
 https://davidfliesen.github.io/
-
----
-
-# 📜 License
-
-Personal and educational use permitted.

@@ -264,8 +264,14 @@ function goOutClick(){
 }
 function partnerApproves(){ const team=state.teams[0]; return team.melds.filter(m=>m.booked).length>=2 || liveCards(state.players[2]).length<8; }
 
-function aiDelay(min=1800,max=4200){
+function aiDelay(min=2000,max=5000){
   return Math.floor(Math.random() * (max-min+1)) + min;
+}
+function aiDelayByDifficulty(){
+  const d = state.difficulty || 'club';
+  if(d === 'easy') return aiDelay(3800,5000);
+  if(d === 'shark') return aiDelay(2000,3200);
+  return aiDelay(2800,4200);
 }
 
 function nextTurn(){
