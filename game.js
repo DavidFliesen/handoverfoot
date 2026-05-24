@@ -37,6 +37,11 @@ function colorClass(c){ return isWild(c)?'wild':isRed(c)?'red':'black'; }
 function liveCards(p){ return p.inFoot ? p.foot : p.hand; }
 function currentPlayer(){ return state.players[state.current]; }
 function currentTeam(){ return state.teams[teamOf(state.current)]; }
+function manualSortHand(){
+  sortCards(liveCards(currentPlayer()));
+  render();
+}
+
 function sortCards(cards){ cards.sort((a,b)=> rankOrder.indexOf(a.rank)-rankOrder.indexOf(b.rank) || suits.indexOf(a.suit)-suits.indexOf(b.suit)); }
 function show(view){ ['home','setup','game'].forEach(v=>$(v).classList.toggle('hidden', v!==view)); state.view=view; }
 function message(txt){ $('message').textContent = txt; }
@@ -88,7 +93,7 @@ function drawTwo(){
   sound('draw');
   drawFor(currentPlayer(),2); state.phase='play'; state.pileIntent=false; render(); message('You drew 2. Make sets, add to books, then discard.');
 }
-function drawFor(p,n){ for(let i=0;i<n;i++){ if(!state.stock.length) recycleDiscard(); if(state.stock.length) liveCards(p).push(state.stock.pop()); } sortCards(liveCards(p)); cardMoveSound(n); }
+function drawFor(p,n){ for(let i=0;i<n;i++){ if(!state.stock.length) recycleDiscard(); if(state.stock.length) liveCards(p).push(state.stock.pop()); } cardMoveSound(n); }
 function recycleDiscard(){ if(state.discard.length<=1) return; const top=state.discard.pop(); state.stock=shuffle(state.discard.splice(0)); state.discard=[top]; }
 function topDiscard(){ return state.discard[state.discard.length-1]; }
 function canTakePile(playerIndex){
@@ -107,7 +112,7 @@ function takePile(){
   sound('draw');
   const chk=canTakePile(0); if(!chk.ok){ message(chk.reason); return; }
   const take = state.discard.splice(Math.max(0,state.discard.length-7));
-  liveCards(currentPlayer()).push(...take); sortCards(liveCards(currentPlayer())); cardMoveSound(take.length);
+  liveCards(currentPlayer()).push(...take); cardMoveSound(take.length);
   state.phase='play'; render(); message(`You took ${take.length} cards from the discard pile. Use the top card in a new set.`);
 }
 function validateSet(cards, team){
