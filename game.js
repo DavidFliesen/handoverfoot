@@ -11,7 +11,7 @@ const bookBonus = { red:500, black:300 };
 const penalty3 = { red:-500, black:-300 };
 let UID=0;
 const state = {
-  view:'home', difficulty:'club', askPartner:true, requireBooks:false,
+  view:'home', mode:'ai', difficulty:'club', askPartner:true, requireBooks:false,
   handNo:1, current:0, phase:'draw', selected:new Set(), selectedMeld:null,
   stock:[], discard:[], players:[], teams:[], gameEnded:false, handEnded:false, pileIntent:false
 };
@@ -41,7 +41,26 @@ function sortCards(cards){ cards.sort((a,b)=> rankOrder.indexOf(a.rank)-rankOrde
 function show(view){ ['home','setup','game'].forEach(v=>$(v).classList.toggle('hidden', v!==view)); state.view=view; }
 function message(txt){ $('message').textContent = txt; }
 function selectedCards(){ const p=state.players[0]; return liveCards(p).filter(c=>state.selected.has(c.id)); }
-function startSetup(){ show('setup'); }
+function startSetup(mode='ai'){
+  state.mode = mode;
+  const title = $('setupTitle');
+  const intro = $('setupIntro');
+  const multi = $('multiplayerPanel');
+  const invite = $('inviteLink');
+
+  if(mode === 'pvp'){
+    if(title) title.textContent = 'Player vs Player';
+    if(intro) intro.textContent = 'Invite another player, or play a local two-player table on this device.';
+    if(multi) multi.classList.remove('hidden');
+    if(invite) invite.value = location.origin + location.pathname + '?mode=pvp';
+  } else {
+    if(title) title.textContent = 'Player vs AI';
+    if(intro) intro.textContent = 'Choose a robot difficulty level, then deal the cards.';
+    if(multi) multi.classList.add('hidden');
+  }
+
+  show('setup');
+}
 function startGame(){
   state.difficulty = document.querySelector('input[name="ai"]:checked')?.value || 'club';
   state.askPartner = $('askPartner').checked;
@@ -316,10 +335,52 @@ function hint(){
   const cards=liveCards(state.players[0]); const team=state.teams[0]; const candidate=bestRobotSet(cards,team); if(candidate){ message(`Hint: you can make a set with ${candidate.map(c=>c.rank+c.suit).join(', ')}.`); } else { message('Hint: add to existing melds if possible, then discard a 3 or a low card.'); }
 }
 function init(){
-  $('playBtn').onclick=startSetup; $('rulesBtn').onclick=showRules; $('settingsBtn').onclick=showSettings; $('scoresBtn').onclick=showScores; $('dealBtn').onclick=startGame;
+  const playAiBtn = $('playAiBtn');
+  const playHumanBtn = $('playHumanBtn');
+  const playBtn = $('playBtn'); // backward compatibility only
+  const settingsBtn = $('settingsBtn'); // backward compatibility only
+  const rulesBtn = $('rulesBtn');
+  const scoresBtn = $('scoresBtn');
+  const dealBtn = $('dealBtn');
+  const copyInviteBtn = $('copyInviteBtn');
+  const inviteLink = $('inviteLink');
+
+  if(playAiBtn) playAiBtn.onclick = () => startSetup('ai');
+  if(playHumanBtn) playHumanBtn.onclick = () => startSetup('pvp');
+  if(playBtn) playBtn.onclick = () => startSetup('ai');
+  if(settingsBtn) settingsBtn.onclick = showSettings;
+  if(rulesBtn) rulesBtn.onclick = showRules;
+  if(scoresBtn) scoresBtn.onclick = showScores;
+  if(dealBtn) dealBtn.onclick = startGame;
+
+  if(copyInviteBtn) copyInviteBtn.onclick = async () => {
+    const link = inviteLink?.value || (location.origin + location.pathname + '?mode=pvp');
+    try {
+      await navigator.clipboard.writeText(link);
+      copyInviteBtn.textContent = 'Copied!';
+      setTimeout(() => copyInviteBtn.textContent = 'Copy Link', 1200);
+    } catch {
+      if(inviteLink){
+        inviteLink.focus();
+        inviteLink.select();
+        document.execCommand('copy');
+      }
+    }
+  };
+
   document.querySelectorAll('[data-nav="home"]').forEach(b=>b.onclick=()=>show('home'));
   document.querySelectorAll('input[name="ai"]').forEach(i=>i.onchange=()=>document.querySelectorAll('.choice').forEach(l=>l.classList.toggle('checked', l.querySelector('input').checked)));
-  $('drawBtn').onclick=drawTwo; $('discardPileBtn').onclick=takePile; $('setBtn').onclick=makeSet; $('addBtn').onclick=addToMeld; $('discardBtn').onclick=discardSelected; $('goOutBtn').onclick=goOutClick; $('sortBtn').onclick=sortHuman; $('clearBtn').onclick=clearSelection; $('nextHandBtn').onclick=nextHand; $('closeModal').onclick=()=>$('modal').close();
+
+  if($('drawBtn')) $('drawBtn').onclick=drawTwo;
+  if($('discardPileBtn')) $('discardPileBtn').onclick=takePile;
+  if($('setBtn')) $('setBtn').onclick=makeSet;
+  if($('addBtn')) $('addBtn').onclick=addToMeld;
+  if($('discardBtn')) $('discardBtn').onclick=discardSelected;
+  if($('goOutBtn')) $('goOutBtn').onclick=goOutClick;
+  if($('sortBtn')) $('sortBtn').onclick=sortHuman;
+  if($('clearBtn')) $('clearBtn').onclick=clearSelection;
+  if($('nextHandBtn')) $('nextHandBtn').onclick=nextHand;
+  if($('closeModal')) $('closeModal').onclick=()=>$('modal').close();
 }
 document.addEventListener('DOMContentLoaded', init);
 })();
