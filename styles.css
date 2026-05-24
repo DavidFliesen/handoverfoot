@@ -283,3 +283,58 @@
   .rules-hero{align-items:flex-start}
   .winner-score{grid-template-columns:1fr}
 }
+
+
+/* v3.4.5 meld panel scrollbar/row-height fix */
+.team-panel,
+.team-panel.enemy,
+.team-panel.friendly{
+  overflow: visible !important;
+  min-height: 260px;
+}
+
+.meld-zone{
+  overflow: visible !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  max-height: none !important;
+  height: auto !important;
+  min-height: 128px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 4px 4px 18px;
+}
+
+.meld{
+  flex: 0 0 auto;
+  margin-bottom: 12px;
+}
+
+.team-board{
+  align-items: stretch;
+}
+
+/* Hide any browser scrollbar accidentally attached inside meld areas */
+.team-panel::-webkit-scrollbar,
+.meld-zone::-webkit-scrollbar{
+  display: none;
+}
+.team-panel,
+.meld-zone{
+  scrollbar-width: none;
+}
+
+/* Tablet-friendly minimum space so labels and card bottoms do not get clipped */
+@media(max-width:900px){
+  .team-panel{
+    min-height: 220px;
+  }
+  .meld-zone{
+    min-height: 118px;
+    gap: 12px;
+    padding-bottom: 22px;
+  }
+}
