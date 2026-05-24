@@ -338,3 +338,38 @@
     padding-bottom: 22px;
   }
 }
+
+
+/* v3.4.6 PVP invite/share buttons */
+.invite-actions{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:12px;
+}
+.invite-actions button,
+.invite-actions a{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  border-radius:12px;
+  border:2px solid rgba(213,169,54,.75);
+  background:linear-gradient(#105f38,#063a22);
+  color:#fff;
+  font-weight:900;
+  text-transform:uppercase;
+  text-decoration:none;
+  letter-spacing:.04em;
+}
+.invite-actions a:nth-child(2){
+  background:linear-gradient(#277cb9,#064b83);
+}
+.invite-actions a:nth-child(3){
+  background:linear-gradient(#28a334,#056320);
+}
+@media(max-width:560px){
+  .invite-actions{
+    grid-template-columns:1fr;
+  }
+}
