@@ -266,7 +266,7 @@ function partnerApproves(){ const team=state.teams[0]; return team.melds.filter(
 function nextTurn(){
   state.phase='draw'; state.pileIntent=false; state.selected.clear(); state.selectedMeld=null;
   for(let i=1;i<=4;i++){ const n=(state.current+i)%4; if(!state.players[n].out){ state.current=n; break; } }
-  render(); message(`${state.players[state.current].name}'s turn. Draw 2 or take the pile.`); maybeRobotTurn();
+  render(); message(state.current===0 ? 'Your turn. Draw 2 or take the pile.' : `${state.players[state.current].name}'s turn. Draw 2 or take the pile.`); maybeRobotTurn();
 }
 
 function showRoundWinner(playerIndex){
@@ -423,6 +423,18 @@ function bindClicks(){
 }
 function sortHuman(){ sortCards(liveCards(state.players[0])); render(); }
 function clearSelection(){ state.selected.clear(); state.selectedMeld=null; render(); }
+function showModal(html){
+  const modal = $('modal');
+  const body = $('modalBody');
+  if(!modal || !body) return;
+  body.innerHTML = html;
+  try{
+    if(modal.open) modal.close();
+    modal.showModal();
+  }catch(e){
+    modal.setAttribute('open','');
+  }
+}
 function showRules(){
   sound('click');
   showModal(`
@@ -560,19 +572,20 @@ function zoomBy(delta){
 
 function init(){
   loadAudioPrefs();
+
   const playAiBtn = $('playAiBtn');
   const playHumanBtn = $('playHumanBtn');
-  const playBtn = $('playBtn'); // backward compatibility only
-  const settingsBtn = $('settingsBtn'); // backward compatibility only
+  const playBtn = $('playBtn');
+  const settingsBtn = $('settingsBtn');
   const rulesBtn = $('rulesBtn');
   const scoresBtn = $('scoresBtn');
   const dealBtn = $('dealBtn');
   const copyInviteBtn = $('copyInviteBtn');
   const inviteLink = $('inviteLink');
 
-  if(playAiBtn) playAiBtn.onclick = () => startSetup('ai');
-  if(playHumanBtn) playHumanBtn.onclick = () => startSetup('pvp');
-  if(playBtn) playBtn.onclick = () => startSetup('ai');
+  if(playAiBtn) playAiBtn.onclick = () => { sound('click'); startSetup('ai'); };
+  if(playHumanBtn) playHumanBtn.onclick = () => { sound('click'); startSetup('pvp'); };
+  if(playBtn) playBtn.onclick = () => { sound('click'); startSetup('ai'); };
   if(settingsBtn) settingsBtn.onclick = showSettings;
   if(rulesBtn) rulesBtn.onclick = showRules;
   if(scoresBtn) scoresBtn.onclick = showScores;
@@ -608,7 +621,11 @@ function init(){
   if($('zoomOutBtn')) $('zoomOutBtn').onclick=()=>zoomBy(-.1);
   if($('zoomInBtn')) $('zoomInBtn').onclick=()=>zoomBy(.1);
   applyZoom();
+
   if($('closeModal')) $('closeModal').onclick=()=>$('modal').close();
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && $('modal')?.open) $('modal').close();
+  });
 }
 document.addEventListener('DOMContentLoaded', init);
 })();
