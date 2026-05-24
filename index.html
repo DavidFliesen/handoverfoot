@@ -3,105 +3,110 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#062f1d" />
+  <meta name="theme-color" content="#06331e" />
   <title>Hand Over Foot</title>
-  <meta name="description" content="A polished browser-based Hand and Foot style card game by Cibola Studios." />
+  <meta name="description" content="Hand Over Foot, a polished browser card game inspired by Hand and Foot Canasta." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bree+Serif&family=Inter:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@1,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2.0.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:ital,wght@1,800&family=Bree+Serif&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=3.0.0" />
 </head>
 <body>
-  <div id="app" class="app-shell">
-    <section id="homeScreen" class="screen home-screen" aria-label="Home screen">
-      <div class="hero-bg" role="img" aria-label="Hand Over Foot logo with playing cards on green felt"></div>
-      <div class="home-actions" aria-label="Main menu">
-        <button class="menu-button play" id="soloBtn"><span class="button-icon">♟</span><span>Play Solo</span></button>
-        <button class="menu-button blue" id="passBtn"><span class="button-icon">👥</span><span>Pass & Play</span></button>
-        <button class="menu-button purple" id="rulesBtn"><span class="button-icon">📖</span><span>Rules</span></button>
-        <button class="menu-button gold" id="settingsBtn"><span class="button-icon">⚙</span><span>Settings</span></button>
-      </div>
-      <div class="feature-strip" aria-label="Game highlights">
-        <article><div class="feature-icon">🃏</div><strong>Classic Melds</strong><span>Build sets and books.</span></article>
-        <article><div class="feature-icon">🤝</div><strong>Team Style</strong><span>Solo or pass & play.</span></article>
-        <article><div class="feature-icon">✨</div><strong>Wild Cards</strong><span>2s and Jokers.</span></article>
-        <article><div class="feature-icon">🏆</div><strong>Score Big</strong><span>Clean, dirty, and wild books.</span></article>
-      </div>
-      <p class="credit">Created by David Fliesen / Cibola Studios</p>
-    </section>
-
-    <section id="setupScreen" class="screen panel-screen hidden" aria-label="Game setup">
-      <div class="glass-panel setup-panel">
-        <button class="home-link" data-view="home">← Home</button>
-        <h1>Choose Your Table</h1>
-        <p>Classic-inspired Hand and Foot rules, tuned for a clean browser experience.</p>
-        <div class="setup-grid">
-          <label class="choice-card"><input type="radio" name="difficulty" value="easy"><span>😊</span><strong>Easy</strong><small>Learning pace</small></label>
-          <label class="choice-card selected"><input type="radio" name="difficulty" value="club" checked><span>🃏</span><strong>Club</strong><small>Balanced AI</small></label>
-          <label class="choice-card"><input type="radio" name="difficulty" value="shark"><span>🦈</span><strong>Shark</strong><small>Aggressive AI</small></label>
+  <div id="app">
+    <section id="home" class="view home-view">
+      <img class="side-badge hand-badge" src="assets/hand-badge.png" alt="Hand badge" />
+      <img class="side-badge foot-badge" src="assets/foot-badge.png" alt="Foot badge" />
+      <main class="home-stack">
+        <img class="hero-logo" src="assets/hero-logo.png" alt="Hand Over Foot logo" />
+        <div class="home-buttons" aria-label="Main menu">
+          <button class="home-btn green" id="playBtn"><span>👥</span>Play Table</button>
+          <button class="home-btn blue" id="rulesBtn"><span>📘</span>Rules</button>
+          <button class="home-btn purple" id="scoresBtn"><span>🏆</span>Scores</button>
+          <button class="home-btn gold" id="settingsBtn"><span>⚙️</span>Settings</button>
         </div>
-        <div class="toggle-row"><label><input id="strictRules" type="checkbox" checked> Require one clean and one dirty book to go out</label></div>
-        <div class="toggle-row"><label><input id="wildBooks" type="checkbox" checked> Allow seven-card wild books</label></div>
-        <button class="primary-cta" id="startGameBtn">Deal Cards</button>
+        <p class="home-credit">Created by David Fliesen / Cibola Studios</p>
+      </main>
+    </section>
+
+    <section id="setup" class="view panel-view hidden">
+      <div class="glass-panel narrow">
+        <button class="back-btn" data-nav="home">← Home</button>
+        <h1>Choose Your Table</h1>
+        <p>Four-player partner play: you and your robot partner versus two robot opponents.</p>
+        <div class="choice-grid">
+          <label class="choice"><input type="radio" name="ai" value="easy"><span>😊</span><b>Easy</b><small>Casual robots</small></label>
+          <label class="choice checked"><input type="radio" name="ai" value="club" checked><span>🃏</span><b>Club</b><small>Balanced robots</small></label>
+          <label class="choice"><input type="radio" name="ai" value="shark"><span>🦈</span><b>Shark</b><small>Aggressive robots</small></label>
+        </div>
+        <label class="option-line"><input type="checkbox" id="askPartner" checked> Ask partner before going out</label>
+        <label class="option-line"><input type="checkbox" id="requireBooks"> Require one red and one black book to go out</label>
+        <button class="primary" id="dealBtn">Deal Cards</button>
       </div>
     </section>
 
-    <main id="gameScreen" class="game-screen hidden" aria-label="Game table">
-      <header class="topbar">
-        <button class="brand-button" data-view="home"><span>HAND</span><em>over</em><span>FOOT</span></button>
-        <div class="round-pill" id="roundInfo">Round 1 · Open 50</div>
-        <div class="scoreboard" id="scoreboard"></div>
+    <section id="game" class="view game-view hidden">
+      <header class="game-top">
+        <button class="mini-logo" data-nav="home"><b>HAND</b><i>over</i><b>FOOT</b></button>
+        <div id="roundBadge" class="round-badge">Hand 1 · Meld 50</div>
+        <div id="scoreBadges" class="score-badges"></div>
       </header>
 
-      <section class="table-area">
-        <aside class="player-zone opponent" id="opponentZone">
-          <div class="zone-header"><strong id="opponentName">Opponent</strong><span id="opponentStatus">Hand</span><span id="opponentCount">0 cards</span></div>
-          <div class="opponent-cards" id="opponentCards"></div>
-          <div class="meld-rack" id="opponentMelds"></div>
-        </aside>
+      <main class="table">
+        <section class="opponents" id="opponentStrip"></section>
 
-        <section class="center-table" aria-label="Stock, discard, actions">
-          <div class="pile-group">
-            <button class="card-pile stock" id="drawBtn" aria-label="Draw two cards"><span>◆</span><small id="stockCount">0</small></button>
-            <label>Stock</label>
-          </div>
-          <div class="pile-group">
-            <button class="card-pile discard" id="takePileBtn" aria-label="Take discard pile"></button>
-            <label>Discard <small id="discardCount"></small></label>
-          </div>
-          <div class="turn-card">
-            <strong id="turnTitle">Your Turn</strong>
-            <p id="message">Draw two cards or take the pile.</p>
-            <div class="action-grid">
-              <button id="newMeldBtn" class="table-action">New Meld</button>
-              <button id="addMeldBtn" class="table-action">Add to Meld</button>
-              <button id="discardBtn" class="table-action danger">Discard</button>
-              <button id="goOutBtn" class="table-action gold">Go Out</button>
+        <section class="team-board">
+          <article class="team-panel enemy">
+            <h2>Opponents' Melds</h2>
+            <div id="team1Melds" class="meld-zone"></div>
+          </article>
+
+          <section class="center-piles">
+            <div class="pile-wrap">
+              <button id="drawBtn" class="pile stock-pile"><span>◆</span><small id="stockCount">0</small></button>
+              <em>Draw 2</em>
             </div>
+            <div class="pile-wrap">
+              <button id="discardPileBtn" class="pile discard-pile"></button>
+              <em>Take 7</em>
+            </div>
+            <div class="turn-box">
+              <strong id="turnName">Your Turn</strong>
+              <p id="message">Draw two cards or take the discard pile.</p>
+            </div>
+          </section>
+
+          <article class="team-panel friendly">
+            <h2>Your Team Melds</h2>
+            <div id="team0Melds" class="meld-zone"></div>
+          </article>
+        </section>
+
+        <section class="player-area">
+          <div class="player-head">
+            <div><strong id="playerLabel">You</strong><span id="handMode">Hand</span></div>
+            <div class="cards-left" id="cardsLeft">0 cards</div>
           </div>
+          <div id="humanCards" class="hand-row"></div>
         </section>
+      </main>
 
-        <section class="player-zone human active" id="humanZone">
-          <div class="zone-header"><strong id="humanName">You</strong><span id="humanStatus">Hand</span><span id="humanCount">0 cards</span></div>
-          <div class="meld-rack" id="humanMelds"></div>
-          <div class="hand-row" id="humanHand" aria-label="Your cards"></div>
-        </section>
-      </section>
-
-      <footer class="bottombar">
+      <footer class="game-actions">
+        <button id="setBtn">Set</button>
+        <button id="addBtn">Add</button>
+        <button id="discardBtn" class="danger">Discard</button>
+        <button id="goOutBtn" class="gold">Go Out</button>
         <button id="sortBtn">Sort</button>
-        <button id="hintBtn">Hint</button>
-        <button id="undoSelectionBtn">Clear Selection</button>
-        <button id="newRoundBtn" class="hidden">Next Round</button>
+        <button id="clearBtn">Clear</button>
+        <button id="nextHandBtn" class="hidden">Next Hand</button>
       </footer>
-    </main>
+    </section>
   </div>
 
-  <dialog id="modal" class="modal-card">
-    <button id="closeModal" class="close-modal">×</button>
+  <dialog id="modal" class="modal">
+    <button id="closeModal" class="modal-close">×</button>
     <div id="modalBody"></div>
   </dialog>
 
-  <script src="game.js?v=2.0.0"></script>
+  <script src="game.js?v=3.0.0"></script>
 </body>
 </html>
