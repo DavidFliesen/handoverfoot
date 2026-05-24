@@ -11,7 +11,7 @@ const bookBonus = { red:500, black:300 };
 const penalty3 = { red:-500, black:-300 };
 let UID=0;
 const state = {
-  view:'home', mode:'ai', difficulty:'club', askPartner:true, requireBooks:false,
+  view:'home', mode:'ai', zoom:1, difficulty:'club', askPartner:true, requireBooks:false,
   handNo:1, current:0, phase:'draw', selected:new Set(), selectedMeld:null,
   stock:[], discard:[], players:[], teams:[], gameEnded:false, handEnded:false, pileIntent:false
 };
@@ -123,13 +123,91 @@ function validateSet(cards, team){
   if(!team.opened && meldPoints < openMinimums[state.handNo-1]) return {ok:false, reason:`Your team needs ${openMinimums[state.handNo-1]} points to open.`};
   return {ok:true, rank, wilds:wilds.length, meldPoints};
 }
+
+function analyzeSelectedSets(cards, team){
+  if(!cards.length) return {ok:false, reason:'Select cards to meld.'};
+  if(cards.some(isThree)) return {ok:false, reason:'3s cannot be melded.'};
+
+  const naturalGroups = new Map();
+  const wilds = [];
+  for(const c of cards){
+    if(isWild(c)) wilds.push(c);
+    else {
+      if(!meldRanks.includes(c.rank)) return {ok:false, reason:'Sets must be 4 through Ace.'};
+      if(!naturalGroups.has(c.rank)) naturalGroups.set(c.rank, []);
+      naturalGroups.get(c.rank).push(c);
+    }
+  }
+
+  if(!naturalGroups.size) return {ok:false, reason:'You may not make a wild-card set.'};
+
+  const sets = [];
+  const ranks = [...naturalGroups.keys()].sort((a,b)=>rankOrder.indexOf(a)-rankOrder.indexOf(b));
+  let remainingWilds = [...wilds];
+
+  for(const rank of ranks){
+    if(team.melds.some(m=>m.rank===rank)) return {ok:false, reason:`Your team already has a set or book of ${rank}s.`};
+    const naturals = naturalGroups.get(rank);
+    let setWilds = [];
+    const needed = Math.max(0, 3 - naturals.length);
+
+    if(needed > 0){
+      const maxWilds = naturals.length;
+      if(needed > maxWilds) return {ok:false, reason:`${rank}s need more natural cards before wilds can be used.`};
+      setWilds = remainingWilds.splice(0, needed);
+      if(setWilds.length < needed) return {ok:false, reason:`${rank}s need at least 3 cards to make a set.`};
+    }
+
+    const setCards = [...naturals, ...setWilds];
+    if(setCards.length < 3) return {ok:false, reason:`${rank}s need at least 3 cards to make a set.`};
+    if(setWilds.length > naturals.length) return {ok:false, reason:'A black set must have at least as many natural cards as wild cards.'};
+    sets.push({rank, cards:setCards, wilds:setWilds.length});
+  }
+
+  if(remainingWilds.length){
+    if(sets.length !== 1) return {ok:false, reason:'Extra wilds can only be added when one new set is selected.'};
+    const s = sets[0];
+    const naturalCount = s.cards.length - s.wilds;
+    const maxExtraWilds = Math.max(0, naturalCount - s.wilds);
+    if(remainingWilds.length > maxExtraWilds) return {ok:false, reason:'Too many wilds. Natural cards must be at least wild cards.'};
+    s.cards.push(...remainingWilds);
+    s.wilds += remainingWilds.length;
+  }
+
+  const meldPoints = sets.reduce((sum,set)=>sum + set.cards.reduce((s,c)=>s+points(c),0), 0);
+  if(!team.opened && meldPoints < openMinimums[state.handNo-1]){
+    return {ok:false, reason:`Your team needs ${openMinimums[state.handNo-1]} points to open. Selected cards total ${meldPoints}.`};
+  }
+
+  return {ok:true, sets, meldPoints};
+}
+
 function makeSet(){
   if(state.current!==0 || state.phase!=='play') return;
-  const cards=selectedCards(); const team=currentTeam(); const v=validateSet(cards,team);
+  const cards=selectedCards();
+  const team=currentTeam();
+
+  const v=analyzeSelectedSets(cards, team);
   if(!v.ok){ message(v.reason); return; }
-  removeCards(currentPlayer(),cards);
-  team.melds.push({ rank:v.rank, cards:[...cards], black:v.wilds>0, booked:false });
-  team.opened=true; state.selected.clear(); checkFoot(currentPlayer()); render(); message(`Set made: ${v.rank}s for ${v.meldPoints} points.`); checkHumanEmpty();
+
+  for(const set of v.sets){
+    removeCards(currentPlayer(), set.cards);
+    team.melds.push({
+      rank:set.rank,
+      cards:[...set.cards],
+      black:set.wilds>0,
+      booked:set.cards.length>=7
+    });
+  }
+
+  team.opened=true;
+  state.selected.clear();
+  checkFoot(currentPlayer());
+  render();
+
+  const label = v.sets.map(s => `${s.rank}s`).join(', ');
+  message(`Melded ${label} for ${v.meldPoints} points.`);
+  checkHumanEmpty();
 }
 function removeCards(p,cards){ const ids=new Set(cards.map(c=>c.id)); p.hand=p.hand.filter(c=>!ids.has(c.id)); p.foot=p.foot.filter(c=>!ids.has(c.id)); }
 function canAddToMeld(cards, meld){
@@ -334,6 +412,19 @@ function hint(){
   if(state.phase==='draw'){ const chk=canTakePile(0); message(chk.ok ? 'You can take the discard pile if you want those cards.' : 'Best move: draw 2. ' + chk.reason); return; }
   const cards=liveCards(state.players[0]); const team=state.teams[0]; const candidate=bestRobotSet(cards,team); if(candidate){ message(`Hint: you can make a set with ${candidate.map(c=>c.rank+c.suit).join(', ')}.`); } else { message('Hint: add to existing melds if possible, then discard a 3 or a low card.'); }
 }
+
+function applyZoom(){
+  const clamped = Math.max(.7, Math.min(1.45, state.zoom || 1));
+  state.zoom = clamped;
+  document.documentElement.style.setProperty('--zoom', clamped.toFixed(2));
+  const zl = $('zoomLevel');
+  if(zl) zl.textContent = Math.round(clamped*100) + '%';
+}
+function zoomBy(delta){
+  state.zoom = Math.max(.7, Math.min(1.45, (state.zoom || 1) + delta));
+  applyZoom();
+}
+
 function init(){
   const playAiBtn = $('playAiBtn');
   const playHumanBtn = $('playHumanBtn');
@@ -380,6 +471,9 @@ function init(){
   if($('sortBtn')) $('sortBtn').onclick=sortHuman;
   if($('clearBtn')) $('clearBtn').onclick=clearSelection;
   if($('nextHandBtn')) $('nextHandBtn').onclick=nextHand;
+  if($('zoomOutBtn')) $('zoomOutBtn').onclick=()=>zoomBy(-.1);
+  if($('zoomInBtn')) $('zoomInBtn').onclick=()=>zoomBy(.1);
+  applyZoom();
   if($('closeModal')) $('closeModal').onclick=()=>$('modal').close();
 }
 document.addEventListener('DOMContentLoaded', init);

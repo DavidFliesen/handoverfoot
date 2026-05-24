@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:ital,wght@1,800&family=Bree+Serif&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3.1.2" />
+  <link rel="stylesheet" href="styles.css?v=3.2.0" />
 </head>
 <body>
   <div id="app">
@@ -17,7 +17,7 @@
       <img class="side-badge hand-badge" src="assets/hand-badge.png" alt="Hand badge" />
       <img class="side-badge foot-badge" src="assets/foot-badge.png" alt="Foot badge" />
       <main class="home-stack">
-        <img class="hero-logo" src="assets/hero-logo.png" alt="Hand Over Foot logo" />
+        <img class="hero-logo" src="assets/hof-logo.png" alt="Hand Over Foot logo" />
         <div class="home-buttons" aria-label="Main menu">
           <button class="home-btn green" id="playAiBtn"><span>🤖</span>Player vs AI</button>
           <button class="home-btn gold" id="playHumanBtn"><span>🔗</span>Player vs Player</button>
@@ -56,6 +56,11 @@
       <header class="game-top">
         <button class="mini-logo" data-nav="home"><b>HAND</b><i>over</i><b>FOOT</b></button>
         <div id="roundBadge" class="round-badge">Hand 1 · Meld 50</div>
+        <div class="zoom-controls" aria-label="Card zoom controls">
+          <button id="zoomOutBtn" type="button" title="Zoom cards out">−</button>
+          <span id="zoomLevel">100%</span>
+          <button id="zoomInBtn" type="button" title="Zoom cards in">+</button>
+        </div>
         <div id="scoreBadges" class="score-badges"></div>
       </header>
 
@@ -115,6 +120,6 @@
     <div id="modalBody"></div>
   </dialog>
 
-  <script src="game.js?v=3.1.2"></script>
+  <script src="game.js?v=3.2.0"></script>
 </body>
 </html>
