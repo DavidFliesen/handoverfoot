@@ -11,7 +11,7 @@ const bookBonus = { red:500, black:300 };
 const penalty3 = { red:-500, black:-300 };
 let UID=0;
 const state = {
-  view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.35, difficulty:'club', askPartner:true, requireBooks:false,
+  view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.55, difficulty:'club', askPartner:true, requireBooks:false,
   handNo:1, current:0, phase:'draw', selected:new Set(), selectedMeld:null,
   stock:[], discard:[], players:[], teams:[], gameEnded:false, handEnded:false, pileIntent:false
 };
@@ -88,7 +88,7 @@ function drawTwo(){
   sound('draw');
   drawFor(currentPlayer(),2); state.phase='play'; state.pileIntent=false; render(); message('You drew 2. Make sets, add to books, then discard.');
 }
-function drawFor(p,n){ for(let i=0;i<n;i++){ if(!state.stock.length) recycleDiscard(); if(state.stock.length) liveCards(p).push(state.stock.pop()); } sortCards(liveCards(p)); }
+function drawFor(p,n){ for(let i=0;i<n;i++){ if(!state.stock.length) recycleDiscard(); if(state.stock.length) liveCards(p).push(state.stock.pop()); } sortCards(liveCards(p)); cardMoveSound(n); }
 function recycleDiscard(){ if(state.discard.length<=1) return; const top=state.discard.pop(); state.stock=shuffle(state.discard.splice(0)); state.discard=[top]; }
 function topDiscard(){ return state.discard[state.discard.length-1]; }
 function canTakePile(playerIndex){
@@ -107,7 +107,7 @@ function takePile(){
   sound('draw');
   const chk=canTakePile(0); if(!chk.ok){ message(chk.reason); return; }
   const take = state.discard.splice(Math.max(0,state.discard.length-7));
-  liveCards(currentPlayer()).push(...take); sortCards(liveCards(currentPlayer()));
+  liveCards(currentPlayer()).push(...take); sortCards(liveCards(currentPlayer())); cardMoveSound(take.length);
   state.phase='play'; render(); message(`You took ${take.length} cards from the discard pile. Use the top card in a new set.`);
 }
 function validateSet(cards, team){
@@ -208,7 +208,7 @@ function makeSet(){
   render();
 
   const label = v.sets.map(s => `${s.rank}s`).join(', ');
-  sound('meld'); message(`Melded ${label} for ${v.meldPoints} points.`);
+  cardMoveSound(cards.length); sound('meld'); message(`Melded ${label} for ${v.meldPoints} points.`);
   checkHumanEmpty();
 }
 function removeCards(p,cards){ const ids=new Set(cards.map(c=>c.id)); p.hand=p.hand.filter(c=>!ids.has(c.id)); p.foot=p.foot.filter(c=>!ids.has(c.id)); }
@@ -233,11 +233,11 @@ function addToMeld(){
   if(!meld){ message('Tap one of your team melds, then press Add.'); return; }
   const v=canAddToMeld(cards,meld); if(!v.ok){ message(v.reason); return; }
   removeCards(currentPlayer(),cards); meld.cards.push(...cards); if(cards.some(isWild)) meld.black=true; if(meld.cards.length>=7) meld.booked=true;
-  state.selected.clear(); state.selectedMeld=null; checkFoot(currentPlayer()); render(); message(`Added ${cards.length} card${cards.length===1?'':'s'} to ${meld.rank}s.`); checkHumanEmpty();
+  state.selected.clear(); state.selectedMeld=null; checkFoot(currentPlayer()); render(); cardMoveSound(cards.length); message(`Added ${cards.length} card${cards.length===1?'':'s'} to ${meld.rank}s.`); checkHumanEmpty();
 }
 function discardSelected(){
   if(state.current!==0 || state.phase!=='play') return;
-  sound('discard');
+  sound('discard'); cardMoveSound(1);
   const cards=selectedCards(); if(cards.length!==1){ message('Select exactly one card to discard.'); return; }
   const c=cards[0]; removeCards(currentPlayer(),[c]); state.discard.push(c); state.selected.clear(); state.selectedMeld=null;
   const p=currentPlayer();
@@ -264,7 +264,7 @@ function goOutClick(){
 }
 function partnerApproves(){ const team=state.teams[0]; return team.melds.filter(m=>m.booked).length>=2 || liveCards(state.players[2]).length<8; }
 
-function aiDelay(min=650,max=1500){
+function aiDelay(min=1800,max=4200){
   return Math.floor(Math.random() * (max-min+1)) + min;
 }
 
@@ -323,7 +323,7 @@ function robotTurn(){
   if(state.current===0 || state.handEnded) return;
   const idx=state.current, p=currentPlayer(), team=currentTeam();
   const take = robotShouldTake(idx);
-  if(take){ const cards=state.discard.splice(Math.max(0,state.discard.length-7)); liveCards(p).push(...cards); }
+  if(take){ const cards=state.discard.splice(Math.max(0,state.discard.length-7)); liveCards(p).push(...cards); cardMoveSound(cards.length); }
   else drawFor(p,2);
   state.phase='play';
   robotPlay(idx);
@@ -336,6 +336,7 @@ function robotShouldTake(idx){
   return true;
 }
 function robotPlay(idx){
+  cardMoveSound(1);
   const p=state.players[idx], team=state.teams[teamOf(idx)];
   sortCards(liveCards(p));
   let played=true, safety=0;
@@ -376,6 +377,7 @@ function bestRobotSet(cards,team){
   return null;
 }
 function robotDiscard(idx){
+  cardMoveSound(1);
   const p=state.players[idx], cards=liveCards(p); if(!cards.length){ finishHand(idx); return; }
   let choice = cards.find(isThree);
   if(!choice){
@@ -528,7 +530,7 @@ function tone(freq=440, duration=.08, type='sine', gain=.08){
     const g = audioCtx.createGain();
     osc.type = type;
     osc.frequency.value = freq;
-    const vol = Math.max(0, Math.min(1, state.audioVolume ?? .35));
+    const vol = Math.max(0, Math.min(1, state.audioVolume ?? .55));
     g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(gain * vol, audioCtx.currentTime + .015);
     g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
@@ -543,9 +545,9 @@ function sound(name){
   try{
     ensureAudio();
     const now = audioCtx.currentTime;
-    const vol = Math.max(0, Math.min(1, state.audioVolume ?? .35));
+    const vol = Math.max(0, Math.min(1, state.audioVolume ?? .55));
 
-    const play = (freq, dur, type='triangle', gain=.03, delay=0) => {
+    const play = (freq, dur, type='triangle', gain=.055, delay=0) => {
       const osc = audioCtx.createOscillator();
       const g = audioCtx.createGain();
       osc.type = type;
@@ -593,6 +595,13 @@ function sound(name){
 function setAudio(on){
   state.audioOn = !!on;
   try{ localStorage.setItem('hofAudioOn', state.audioOn ? '1':'0'); }catch(e){}
+}
+function cardMoveSound(count=1){
+  if(!state.audioOn) return;
+  const n = Math.min(6, Math.max(1, count || 1));
+  for(let i=0;i<n;i++){
+    setTimeout(()=>sound('move'), i*55);
+  }
 }
 function setVolume(v){
   state.audioVolume = Math.max(0, Math.min(1, Number(v)));
