@@ -435,7 +435,7 @@ function renderAiStatus(){
   const p=ai();
   if(!p){ $('aiStatus').innerHTML=''; return; }
   $('aiStatus').classList.toggle('active',state.current===1);
-  $('aiStatus').innerHTML=`<strong>🤖 ${p.name}</strong><span>${p.inFoot?'Foot':'Hand'} · ${liveCards(p).length} cards · ${p.melds.length} melds</span>`;
+  $('aiStatus').innerHTML=`<strong>🤖 ${p.name}</strong><span>${p.inFoot?'FOOT':'HAND'} • ${liveCards(p).length} card${liveCards(p).length===1?'':'s'} • ${p.melds.length} meld${p.melds.length===1?'':'s'}</span>`;
 }
 function renderPile(){
   const top=topDiscard(), el=$('discardPileBtn');
@@ -461,7 +461,7 @@ function renderMeldZone(id,p,selectable){
 function renderHand(){
   const p=player(), cards=liveCards(p);
   $('handMode').textContent=p.inFoot?'FOOT':'HAND';
-  $('cardsLeft').textContent=`${cards.length} card${cards.length===1?'':'s'}`;
+  $('cardsLeft').textContent=`${p.inFoot?'FOOT':'HAND'} • ${cards.length} card${cards.length===1?'':'s'} • ${p.melds.length} meld${p.melds.length===1?'':'s'}`;
   $('humanCards').innerHTML=cards.map(c=>cardHTML(c,true)).join('');
   document.querySelectorAll('#humanCards .card').forEach(el=>el.onclick=()=>{
     const id=el.dataset.id;
