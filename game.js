@@ -504,18 +504,81 @@ function showModal(html){ const modal=$('modal'), body=$('modalBody'); if(!modal
 function showRules(){
   sound('click');
   showModal(`
-    <section class="rules-panel">
-      <div class="rules-hero"><div class="rules-hero-icon">🃏</div><div><h2>Player vs AI Rules</h2><p>A clean two-player Hand and Foot game: you against one AI opponent.</p></div></div>
-      <div class="rules-grid">
-        <article class="rule-card"><h3>🎯 Opening Meld</h3><table class="opening-table"><tr><th>Hand</th><th>Minimum</th></tr><tr><td>1</td><td>50</td></tr><tr><td>2</td><td>90</td></tr><tr><td>3</td><td>120</td></tr><tr><td>4</td><td>150</td></tr></table></article>
-        <article class="rule-card"><h3>🔄 Your Turn</h3><ul><li>Draw 2 from stock, or take up to 7 from discard.</li><li>To take discard, you need 2 natural cards matching the top card.</li><li>You cannot take a pile topped by a 3 or wild card.</li></ul></article>
-        <article class="rule-card"><h3>📚 Sets & Books</h3><ul><li>Sets need 3+ cards of one rank, 4 through Ace.</li><li>2s and Jokers are wild.</li><li>7 cards completes a book.</li></ul></article>
-        <article class="rule-card"><h3>💰 Scoring</h3><ul><li>Red book: 500 points.</li><li>Black book: 300 points.</li><li>Black 3 left over: -300.</li><li>Red 3 left over: -500.</li></ul></article>
+    <section class="rules-panel readable-rules">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">🃏</div>
+        <div>
+          <h2>How to Play</h2>
+          <p>Hand Over Foot is inspired by Hand and Foot Canasta, a Rummy-family card game. This version is a clean Player vs AI game.</p>
+        </div>
       </div>
-      <div class="rules-tip"><b>Tip:</b> New cards from Draw 2 or Take 7 go to the far right so you can see what you just received. Press Sort when ready.</div>
+
+      <div class="rules-grid">
+        <article class="rule-card">
+          <h3>🎯 Goal</h3>
+          <p>Make melds, build books, empty your Hand, then empty your Foot. Highest score after four hands wins.</p>
+        </article>
+
+        <article class="rule-card">
+          <h3>🔄 Your Turn</h3>
+          <ol>
+            <li>Draw 2 cards or Take 7 from the discard pile.</li>
+            <li>Set new melds or add to existing melds.</li>
+            <li>Discard 1 card to end your turn.</li>
+          </ol>
+        </article>
+
+        <article class="rule-card">
+          <h3>🎯 Opening Meld</h3>
+          <table class="opening-table">
+            <tr><th>Hand</th><th>Minimum</th></tr>
+            <tr><td>1</td><td>50</td></tr>
+            <tr><td>2</td><td>90</td></tr>
+            <tr><td>3</td><td>120</td></tr>
+            <tr><td>4</td><td>150</td></tr>
+          </table>
+        </article>
+
+        <article class="rule-card">
+          <h3>📚 Sets & Books</h3>
+          <ul>
+            <li>Sets need 3 or more cards of the same rank, 4 through Ace.</li>
+            <li>2s and Jokers are wild.</li>
+            <li>3s cannot be melded.</li>
+            <li>7 cards completes a book.</li>
+          </ul>
+        </article>
+
+        <article class="rule-card">
+          <h3>💰 Scoring</h3>
+          <ul>
+            <li>3 through 9 = 5 points</li>
+            <li>10, Jack, Queen, King = 10 points</li>
+            <li>Aces and 2s = 20 points</li>
+            <li>Jokers = 50 points</li>
+          </ul>
+        </article>
+
+        <article class="rule-card">
+          <h3>⚠️ Penalties</h3>
+          <ul>
+            <li>Black 3 left in Hand or Foot = -300</li>
+            <li>Red 3 left in Hand or Foot = -500</li>
+          </ul>
+        </article>
+
+        <article class="rule-card full">
+          <h3>📜 Open Source</h3>
+          <p>This project is open source under the MIT “as is” license. You may use it freely to study, remix, or develop your own creations.</p>
+          <p><a class="github-link" href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">View the Hand Over Foot GitHub repository</a></p>
+        </article>
+      </div>
+
+      <div class="rules-tip"><b>Tip:</b> New cards from Draw 2 or Take 7 appear at the far right of your hand so you can see what you just received before using Sort.</div>
     </section>
   `);
 }
+
 function showScores(){
   sound('click');
   const p0=state.players[0]||{score:0,handScore:0,name:'You'}, p1=state.players[1]||{score:0,handScore:0,name:'AI'};

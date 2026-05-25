@@ -375,3 +375,65 @@ button{font:inherit;cursor:pointer}
     padding-bottom:138px;
   }
 }
+
+
+/* v4.5.0 readable rules GitHub link */
+.readable-rules .rule-card{
+  padding:18px;
+}
+
+.readable-rules .rule-card h3{
+  font-size:1.25rem;
+  margin-bottom:12px;
+}
+
+.readable-rules .rule-card p,
+.readable-rules .rule-card li{
+  font-size:1.06rem;
+  line-height:1.62;
+}
+
+.readable-rules .rule-card ol,
+.readable-rules .rule-card ul{
+  padding-left:1.35rem;
+  margin-top:8px;
+}
+
+.github-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  padding:10px 14px;
+  border-radius:14px;
+  border:2px solid rgba(255,223,116,.75);
+  background:linear-gradient(#277cb9,#064b83);
+  color:#fff;
+  font-weight:900;
+  text-decoration:none;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.github-link:hover{
+  filter:brightness(1.12);
+  transform:translateY(-1px);
+}
+
+@media(max-width:640px){
+  .readable-rules .rule-card{
+    padding:15px;
+  }
+
+  .readable-rules .rule-card p,
+  .readable-rules .rule-card li{
+    font-size:1rem;
+    line-height:1.55;
+  }
+
+  .github-link{
+    width:100%;
+    text-align:center;
+    font-size:.88rem;
+  }
+}

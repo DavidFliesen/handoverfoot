@@ -175,7 +175,7 @@ assets/
 
 Multiplayer was removed from this stable version. It can be explored separately without affecting this playable AI build.
 
-Created by David Fliesen / Cibola Studios.
+Created by David Fliesen.
 
 
 ## Phone Layout
@@ -201,6 +201,16 @@ Phone mode includes a **Peek Melds** button beside the card count. Tap it to tem
 The Hand/Foot indicator is also shown as a stronger pill label so it is easier to tell whether you are still in your Hand or have moved into your Foot.
 
 ---
+
+## Source Code
+
+Hand Over Foot is open source under the MIT “as is” license.
+
+GitHub repository:
+
+https://github.com/DavidFliesen/handoverfoot
+
+You may use it freely to study, remix, or develop your own creations. See [`LICENSE`](LICENSE) for details.
 
 ## License
 
