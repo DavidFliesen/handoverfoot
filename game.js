@@ -91,6 +91,10 @@ function applyZoom(){ const z=Math.max(.7,Math.min(1.45,state.zoom||1)); state.z
 function zoomBy(delta){ state.zoom=Math.max(.7,Math.min(1.45,(state.zoom||1)+delta)); applyZoom(); }
 
 function startSetup(){ sound('click'); show('setup'); }
+function isPhoneLayout(){
+  return window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+}
+
 function startGame(){
   state.difficulty=document.querySelector('input[name="ai"]:checked')?.value || 'club';
   state.requireBooks=$('requireBooks').checked;
@@ -127,7 +131,7 @@ function dealHand(){
   state.current=(state.handNo-1)%2;
   render();
   if($('nextHandBtn')) { $('nextHandBtn').classList.add('hidden'); $('nextHandBtn').disabled = true; }
-  if(state.current===0) message('Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.');
+  if(state.current===0) message(isPhoneLayout() ? 'Phone mode: Draw 2 or Take 7 first. Swipe your hand sideways to see cards.' : 'Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.');
   else beginAiTurn();
 }
 

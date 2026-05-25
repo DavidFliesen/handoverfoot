@@ -176,3 +176,19 @@ assets/
 Multiplayer was removed from this stable version. It can be explored separately without affecting this playable AI build.
 
 Created by David Fliesen / Cibola Studios.
+
+
+## Phone Layout
+
+This version includes a phone-specific GUI for iPhones and Android phones.
+
+Phone mode changes include:
+
+- Compact top bar
+- Smaller center draw/discard area
+- Horizontally swipeable hand
+- Sticky bottom action buttons
+- Meld areas moved below the main hand/play area
+- Larger touch targets for mobile play
+
+The tablet and desktop layouts remain separate from the phone layout.

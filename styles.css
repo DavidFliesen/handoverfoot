@@ -69,3 +69,107 @@ button{font:inherit;cursor:pointer}
 .settings-grid{display:grid;gap:14px}.setting-card{padding:16px;border:1px solid rgba(213,169,54,.35);border-radius:18px;background:rgba(0,0,0,.22)}.setting-card h3{margin:0 0 8px;color:var(--gold2)}.audio-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:12px 0;font-size:1rem}.audio-row input[type="range"]{width:min(260px,45vw)}.toggle-pill{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none}.toggle-pill input{transform:scale(1.25)}
 @media(max-width:980px){body{overflow:auto}.view{min-height:100%;position:absolute}.side-badge{opacity:.65;width:clamp(150px,32vw,240px)}.hand-badge{left:-34px;top:28%}.foot-badge{right:-34px;top:28%}.hero-logo{width:min(92vw,760px)}.home-buttons{grid-template-columns:1fr 1fr}.play-board{grid-template-columns:1fr;grid-template-rows:auto auto auto}.center-piles{order:-1}.game-actions{grid-template-columns:repeat(3,1fr)}.score-badges{font-size:.8rem}.game-top{position:sticky;top:0;flex-wrap:wrap;justify-content:center}.pile{height:120px;width:84px}.team-panel{min-height:220px}.player-area{position:sticky;bottom:58px;z-index:4;background:rgba(0,0,0,.42)}}
 @media(max-width:560px){:root{--card-w:calc(54px*var(--zoom))}.home-buttons{grid-template-columns:1fr}.home-btn{min-height:62px}.choice-grid{grid-template-columns:1fr}.center-piles{grid-template-columns:1fr 1fr}.turn-box{min-height:90px}.game-actions{grid-template-columns:repeat(2,1fr)}.hero-logo{max-height:48vh}.home-credit{font-size:.75rem}.rules-grid{grid-template-columns:1fr}.winner-score{grid-template-columns:1fr}}
+
+/* v4.3 phone-specific GUI for iPhone / Android phones */
+@media (max-width:640px) and (orientation:portrait){
+  html,body,#app{height:100%;min-height:100%;overflow:hidden}
+  body{background-attachment:scroll}
+  .view{position:fixed;inset:0;min-height:0}
+  .game-view{display:grid;grid-template-rows:auto 1fr auto;height:100dvh;overflow:hidden}
+  .game-top{
+    position:relative;top:auto;display:grid;
+    grid-template-columns:1fr auto;
+    grid-template-areas:"logo round" "zoom score";
+    gap:6px 8px;align-items:center;padding:8px 10px;
+    background:rgba(0,0,0,.72);border-bottom:2px solid rgba(213,169,54,.48)
+  }
+  .mini-logo{grid-area:logo;justify-self:start;font-size:.86rem}
+  .round-badge{grid-area:round;justify-self:end;padding:7px 12px;font-size:.88rem;white-space:nowrap}
+  .zoom-controls{grid-area:zoom;justify-self:start;transform:scale(.92);transform-origin:left center}
+  .score-badges{grid-area:score;justify-self:end;gap:5px;font-size:.75rem}
+  .score-chip{padding:5px 8px}
+  .table{
+    min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    display:flex;flex-direction:column;gap:8px;padding:8px 8px 128px
+  }
+  .opponent-area{order:1;min-height:42px;padding:7px 10px;border-radius:13px;font-size:.82rem}
+  .opponent-area span{font-size:.78rem;opacity:.86}
+  .play-board{order:2;display:grid;grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:8px;min-height:0}
+  .center-piles{
+    order:1;grid-template-columns:92px 92px 1fr;align-items:center;
+    gap:8px;padding:10px;border-radius:18px;min-height:120px
+  }
+  .pile{width:72px;height:102px;border-radius:10px}
+  .pile-wrap{font-size:.72rem}
+  .pile-wrap em{display:block;margin-top:4px;font-size:.78rem}
+  .turn-box{
+    grid-column:auto;min-height:102px;padding:10px;display:flex;
+    flex-direction:column;justify-content:center;border-radius:14px
+  }
+  .turn-box strong{font-size:1rem}
+  .turn-box p{margin:.35rem 0 0;font-size:.82rem;line-height:1.35}
+  .player-area{
+    order:3;position:relative;bottom:auto;z-index:2;
+    min-height:calc(var(--card-h) + 90px);padding:9px;border-radius:18px;
+    background:rgba(0,0,0,.38)
+  }
+  .player-head{margin-bottom:6px;font-size:.88rem}
+  .player-head strong{font-size:1rem}
+  .cards-left{font-size:.78rem}
+  .hand-row{
+    gap:6px;padding:8px 2px 18px;min-height:calc(var(--card-h) + 32px);
+    border-radius:12px;scroll-snap-type:x proximity
+  }
+  .hand-row .card{scroll-snap-align:start}
+  .hand-row::-webkit-scrollbar{height:10px}
+  .team-panel{min-height:138px;padding:10px;border-radius:18px}
+  .team-panel.enemy{order:4}
+  .team-panel.friendly{order:5}
+  .team-panel h2{font-size:.86rem;margin-bottom:8px;letter-spacing:.06em}
+  .meld-zone{min-height:92px;gap:9px;padding:2px 2px 12px;overflow:visible!important}
+  .meld{width:60px;height:84px;border-radius:9px;padding:5px;margin-bottom:8px;font-size:.82rem}
+  .meld .m-suit{font-size:1.45rem}
+  .meld .m-count{width:21px;height:21px;font-size:.7rem}
+  .meld .m-tag{font-size:.48rem;bottom:-8px}
+  .game-actions{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    grid-template-columns:repeat(3,1fr);gap:7px;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    background:rgba(0,0,0,.86);border-top:2px solid rgba(213,169,54,.55);
+    box-shadow:0 -12px 24px rgba(0,0,0,.42)
+  }
+  .game-actions button{min-height:46px;padding:9px 6px;border-radius:12px;font-size:.86rem;letter-spacing:.05em}
+  .game-actions button.hidden{display:none!important}
+  :root{--card-w:calc(58px*var(--zoom))}
+  .card{border-radius:9px;padding:5px;font-size:.82rem}
+  .card .suit{font-size:1.4em}
+  .modal{width:94vw;max-height:84dvh;border-radius:18px}
+  .modal #modalBody{padding:22px;max-height:80dvh}
+  .rules-grid,.winner-score{grid-template-columns:1fr}
+  .home-stack{width:96vw;gap:14px}
+  .hero-logo{width:min(94vw,560px);max-height:46vh}
+  .side-badge{width:145px;opacity:.55}
+  .hand-badge{left:-58px;top:24%}
+  .foot-badge{right:-58px;top:24%}
+  .home-buttons{grid-template-columns:1fr;width:min(88vw,360px)}
+  .home-btn{min-height:58px;font-size:.96rem}
+}
+@media (max-height:520px) and (orientation:landscape){
+  .game-view{display:grid;grid-template-rows:auto 1fr auto;height:100dvh;overflow:hidden}
+  .game-top{padding:6px 10px}
+  .table{overflow:auto;padding:6px 8px 82px;gap:6px}
+  .play-board{grid-template-columns:1fr 240px 1fr;gap:6px}
+  .center-piles{padding:8px}
+  .pile{width:62px;height:88px}
+  .turn-box{min-height:76px;padding:8px}
+  .team-panel{min-height:128px;padding:8px}
+  .player-area{min-height:calc(var(--card-h) + 58px);padding:8px}
+  .game-actions{
+    position:fixed;left:0;right:0;bottom:0;
+    grid-template-columns:repeat(6,1fr);
+    padding:6px 8px calc(6px + env(safe-area-inset-bottom))
+  }
+  .game-actions button{min-height:42px;font-size:.78rem}
+  :root{--card-w:calc(46px*var(--zoom))}
+  .meld{width:54px;height:76px}
+}
