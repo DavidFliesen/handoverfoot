@@ -224,24 +224,29 @@ The software is provided **"as is"**, without warranty of any kind. See [`LICENS
 Hand Over Foot is inspired by Hand and Foot Canasta, a popular game from the Rummy family of card games. The interface and branding use approachable “Rummy-style” terminology while the gameplay rules follow the classic Hand and Foot Canasta tradition.
 
 
----
+## Navigation and Game Menu
 
-## About the Developer
+The game includes a top-right navigation area with:
 
-Hand Over Foot was created by David Fliesen, a retired U.S. Navy Chief Journalist and Hybrid AI / Multimedia Developer focused on artificial intelligence, interactive storytelling, comics, web apps, and creative AI workflows.
+- Full screen toggle
+- Hamburger menu
+- Scoreboard
+- Game Rules
+- About Hand Over Foot
+- GitHub repository link
+- Audio Settings
 
-This entire browser-based card game was designed and built in essentially a single day using a combination of ChatGPT and Claude for coding assistance, rapid prototyping, debugging, UI refinement, gameplay logic, and responsive design improvements.
+Clicking the Hand Over Foot logo during a game now opens a pause menu instead of immediately leaving the game.
 
-### Links
+## Meld Clarity
 
-🌐 Portfolio  
-https://davidfliesen.github.io/
+Melds and books are labeled as **Clean** or **Dirty**:
 
-💼 LinkedIn  
-https://www.linkedin.com/in/fliesen/
+- Clean meld/book: no wild cards
+- Dirty meld/book: includes wild cards
 
-🎨 Sisters of Summerville Comic Series  
-https://sisters-of-summerville.github.io/
+Dirty melds use a different visual treatment so you can avoid accidentally adding wilds to a clean meld.
 
----
+## Animation and Audio
 
+This build includes lightweight card arrival animation and stronger sound cues for turns, drawing, discarding, melding, and card movement. These effects are intentionally simple so the game remains fast and browser-friendly.

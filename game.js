@@ -25,7 +25,7 @@ const state = {
   gameOver:false,
   zoom:1,
   audioOn:true,
-  audioVolume:.55
+  audioVolume:.7
 };
 
 function id(){ return `c${++UID}`; }
@@ -62,7 +62,7 @@ function sound(name){
   try{
     ensureAudio();
     const now=audioCtx.currentTime;
-    const vol=Math.max(0,Math.min(1,state.audioVolume??.55));
+    const vol=Math.max(0,Math.min(1,state.audioVolume??.7));
     const play=(freq,dur,type='triangle',gain=.055,delay=0)=>{
       const osc=audioCtx.createOscillator();
       const g=audioCtx.createGain();
@@ -74,10 +74,11 @@ function sound(name){
       osc.start(now+delay); osc.stop(now+delay+dur+.03);
     };
     if(name==='click') play(700,.025,'sine',.035);
-    if(name==='move'){ play(230,.035,'triangle',.038); play(310,.032,'sine',.03,.035); }
-    if(name==='draw'){ play(180,.05,'triangle',.045); play(240,.045,'triangle',.04,.045); }
-    if(name==='meld'){ play(392,.08,'sine',.055); play(523,.11,'sine',.06,.07); play(659,.13,'sine',.065,.14); }
-    if(name==='discard') play(160,.045,'triangle',.05);
+    if(name==='move'){ play(230,.04,'triangle',.06); play(310,.04,'sine',.045,.04); }
+    if(name==='draw'){ play(180,.05,'triangle',.06); play(240,.045,'triangle',.055,.045); }
+    if(name==='turn'){ play(520,.055,'sine',.045); play(660,.075,'sine',.04,.07); }
+    if(name==='meld'){ play(392,.08,'sine',.07); play(523,.11,'sine',.075,.07); play(659,.13,'sine',.08,.14); }
+    if(name==='discard') play(160,.055,'triangle',.065);
     if(name==='error') play(140,.08,'sawtooth',.035);
     if(name==='win'){ play(392,.12,'sine',.055); play(523,.16,'sine',.065,.12); play(659,.22,'sine',.07,.26); play(784,.28,'sine',.075,.46); }
   }catch(e){}
@@ -133,7 +134,7 @@ function dealHand(){
   state.current=(state.handNo-1)%2;
   render();
   if($('nextHandBtn')) { $('nextHandBtn').classList.add('hidden'); $('nextHandBtn').disabled = true; }
-  if(state.current===0) message(isPhoneLayout() ? 'Phone mode: Draw 2 or Take 7 first. Swipe your hand sideways to see cards.' : 'Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.');
+  if(state.current===0){ sound('turn'); message(isPhoneLayout() ? 'Phone mode: Draw 2 or Take 7 first. Swipe your hand sideways to see cards.' : 'Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.'); }
   else beginAiTurn();
 }
 
@@ -277,7 +278,7 @@ function canGoOut(idx){
 function goOutClick(){ const chk=canGoOut(0); if(!chk.ok){ sound('error'); message(chk.reason); return; } finishHand(0); }
 function nextTurn(){
   state.phase='draw'; state.selected.clear(); state.selectedMeld=null; state.current=state.current===0?1:0; render();
-  if(state.current===0) message('Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.');
+  if(state.current===0){ sound('turn'); message('Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.'); }
   else beginAiTurn();
 }
 function aiDelayByDifficulty(){
@@ -287,6 +288,7 @@ function aiDelayByDifficulty(){
   return 7000 + Math.floor(Math.random()*2000);
 }
 function beginAiTurn(){
+  sound('turn');
   render();
   message(`${ai().name} is thinking...`);
   setTimeout(aiTurn, aiDelayByDifficulty());
@@ -435,7 +437,7 @@ function renderAiStatus(){
   const p=ai();
   if(!p){ $('aiStatus').innerHTML=''; return; }
   $('aiStatus').classList.toggle('active',state.current===1);
-  $('aiStatus').innerHTML=`<strong>🤖 ${p.name}</strong><span>${p.inFoot?'FOOT':'HAND'} • ${liveCards(p).length} card${liveCards(p).length===1?'':'s'} • ${p.melds.length} meld${p.melds.length===1?'':'s'}</span>`;
+  $('aiStatus').innerHTML=`<strong>🤖 ${p.name}<span class="mode-pill">${p.inFoot?'FOOT':'HAND'}</span></strong><span>${p.inFoot?'FOOT':'HAND'} • ${liveCards(p).length} card${liveCards(p).length===1?'':'s'} • ${p.melds.length} meld${p.melds.length===1?'':'s'}</span>`;
 }
 function renderPile(){
   const top=topDiscard(), el=$('discardPileBtn');
@@ -449,9 +451,10 @@ function renderMelds(){
 function renderMeldZone(id,p,selectable){
   $(id).innerHTML=p.melds.map((m,i)=>{
     const book=m.cards.length>=7 || m.booked; m.booked=book;
-    const cls=book?(m.black?'black-book':'red-book'):(m.black?'dirty':'');
-    return `<button class="meld ${cls} ${selectable?'selectable':''}" data-meld="${i}">
-      <div>${m.rank}</div><div class="m-suit">${m.black?'★':'◆'}</div><div class="m-count">${m.cards.length}</div><div class="m-tag">${book?(m.black?'BLACK BOOK':'RED BOOK'):(m.black?'BLACK SET':'RED SET')}</div>
+    const cleanDirtyCls = m.black ? 'dirty-meld' : 'clean-meld';
+    const cls=book?(m.black?'black-book':'red-book'):(m.black?'dirty':'clean');
+    return `<button class="meld ${cls} ${cleanDirtyCls} ${selectable?'selectable':''}" data-meld="${i}">
+      <div>${m.rank}</div><div class="m-suit">${m.black?'★':'◆'}</div><div class="m-count">${m.cards.length}</div><div class="m-tag">${book?(m.black?'DIRTY BOOK':'CLEAN BOOK'):(m.black?'DIRTY SET':'CLEAN SET')}</div>
     </button>`;
   }).join('');
   if(selectable){
@@ -461,7 +464,7 @@ function renderMeldZone(id,p,selectable){
 function renderHand(){
   const p=player(), cards=liveCards(p);
   $('handMode').textContent=p.inFoot?'FOOT':'HAND';
-  $('cardsLeft').textContent=`${p.inFoot?'FOOT':'HAND'} • ${cards.length} card${cards.length===1?'':'s'} • ${p.melds.length} meld${p.melds.length===1?'':'s'}`;
+  $('cardsLeft').textContent=`${cards.length} card${cards.length===1?'':'s'}`;
   $('humanCards').innerHTML=cards.map(c=>cardHTML(c,true)).join('');
   document.querySelectorAll('#humanCards .card').forEach(el=>el.onclick=()=>{
     const id=el.dataset.id;
@@ -589,13 +592,119 @@ function showSettings(){
   showModal(`
     <section class="settings-grid">
       <div class="rules-hero"><div class="rules-hero-icon">⚙️</div><div><h2>Settings</h2><p>Adjust subtle game sounds.</p></div></div>
-      <article class="setting-card"><h3>🔊 Audio</h3><label class="toggle-pill"><input type="checkbox" id="audioToggle" ${state.audioOn?'checked':''}> Subtle sound effects</label><div class="audio-row"><span>Volume</span><input type="range" id="audioVolume" min="0" max="1" step="0.05" value="${state.audioVolume??.55}"></div></article>
+      <article class="setting-card"><h3>🔊 Audio</h3><label class="toggle-pill"><input type="checkbox" id="audioToggle" ${state.audioOn?'checked':''}> Subtle sound effects</label><div class="audio-row"><span>Volume</span><input type="range" id="audioVolume" min="0" max="1" step="0.05" value="${state.audioVolume??.7}"></div></article>
     </section>`);
   setTimeout(()=>{ const t=$('audioToggle'), v=$('audioVolume'); if(t) t.onchange=()=>{setAudio(t.checked); sound('click');}; if(v) v.oninput=()=>{setVolume(v.value); sound('click');}; },0);
 }
 function showFinalScores(){ showScores(); }
 
+
+function showGameMenu(){
+  sound('click');
+  showModal(`
+    <section class="menu-panel">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">☰</div>
+        <div>
+          <h2>Menu</h2>
+          <p>Game options, rules, settings, and source code.</p>
+        </div>
+      </div>
+      <div class="menu-actions">
+        <button type="button" onclick="window.hofShowScores && window.hofShowScores()">Scoreboard</button>
+        <button type="button" onclick="window.hofShowRules && window.hofShowRules()">Game Rules</button>
+        <button type="button" onclick="window.hofShowAbout && window.hofShowAbout()">About Hand Over Foot</button>
+        <a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">GitHub Repository</a>
+        <button type="button" onclick="window.hofShowSettings && window.hofShowSettings()">Audio Settings</button>
+      </div>
+    </section>
+  `);
+}
+
+function showAbout(){
+  sound('click');
+  showModal(`
+    <section class="rules-panel readable-rules">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">🃏</div>
+        <div>
+          <h2>About Hand Over Foot</h2>
+          <p>A free browser-based Rummy-family card game inspired by Hand and Foot Canasta.</p>
+        </div>
+      </div>
+      <div class="rules-grid">
+        <article class="rule-card full">
+          <h3>About the Game</h3>
+          <p>Hand Over Foot is a single-player Player vs AI card game with three difficulty levels, clean/dirty meld tracking, tablet and phone layouts, and an MIT “as is” open-source license.</p>
+        </article>
+        <article class="rule-card full">
+          <h3>About the Developer</h3>
+          <p>Created by David Fliesen, a Hybrid AI / Multimedia Developer exploring AI-assisted coding, interactive media, web apps, comics, and creative production workflows.</p>
+          <p><a class="github-link" href="https://davidfliesen.github.io/" target="_blank" rel="noopener">Portfolio</a></p>
+        </article>
+        <article class="rule-card full">
+          <h3>Open Source</h3>
+          <p>Use this project freely to study, remix, or develop your own creations under the MIT “as is” license.</p>
+          <p><a class="github-link" href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">View the GitHub Repository</a></p>
+        </article>
+      </div>
+    </section>
+  `);
+}
+
+function showPauseMenu(){
+  sound('click');
+  showModal(`
+    <section class="menu-panel">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">⏸</div>
+        <div>
+          <h2>Pause Game</h2>
+          <p>Your current game is still here. Resume to keep playing, or quit to return to the opening screen.</p>
+        </div>
+      </div>
+      <div class="pause-actions">
+        <button class="resume-btn" type="button" onclick="document.getElementById('modal').close()">Resume</button>
+        <button class="quit-btn" type="button" onclick="window.hofQuitGame && window.hofQuitGame()">Quit Game</button>
+      </div>
+    </section>
+  `);
+}
+
+function quitGame(){
+  const modal = $('modal');
+  if(modal && modal.open) modal.close();
+  show('home');
+}
+
+function updateFullscreenButton(){
+  const btn = $('fullscreenBtn');
+  if(!btn) return;
+  btn.textContent = document.fullscreenElement ? '−' : '□';
+  btn.title = document.fullscreenElement ? 'Leave full screen' : 'Full screen';
+}
+
+async function toggleFullscreen(){
+  sound('click');
+  try{
+    if(!document.fullscreenElement){
+      await document.documentElement.requestFullscreen();
+    }else{
+      await document.exitFullscreen();
+    }
+  }catch(e){
+    message('Full screen mode is not available in this browser.');
+  }
+  updateFullscreenButton();
+}
+
 function init(){
+  if($('menuBtn')) $('menuBtn').onclick=showGameMenu;
+  if($('fullscreenBtn')) $('fullscreenBtn').onclick=toggleFullscreen;
+  if($('pauseGameBtn')) $('pauseGameBtn').onclick=showPauseMenu;
+  document.addEventListener('fullscreenchange', updateFullscreenButton);
+  updateFullscreenButton();
+
   loadAudioPrefs(); applyZoom();
   $('playAiBtn').onclick=startSetup;
   $('rulesBtn').onclick=showRules;
