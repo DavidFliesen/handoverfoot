@@ -4,201 +4,50 @@
   <img src="assets/splash-reference.png" alt="Hand Over Foot opening screen" width="100%">
 </p>
 
-A polished browser-based **Hand and Foot Canasta** style card game.
+A free browser-based Hand and Foot Canasta-style card game from the Rummy family.
 
-This version is intentionally simplified as a **two-player game: Player vs AI only**.
-
----
-
-## 🎮 Play Online
-
-👉 https://davidfliesen.github.io/handoverfoot/
+👉 Play Online: https://davidfliesen.github.io/handoverfoot/
 
 ---
 
-## ✨ Features
+## Features
 
-- Player vs AI only
-- Three AI skill levels: Easy, Club, and Shark
-- AI turns take roughly 5 to 10 seconds so play feels more natural
-- Clean two-player interface
-- Larger, easier-to-read playing table
-- Draw 2 and Take 7 cards appear at the far right of your hand
-- Manual Sort button so you can inspect new cards first
-- Red and black books
-- Automatic going out when your foot is emptied
-- Round winner splash screens
-- Subtle audio effects with volume controls
-- Runs fully in the browser from GitHub Pages
+- Player vs AI gameplay
+- Three AI difficulty levels
+- Tablet, desktop, and smartphone layouts
+- Full screen mode
+- Hamburger game menu
+- Audio controls and sound effects
+- Clean and dirty meld tracking
+- MIT open-source license
+- Responsive green-felt card table interface
 
 ---
 
-## 🃏 Basic Rules
+## About the Game
 
-Each player receives:
+Hand Over Foot is inspired by Hand and Foot Canasta, a popular game from the Rummy family of card games. The interface uses approachable “Rummy-style” terminology while the gameplay follows classic Hand and Foot style rules.
 
-- 11 cards in Hand
-- 11 cards in Foot
-
-At the start of each turn, you must either:
-
-1. Draw 2 cards from the stock pile  
-   **or**
-2. Take up to 7 cards from the discard pile
-
-After drawing or taking the pile, you may:
-
-- Set new melds
-- Add cards to existing melds/books
-- Discard 1 card to end your turn
+The game works best on tablets and desktop computers, but it also supports iPhones and Android phones with a simplified mobile layout.
 
 ---
 
-## 🎯 Opening Meld Requirements
+## About the Developer
 
-| Hand | Minimum Opening Meld |
-|---|---:|
-| 1 | 50 |
-| 2 | 90 |
-| 3 | 120 |
-| 4 | 150 |
+Hand Over Foot was created by David Fliesen, a Hybrid AI / Multimedia Developer focused on artificial intelligence, interactive storytelling, comics, multimedia, and creative AI workflows.
 
-Your opening meld may combine multiple legal sets.
+This browser-based card game was designed and built in essentially a single day using a combination of ChatGPT and Claude for coding assistance, rapid prototyping, debugging, UI refinement, gameplay logic, and responsive design improvements.
 
-Example:
+### Links
 
-- 4 Kings = 40 points
-- 4 Aces = 80 points
-- Total = 120 points
+🌐 Portfolio  
+https://davidfliesen.github.io/
 
-That would open Hand 2, because Hand 2 requires 90.
+💼 LinkedIn  
+https://www.linkedin.com/in/fliesen/
 
----
-
-## 📚 Sets and Books
-
-- Sets must be 3 or more cards of the same rank from 4 through Ace.
-- 2s and Jokers are wild.
-- 3s cannot be melded.
-- A set becomes a book at 7 cards.
-
-Books:
-
-- Red book / clean book: no wild cards, worth 500 points
-- Black book / dirty book: includes wild cards, worth 300 points
-
----
-
-## 💰 Card Values
-
-| Cards | Points |
-|---|---:|
-| 3 through 9 | 5 |
-| 10, Jack, Queen, King | 10 |
-| Ace | 20 |
-| 2 wild card | 20 |
-| Joker | 50 |
-
-Penalty cards left in hand or foot:
-
-| Card | Penalty |
-|---|---:|
-| Black 3 | -300 |
-| Red 3 | -500 |
-
----
-
-## 🏆 Going Out
-
-There is no Go Out button in this version.
-
-Going out happens automatically when you empty your Foot.
-
-When the hand ends:
-
-- Scores are calculated
-- A winner splash screen appears
-- Next Hand appears if another hand remains
-
-Highest score after four hands wins.
-
----
-
-## 🤖 AI Timing
-
-The AI is intentionally paced to feel more like playing at a table.
-
-Approximate timing:
-
-| Difficulty | Timing Feel |
-|---|---|
-| Easy | Slower and more casual |
-| Club | Balanced |
-| Shark | Faster and sharper |
-
-AI turns take roughly 5 to 10 seconds depending on difficulty.
-
----
-
-## 🔊 Audio
-
-Hand Over Foot includes subtle browser-generated audio effects for:
-
-- Card movement
-- Drawing
-- Melding
-- Discarding
-- Winning
-
-Audio can be adjusted or disabled in Settings.
-
----
-
-## 📂 Files
-
-```text
-index.html
-styles.css
-game.js
-README.md
-assets/
-  splash-reference.png
-  hof-logo.png
-  hand-badge.png
-  foot-badge.png
-  felt-bg.png
-```
-
----
-
-## Notes
-
-Multiplayer was removed from this stable version. It can be explored separately without affecting this playable AI build.
-
-Created by David Fliesen.
-
-
-## Phone Layout
-
-This version includes a phone-specific GUI for iPhones and Android phones.
-
-Phone mode changes include:
-
-- Compact top bar
-- Smaller center draw/discard area
-- Horizontally swipeable hand
-- Sticky bottom action buttons
-- Meld areas moved below the main hand/play area
-- Larger touch targets for mobile play
-
-The tablet and desktop layouts remain separate from the phone layout.
-
-
-## iPhone Meld Peek
-
-Phone mode includes a **Peek Melds** button beside the card count. Tap it to temporarily collapse your hand area so you can see your melds more clearly underneath. Tap **Show Hand** to bring your cards back.
-
-The Hand/Foot indicator is also shown as a stronger pill label so it is easier to tell whether you are still in your Hand or have moved into your Foot.
+🎨 Sisters of Summerville Comic Series  
+https://sisters-of-summerville.github.io/
 
 ---
 
@@ -210,43 +59,14 @@ GitHub repository:
 
 https://github.com/DavidFliesen/handoverfoot
 
-You may use it freely to study, remix, or develop your own creations. See [`LICENSE`](LICENSE) for details.
+You may use it freely to study, remix, or develop your own creations.
+
+---
 
 ## License
 
-This project is open source under the MIT License.
+MIT License
 
-The software is provided **"as is"**, without warranty of any kind. See [`LICENSE`](LICENSE) for details.
+Copyright (c) 2026 David Fliesen
 
-
-## About the Game
-
-Hand Over Foot is inspired by Hand and Foot Canasta, a popular game from the Rummy family of card games. The interface and branding use approachable “Rummy-style” terminology while the gameplay rules follow the classic Hand and Foot Canasta tradition.
-
-
-## Navigation and Game Menu
-
-The game includes a top-right navigation area with:
-
-- Full screen toggle
-- Hamburger menu
-- Scoreboard
-- Game Rules
-- About Hand Over Foot
-- GitHub repository link
-- Audio Settings
-
-Clicking the Hand Over Foot logo during a game now opens a pause menu instead of immediately leaving the game.
-
-## Meld Clarity
-
-Melds and books are labeled as **Clean** or **Dirty**:
-
-- Clean meld/book: no wild cards
-- Dirty meld/book: includes wild cards
-
-Dirty melds use a different visual treatment so you can avoid accidentally adding wilds to a clean meld.
-
-## Animation and Audio
-
-This build includes lightweight card arrival animation and stronger sound cues for turns, drawing, discarding, melding, and card movement. These effects are intentionally simple so the game remains fast and browser-friendly.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
