@@ -207,3 +207,8 @@ The Hand/Foot indicator is also shown as a stronger pill label so it is easier t
 This project is open source under the MIT License.
 
 The software is provided **"as is"**, without warranty of any kind. See [`LICENSE`](LICENSE) for details.
+
+
+## About the Game
+
+Hand Over Foot is inspired by Hand and Foot Canasta, a popular game from the Rummy family of card games. The interface and branding use approachable “Rummy-style” terminology while the gameplay rules follow the classic Hand and Foot Canasta tradition.
