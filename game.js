@@ -611,14 +611,27 @@ function showGameMenu(){
         </div>
       </div>
       <div class="menu-actions">
-        <button type="button" onclick="window.hofShowScores && window.hofShowScores()">Scoreboard</button>
-        <button type="button" onclick="window.hofShowRules && window.hofShowRules()">Game Rules</button>
-        <button type="button" onclick="window.hofShowAbout && window.hofShowAbout()">About Hand Over Foot</button>
+        <button type="button" data-menu-action="scores">Scoreboard</button>
+        <button type="button" data-menu-action="rules">Game Rules</button>
+        <button type="button" data-menu-action="about">About Hand Over Foot</button>
         <a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">GitHub Repository</a>
-        <button type="button" onclick="window.hofShowSettings && window.hofShowSettings()">Audio Settings</button>
+        <button type="button" data-menu-action="settings">Audio Settings</button>
       </div>
     </section>
   `);
+
+  document.querySelectorAll('[data-menu-action]').forEach(btn=>{
+    btn.onclick=()=>{
+      const action = btn.dataset.menuAction;
+      const modal = $('modal');
+      if(modal && modal.open) modal.close();
+
+      if(action==='scores') showScores();
+      else if(action==='rules') showRules();
+      else if(action==='about') showAbout();
+      else if(action==='settings') showSettings();
+    };
+  });
 }
 
 function showAbout(){
@@ -701,7 +714,6 @@ async function toggleFullscreen(){
 function init(){
   if($('menuBtn')) $('menuBtn').onclick=showGameMenu;
   if($('fullscreenBtn')) $('fullscreenBtn').onclick=toggleFullscreen;
-  if($('pauseGameBtn')) $('pauseGameBtn').onclick=showPauseMenu;
   document.addEventListener('fullscreenchange', updateFullscreenButton);
   updateFullscreenButton();
 

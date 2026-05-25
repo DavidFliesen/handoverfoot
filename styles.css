@@ -626,3 +626,19 @@ button{font:inherit;cursor:pointer}
     grid-template-columns:1fr;
   }
 }
+
+
+/* v4.6.1 hamburger spacing + static logo */
+.static-logo{
+  cursor:default!important;
+  user-select:none;
+}
+
+.hamburger{
+  gap:1px!important;
+}
+
+.hamburger span{
+  width:18px;
+  height:2px;
+}
