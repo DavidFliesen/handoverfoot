@@ -8,7 +8,7 @@ const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const meldRanks = ['4','5','6','7','8','9','10','J','Q','K','A'];
 const rankOrder = ['3','4','5','6','7','8','9','10','J','Q','K','A','2','JK'];
 const openMinimums = [50,90,120,150];
-const cardPoints = { '3':5, '4':5, '5':5, '6':5, '7':5, '8':10, '9':10, '10':10, 'J':10, 'Q':10, 'K':10, 'A':20, '2':20, 'JK':50 };
+const cardPoints = { '3':5, '4':5, '5':5, '6':5, '7':5, '8':5, '9':5, '10':10, 'J':10, 'Q':10, 'K':10, 'A':20, '2':20, 'JK':50 };
 let UID = 0;
 const state = {
   difficulty:'club',
@@ -100,9 +100,23 @@ function startGame(){
   show('game');
 }
 
+
+function resetRoundControls(){
+  state.handEnded = false;
+  state.phase = 'draw';
+  state.selected.clear();
+  state.selectedMeld = null;
+  const next = $('nextHandBtn');
+  if(next){
+    next.classList.add('hidden');
+    next.disabled = true;
+  }
+}
+
 function dealHand(){
   UID=0;
-  state.stock=makeDeck(5); state.discard=[]; state.selected.clear(); state.selectedMeld=null; state.phase='draw'; state.handEnded=false;
+  resetRoundControls();
+  state.stock=makeDeck(5); state.discard=[];
   state.players.forEach(p=>{ p.hand=[]; p.foot=[]; p.inFoot=false; p.melds=[]; p.opened=false; p.wentOut=false; p.handScore=0; });
   for(let i=0;i<11;i++) state.players.forEach(p=>p.hand.push(state.stock.pop()));
   for(let i=0;i<11;i++) state.players.forEach(p=>p.foot.push(state.stock.pop()));
@@ -112,7 +126,8 @@ function dealHand(){
   if(up) state.discard.push(up);
   state.current=(state.handNo-1)%2;
   render();
-  if(state.current===0) message('Your turn. Draw 2 or take the pile.');
+  if($('nextHandBtn')) { $('nextHandBtn').classList.add('hidden'); $('nextHandBtn').disabled = true; }
+  if(state.current===0) message('Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.');
   else beginAiTurn();
 }
 
@@ -241,7 +256,7 @@ function discardSelected(){
 }
 function checkFoot(p){ if(!p.inFoot && p.hand.length===0){ p.inFoot=true; message(p.isAI ? 'AI picked up its foot.' : 'You picked up your foot and may keep playing.'); } }
 function checkHumanEmpty(){ const p=player(); if(p.inFoot && p.foot.length===0) finishHand(0); else render(); }
-function manualSortHand(){ sortCards(liveCards(player())); render(); message('Your cards are sorted.'); }
+function manualSortHand(){ sortCards(liveCards(player())); render(); message(state.phase==='draw' ? 'Your cards are sorted. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.' : 'Your cards are sorted.'); }
 
 function canGoOut(idx){
   const p=state.players[idx];
@@ -256,7 +271,7 @@ function canGoOut(idx){
 function goOutClick(){ const chk=canGoOut(0); if(!chk.ok){ sound('error'); message(chk.reason); return; } finishHand(0); }
 function nextTurn(){
   state.phase='draw'; state.selected.clear(); state.selectedMeld=null; state.current=state.current===0?1:0; render();
-  if(state.current===0) message('Your turn. Draw 2 or take the pile.');
+  if(state.current===0) message('Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.');
   else beginAiTurn();
 }
 function aiDelayByDifficulty(){
@@ -282,6 +297,7 @@ function aiTurn(){
   }
   state.phase='play';
   aiPlayMelds();
+  if(state.handEnded) return;
   aiDiscard();
 }
 function aiShouldTakePile(){
@@ -353,7 +369,6 @@ function finishHand(winnerIdx){
   state.players[winnerIdx].wentOut=true;
   scoreHand();
   render();
-  $('nextHandBtn').classList.toggle('hidden', state.handNo>=4);
   showRoundWinner(winnerIdx);
   if(state.handNo>=4) state.gameOver=true;
 }
@@ -371,7 +386,7 @@ function scoreHand(){
     p.handScore=score; p.score+=score;
   });
 }
-function nextHand(){ if(state.handNo>=4){ showFinalScores(); return; } state.handNo++; dealHand(); }
+function nextHand(){ if(state.handNo>=4){ showFinalScores(); return; } state.handNo++; resetRoundControls(); dealHand(); }
 function showRoundWinner(winnerIdx){
   const p0=player(), p1=ai(), handWinner=p0.handScore>=p1.handScore?p0:p1, isGameOver=state.handNo>=4;
   sound('win');
@@ -439,6 +454,9 @@ function renderHand(){
     const id=el.dataset.id;
     if(state.selected.has(id)) state.selected.delete(id); else state.selected.add(id);
     renderHand();
+    if(state.current===0 && state.phase==='draw'){
+      message('Cards selected. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.');
+    }
   });
 }
 function cardHTML(c,clickable){
@@ -449,10 +467,24 @@ function cardHTML(c,clickable){
   return `<div class="card ${cls} ${selected}" data-id="${c.id}"><div>${r}<br>${s}</div><div class="suit">${s}</div><div class="bottom">${r}<br>${s}</div></div>`;
 }
 function renderButtons(){
-  const humanTurn=state.current===0 && !state.handEnded;
-  $('drawBtn').disabled=!humanTurn || state.phase!=='draw';
-  $('discardPileBtn').disabled=!humanTurn || state.phase!=='draw';
-  ['setBtn','addBtn','discardBtn','goOutBtn'].forEach(id=>$(id).disabled=!humanTurn || state.phase!=='play');
+  const humanTurn = state.current===0 && !state.handEnded;
+  const canDraw = humanTurn && state.phase==='draw';
+  const canPlay = humanTurn && state.phase==='play';
+
+  if($('drawBtn')) $('drawBtn').disabled = !canDraw;
+  if($('discardPileBtn')) $('discardPileBtn').disabled = !canDraw;
+
+  ['setBtn','addBtn','discardBtn'].forEach(id=>{
+    const b = $(id);
+    if(b) b.disabled = !canPlay;
+  });
+
+  const next = $('nextHandBtn');
+  if(next){
+    const showNext = state.handEnded && state.handNo < 4;
+    next.classList.toggle('hidden', !showNext);
+    next.disabled = !showNext;
+  }
 }
 function clearSelection(){ state.selected.clear(); state.selectedMeld=null; renderHand(); }
 function showModal(html){ const modal=$('modal'), body=$('modalBody'); if(!modal||!body) return; body.innerHTML=html; try{ if(modal.open) modal.close(); modal.showModal(); }catch(e){ modal.setAttribute('open',''); } }
@@ -501,7 +533,6 @@ function init(){
   $('setBtn').onclick=makeSet;
   $('addBtn').onclick=addToMeld;
   $('discardBtn').onclick=discardSelected;
-  $('goOutBtn').onclick=goOutClick;
   $('sortBtn').onclick=manualSortHand;
   $('clearBtn').onclick=clearSelection;
   $('nextHandBtn').onclick=nextHand;
