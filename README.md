@@ -192,3 +192,12 @@ Phone mode changes include:
 - Larger touch targets for mobile play
 
 The tablet and desktop layouts remain separate from the phone layout.
+
+
+## What "AI" Means Here
+
+In this game, "AI" means a built-in computer opponent that makes decisions using game rules and difficulty settings.
+
+It is not using ChatGPT, an online LLM, or a remote AI service during play. The opponent runs locally in the browser and uses scripted/rule-based decision logic for drawing, taking the pile, melding, adding cards, and discarding.
+
+The three skill levels change how aggressively the computer opponent evaluates moves.

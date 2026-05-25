@@ -173,3 +173,78 @@ button{font:inherit;cursor:pointer}
   :root{--card-w:calc(46px*var(--zoom))}
   .meld{width:54px;height:76px}
 }
+
+
+/* v4.3.1 iPhone setup screen scroll fix */
+@media (max-width:640px){
+  .panel-view{
+    display:block;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:16px 14px calc(28px + env(safe-area-inset-bottom));
+  }
+
+  .panel-view .glass-panel{
+    width:100%;
+    max-width:520px;
+    margin:0 auto;
+    padding:18px 16px 22px;
+    border-radius:22px;
+  }
+
+  .panel-view .glass-panel h1{
+    font-size:clamp(1.8rem,8vw,2.7rem);
+    margin:8px 0;
+  }
+
+  .panel-view .glass-panel p{
+    font-size:.94rem;
+    line-height:1.4;
+    margin:8px 0 12px;
+  }
+
+  .choice-grid{
+    grid-template-columns:1fr;
+    gap:9px;
+    margin:14px 0;
+  }
+
+  .choice{
+    display:grid;
+    grid-template-columns:42px 1fr;
+    grid-template-areas:
+      "icon title"
+      "icon desc";
+    text-align:left;
+    align-items:center;
+    padding:11px 12px;
+  }
+
+  .choice span{
+    grid-area:icon;
+    font-size:1.55rem;
+  }
+
+  .choice b{
+    grid-area:title;
+  }
+
+  .choice small{
+    grid-area:desc;
+  }
+
+  .option-line{
+    font-size:.9rem;
+    line-height:1.35;
+    margin:10px 0;
+  }
+
+  .primary{
+    position:sticky;
+    bottom:calc(8px + env(safe-area-inset-bottom));
+    z-index:4;
+    min-height:52px;
+    margin-top:12px;
+    box-shadow:0 -8px 18px rgba(0,0,0,.32), 0 10px 18px rgba(0,0,0,.35);
+  }
+}
