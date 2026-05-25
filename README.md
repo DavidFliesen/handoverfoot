@@ -222,3 +222,29 @@ The software is provided **"as is"**, without warranty of any kind. See [`LICENS
 ## About the Game
 
 Hand Over Foot is inspired by Hand and Foot Canasta, a popular game from the Rummy family of card games. The interface and branding use approachable “Rummy-style” terminology while the gameplay rules follow the classic Hand and Foot Canasta tradition.
+
+
+---
+
+## About the Developer
+
+Hand Over Foot was created by David Fliesen, a retired U.S. Navy Chief Journalist and multimedia developer focused on artificial intelligence, interactive storytelling, comics, web apps, and creative AI workflows.
+
+This entire browser-based card game was designed and built in essentially a single day using a combination of ChatGPT and Claude for coding assistance, rapid prototyping, debugging, UI refinement, gameplay logic, and responsive design improvements.
+
+### Links
+
+🌐 Portfolio  
+https://davidfliesen.github.io/
+
+💼 LinkedIn  
+https://www.linkedin.com/in/davidfliesen/
+
+🎨 Sisters of Summerville Comic Series  
+https://sisters-of-summerville.github.io/
+
+🃏 Hand Over Foot GitHub Repository  
+https://github.com/DavidFliesen/handoverfoot
+
+---
+
