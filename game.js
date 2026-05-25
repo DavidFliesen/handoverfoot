@@ -96,6 +96,8 @@ function isPhoneLayout(){
 }
 
 function startGame(){
+  document.body.classList.remove('peek-melds');
+  const peekBtn = $('peekMeldsBtn'); if(peekBtn) peekBtn.textContent='Peek Melds';
   state.difficulty=document.querySelector('input[name="ai"]:checked')?.value || 'club';
   state.requireBooks=$('requireBooks').checked;
   state.handNo=1; state.gameOver=false;
@@ -152,7 +154,7 @@ function drawTwo(){
   drawFor(player(),2,false);
   state.phase='play';
   render();
-  message('You drew 2. New cards are at the far right. Make sets, add to melds, then discard.');
+  message(isPhoneLayout() ? 'You drew 2. Swipe your hand sideways. Use Peek Melds to check your melds.' : 'You drew 2. New cards are at the far right. Make sets, add to melds, then discard.');
 }
 function canTakePile(idx){
   if(state.phase!=='draw') return {ok:false,reason:'You must draw or take the pile first.'};
@@ -173,7 +175,7 @@ function takePile(){
   sound('draw'); cardMoveSound(take.length);
   state.phase='play';
   render();
-  message(`You took ${take.length} cards. New cards are at the far right.`);
+  message(isPhoneLayout() ? `You took ${take.length} cards. Swipe sideways, or tap Peek Melds to check the table.` : `You took ${take.length} cards. New cards are at the far right.`);
 }
 
 function analyzeSelectedSets(cards,p){
@@ -409,6 +411,13 @@ function showRoundWinner(winnerIdx){
 }
 function finalWinnerText(){ const p0=player(), p1=ai(); if(p0.score===p1.score) return `Final score is tied at ${p0.score}.`; const winner=p0.score>p1.score?p0:p1; return `${winner.name} wins the game, ${p0.score} to ${p1.score}.`; }
 
+
+function togglePeekMelds(){
+  document.body.classList.toggle('peek-melds');
+  const btn = $('peekMeldsBtn');
+  if(btn) btn.textContent = document.body.classList.contains('peek-melds') ? 'Show Hand' : 'Peek Melds';
+}
+
 function render(){
   if(!$('game')) return;
   $('roundBadge').textContent=`Hand ${state.handNo} · Open ${openingMinimum()}`;
@@ -451,8 +460,8 @@ function renderMeldZone(id,p,selectable){
 }
 function renderHand(){
   const p=player(), cards=liveCards(p);
-  $('handMode').textContent=p.inFoot?'Foot':'Hand';
-  $('cardsLeft').textContent=`${cards.length} cards`;
+  $('handMode').textContent=p.inFoot?'FOOT':'HAND';
+  $('cardsLeft').textContent=`${cards.length} card${cards.length===1?'':'s'}`;
   $('humanCards').innerHTML=cards.map(c=>cardHTML(c,true)).join('');
   document.querySelectorAll('#humanCards .card').forEach(el=>el.onclick=()=>{
     const id=el.dataset.id;
@@ -542,6 +551,7 @@ function init(){
   $('nextHandBtn').onclick=nextHand;
   $('zoomOutBtn').onclick=()=>zoomBy(-.1);
   $('zoomInBtn').onclick=()=>zoomBy(.1);
+  if($('peekMeldsBtn')) $('peekMeldsBtn').onclick=togglePeekMelds;
   $('closeModal').onclick=()=>$('modal').close();
 }
 document.addEventListener('DOMContentLoaded', init);

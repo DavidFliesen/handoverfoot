@@ -194,10 +194,8 @@ Phone mode changes include:
 The tablet and desktop layouts remain separate from the phone layout.
 
 
-## What "AI" Means Here
+## iPhone Meld Peek
 
-In this game, "AI" means a built-in computer opponent that makes decisions using game rules and difficulty settings.
+Phone mode includes a **Peek Melds** button beside the card count. Tap it to temporarily collapse your hand area so you can see your melds more clearly underneath. Tap **Show Hand** to bring your cards back.
 
-It is not using ChatGPT, an online LLM, or a remote AI service during play. The opponent runs locally in the browser and uses scripted/rule-based decision logic for drawing, taking the pile, melding, adding cards, and discarding.
-
-The three skill levels change how aggressively the computer opponent evaluates moves.
+The Hand/Foot indicator is also shown as a stronger pill label so it is easier to tell whether you are still in your Hand or have moved into your Foot.
