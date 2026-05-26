@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#06331e" />
   <title>Hand Over Foot</title>
-  <meta name="description" content="Hand Over Foot, a browser card game inspired by Hand and Foot Canasta." />
+  <meta name="description" content="Hand Over Foot, a polished browser card game inspired by Hand and Foot Canasta." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:ital,wght@1,800&family=Bree+Serif&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4.7.0" />
+  <link rel="stylesheet" href="styles.css?v=3.4.6" />
 </head>
 <body>
   <div id="app">
@@ -17,52 +17,60 @@
       <img class="side-badge hand-badge" src="assets/hand-badge.png" alt="Hand badge" />
       <img class="side-badge foot-badge" src="assets/foot-badge.png" alt="Foot badge" />
       <main class="home-stack">
-        <img class="hero-logo" src="assets/hof-logo.png?v=4.3.0" alt="Hand Over Foot logo" />
+        <img class="hero-logo" src="assets/hof-logo.png?v=3.4.0" alt="Hand Over Foot logo" />
         <div class="home-buttons" aria-label="Main menu">
           <button class="home-btn green" id="playAiBtn"><span>🤖</span>Player vs AI</button>
+          <button class="home-btn gold" id="playHumanBtn"><span>🔗</span>Player vs Player</button>
           <button class="home-btn blue" id="rulesBtn"><span>📘</span>Rules</button>
           <button class="home-btn purple" id="scoresBtn"><span>🏆</span>Scores</button>
-          <button class="home-btn gold" id="settingsBtn"><span>⚙️</span>Settings</button>
         </div>
-        <p class="home-credit">Created by David Fliesen</p>
+        <p class="home-credit">Created by David Fliesen / Cibola Studios</p>
       </main>
     </section>
 
     <section id="setup" class="view panel-view hidden">
       <div class="glass-panel narrow">
         <button class="back-btn" data-nav="home">← Home</button>
-        <h1>Player vs AI</h1>
-        <p>Choose the robot skill level. This version is now a clean two-player game: you versus one AI opponent.</p>
+        <h1 id="setupTitle">Player vs AI</h1>
+        <p id="setupIntro">Choose a robot difficulty level, then deal the cards.</p>
         <div class="choice-grid">
-          <label class="choice"><input type="radio" name="ai" value="easy"><span>😊</span><b>Easy</b><small>Casual and forgiving</small></label>
-          <label class="choice checked"><input type="radio" name="ai" value="club" checked><span>🃏</span><b>Club</b><small>Balanced table play</small></label>
-          <label class="choice"><input type="radio" name="ai" value="shark"><span>🦈</span><b>Shark</b><small>Faster and sharper</small></label>
+          <label class="choice"><input type="radio" name="ai" value="easy"><span>😊</span><b>Easy</b><small>Casual robots</small></label>
+          <label class="choice checked"><input type="radio" name="ai" value="club" checked><span>🃏</span><b>Club</b><small>Balanced robots</small></label>
+          <label class="choice"><input type="radio" name="ai" value="shark"><span>🦈</span><b>Shark</b><small>Aggressive robots</small></label>
         </div>
-        <label class="option-line"><input type="checkbox" id="requireBooks" checked> Require one red book and one black book to go out</label>
+        <label class="option-line"><input type="checkbox" id="askPartner" checked> Ask partner before going out</label>
+        <label class="option-line"><input type="checkbox" id="requireBooks"> Require one red and one black book to go out</label>
+        <div id="multiplayerPanel" class="multiplayer-panel hidden">
+          <h2>Invite Another Player</h2>
+          <p>This browser version is prepared for a two-player table: you versus one invited player. Online sync can be wired into the next build with PeerJS/WebRTC.</p>
+          <div class="invite-row">
+            <input id="inviteLink" readonly value="https://davidfliesen.github.io/handoverfoot/?mode=pvp" />
+            <button type="button" id="copyInviteBtn">Copy Link</button>
+          </div>
+        </div>
         <button class="primary" id="dealBtn">Deal Cards</button>
       </div>
     </section>
 
     <section id="game" class="view game-view hidden">
       <header class="game-top">
-        <div class="mini-logo static-logo"><b>HAND</b><i>over</i><b>FOOT</b></div>
-        <div id="roundBadge" class="round-badge">Hand 1 · Open 50</div>
+        <button class="mini-logo" data-nav="home"><b>HAND</b><i>over</i><b>FOOT</b></button>
+        <div id="roundBadge" class="round-badge">Hand 1 · Meld 50</div>
         <div class="zoom-controls" aria-label="Card zoom controls">
           <button id="zoomOutBtn" type="button" title="Zoom cards out">−</button>
           <span id="zoomLevel">100%</span>
           <button id="zoomInBtn" type="button" title="Zoom cards in">+</button>
         </div>
         <div id="scoreBadges" class="score-badges"></div>
-        <div class="nav-controls"><button id="fullscreenBtn" type="button" class="icon-btn" title="Full screen">□</button><button id="menuBtn" type="button" class="icon-btn hamburger" title="Menu"><span></span><span></span><span></span></button></div>
       </header>
 
-      <main class="table two-player-table">
-        <section class="opponent-area player-card" id="aiStatus"></section>
+      <main class="table">
+        <section class="opponents" id="opponentStrip"></section>
 
-        <section class="play-board">
+        <section class="team-board">
           <article class="team-panel enemy">
-            <h2>AI Melds</h2>
-            <div id="aiMelds" class="meld-zone"></div>
+            <h2>Opponents' Melds</h2>
+            <div id="team1Melds" class="meld-zone"></div>
           </article>
 
           <section class="center-piles">
@@ -81,15 +89,15 @@
           </section>
 
           <article class="team-panel friendly">
-            <h2>Your Melds</h2>
-            <div id="playerMelds" class="meld-zone"></div>
+            <h2>Your Team Melds</h2>
+            <div id="team0Melds" class="meld-zone"></div>
           </article>
         </section>
 
         <section class="player-area">
           <div class="player-head">
             <div><strong id="playerLabel">You</strong><span id="handMode">Hand</span></div>
-            <div class="player-tools"><div class="cards-left" id="cardsLeft">0 cards</div><button type="button" id="peekMeldsBtn">Peek Melds</button></div>
+            <div class="cards-left" id="cardsLeft">0 cards</div>
           </div>
           <div id="humanCards" class="hand-row"></div>
         </section>
@@ -99,6 +107,7 @@
         <button id="setBtn">Set</button>
         <button id="addBtn">Add</button>
         <button id="discardBtn" class="danger">Discard</button>
+        <button id="goOutBtn" class="gold">Go Out</button>
         <button id="sortBtn">Sort</button>
         <button id="clearBtn">Clear</button>
         <button id="nextHandBtn" class="hidden">Next Hand</button>
@@ -111,6 +120,6 @@
     <div id="modalBody"></div>
   </dialog>
 
-  <script src="game.js?v=4.7.0"></script>
+  <script src="game.js?v=3.4.6"></script>
 </body>
 </html>
