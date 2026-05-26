@@ -1,536 +1,484 @@
 (() => {
 'use strict';
-
 const $ = id => document.getElementById(id);
 const suits = ['♠','♥','♦','♣'];
 const redSuits = new Set(['♥','♦']);
-const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const meldRanks = ['4','5','6','7','8','9','10','J','Q','K','A'];
 const rankOrder = ['3','4','5','6','7','8','9','10','J','Q','K','A','2','JK'];
 const openMinimums = [50,90,120,150];
-const cardPoints = { '3':5, '4':5, '5':5, '6':5, '7':5, '8':5, '9':5, '10':10, 'J':10, 'Q':10, 'K':10, 'A':20, '2':20, 'JK':50 };
-let UID = 0;
+const cardPoints = { '3':5, '4':5, '5':5, '6':5, '7':5, '8':10, '9':10, '10':10, 'J':10, 'Q':10, 'K':10, 'A':20, '2':20, 'JK':50 };
+const bookBonus = { red:500, black:300 };
+const penalty3 = { red:-500, black:-300 };
+let UID=0;
 const state = {
-  difficulty:'club',
-  requireBooks:true,
-  handNo:1,
-  current:0,
-  phase:'draw',
-  selected:new Set(),
-  selectedMeld:null,
-  stock:[],
-  discard:[],
-  players:[],
-  handEnded:false,
-  gameOver:false,
-  zoom:1,
-  audioOn:true,
-  audioVolume:.7
+  view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.55, difficulty:'club', askPartner:true, requireBooks:false,
+  handNo:1, current:0, phase:'draw', selected:new Set(), selectedMeld:null,
+  stock:[], discard:[], players:[], teams:[], gameEnded:false, handEnded:false, pileIntent:false
 };
-
 function id(){ return `c${++UID}`; }
-function player(){ return state.players[0]; }
-function ai(){ return state.players[1]; }
-function currentPlayer(){ return state.players[state.current]; }
-function liveCards(p){ return p.inFoot ? p.foot : p.hand; }
-function makePlayer(name, isAI=false){ return {name, isAI, score:0, handScore:0, hand:[], foot:[], inFoot:false, melds:[], opened:false, wentOut:false}; }
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function teamOf(i){ return i%2; }
+function makePlayer(name, ai=true){ return { name, ai, hand:[], foot:[], inFoot:false, out:false }; }
+function makeTeam(name){ return { name, score:0, handScore:0, melds:[], opened:false, wentOut:false }; }
 function makeDeck(decks=5){
   const cards=[];
   for(let d=0; d<decks; d++){
-    for(const s of suits){ for(const r of ranks) cards.push({id:id(),rank:r,suit:s}); }
-    cards.push({id:id(),rank:'JK',suit:'★'});
-    cards.push({id:id(),rank:'JK',suit:'★'});
+    for(const s of suits){ for(const r of ['A','2','3','4','5','6','7','8','9','10','J','Q','K']) cards.push({id:id(), rank:r, suit:s}); }
+    cards.push({id:id(), rank:'JK', suit:'★'}); cards.push({id:id(), rank:'JK', suit:'★'});
   }
   return shuffle(cards);
 }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function isRed(c){ return c.rank!=='JK' && redSuits.has(c.suit); }
 function isThree(c){ return c.rank==='3'; }
 function isWild(c){ return c.rank==='2' || c.rank==='JK'; }
-function points(c){ return cardPoints[c.rank] || 0; }
-function sortCards(cards){ cards.sort((a,b)=>rankOrder.indexOf(a.rank)-rankOrder.indexOf(b.rank)||suits.indexOf(a.suit)-suits.indexOf(b.suit)); }
-function show(view){ ['home','setup','game'].forEach(v=>$(v).classList.toggle('hidden', v!==view)); }
-function message(txt){ $('message').textContent=txt; }
-function selectedCards(){ return liveCards(player()).filter(c=>state.selected.has(c.id)); }
-function topDiscard(){ return state.discard[state.discard.length-1]; }
-function openingMinimum(){ return openMinimums[state.handNo-1]; }
-
-let audioCtx=null;
-function ensureAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }
-function sound(name){
-  if(!state.audioOn) return;
-  try{
-    ensureAudio();
-    const now=audioCtx.currentTime;
-    const vol=Math.max(0,Math.min(1,state.audioVolume??.7));
-    const play=(freq,dur,type='triangle',gain=.055,delay=0)=>{
-      const osc=audioCtx.createOscillator();
-      const g=audioCtx.createGain();
-      osc.type=type; osc.frequency.value=freq;
-      g.gain.setValueAtTime(.0001,now+delay);
-      g.gain.exponentialRampToValueAtTime(gain*vol,now+delay+.015);
-      g.gain.exponentialRampToValueAtTime(.0001,now+delay+dur);
-      osc.connect(g).connect(audioCtx.destination);
-      osc.start(now+delay); osc.stop(now+delay+dur+.03);
-    };
-    if(name==='click') play(700,.025,'sine',.035);
-    if(name==='move'){ play(230,.04,'triangle',.06); play(310,.04,'sine',.045,.04); }
-    if(name==='draw'){ play(180,.05,'triangle',.06); play(240,.045,'triangle',.055,.045); }
-    if(name==='turn'){ play(520,.055,'sine',.045); play(660,.075,'sine',.04,.07); }
-    if(name==='meld'){ play(392,.08,'sine',.07); play(523,.11,'sine',.075,.07); play(659,.13,'sine',.08,.14); }
-    if(name==='discard') play(160,.055,'triangle',.065);
-    if(name==='error') play(140,.08,'sawtooth',.035);
-    if(name==='win'){ play(392,.12,'sine',.055); play(523,.16,'sine',.065,.12); play(659,.22,'sine',.07,.26); play(784,.28,'sine',.075,.46); }
-  }catch(e){}
-}
-function cardMoveSound(count=1){ for(let i=0;i<Math.min(6,Math.max(1,count));i++) setTimeout(()=>sound('move'),i*55); }
-function loadAudioPrefs(){ try{ const on=localStorage.getItem('hofAudioOn'), vol=localStorage.getItem('hofAudioVolume'); if(on!==null) state.audioOn=on==='1'; if(vol!==null) state.audioVolume=Number(vol); }catch(e){} }
-function setAudio(on){ state.audioOn=!!on; try{localStorage.setItem('hofAudioOn',state.audioOn?'1':'0')}catch(e){} }
-function setVolume(v){ state.audioVolume=Math.max(0,Math.min(1,Number(v))); try{localStorage.setItem('hofAudioVolume',String(state.audioVolume))}catch(e){} }
-
-function applyZoom(){ const z=Math.max(.7,Math.min(1.45,state.zoom||1)); state.zoom=z; document.documentElement.style.setProperty('--zoom',z.toFixed(2)); if($('zoomLevel')) $('zoomLevel').textContent=Math.round(z*100)+'%'; }
-function zoomBy(delta){ state.zoom=Math.max(.7,Math.min(1.45,(state.zoom||1)+delta)); applyZoom(); }
-
-function startSetup(){ sound('click'); show('setup'); }
-function isPhoneLayout(){
-  return window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+function isMeldRank(c){ return meldRanks.includes(c.rank); }
+function points(c){ return cardPoints[c.rank]||0; }
+function colorClass(c){ return isWild(c)?'wild':isRed(c)?'red':'black'; }
+function liveCards(p){ return p.inFoot ? p.foot : p.hand; }
+function currentPlayer(){ return state.players[state.current]; }
+function currentTeam(){ return state.teams[teamOf(state.current)]; }
+function playerMeldCount(playerIndex){ return state.teams[teamOf(playerIndex)]?.melds?.length || 0; }
+function manualSortHand(){
+  sortCards(liveCards(currentPlayer()));
+  render();
 }
 
-function startGame(){
-  document.body.classList.remove('peek-melds');
-  const peekBtn = $('peekMeldsBtn'); if(peekBtn) peekBtn.textContent='Peek Melds';
-  state.difficulty=document.querySelector('input[name="ai"]:checked')?.value || 'club';
-  state.requireBooks=$('requireBooks').checked;
-  state.handNo=1; state.gameOver=false;
-  state.players=[makePlayer('You'), makePlayer('AI Opponent',true)];
-  dealHand();
-  show('game');
-}
+function sortCards(cards){ cards.sort((a,b)=> rankOrder.indexOf(a.rank)-rankOrder.indexOf(b.rank) || suits.indexOf(a.suit)-suits.indexOf(b.suit)); }
+function show(view){ ['home','setup','game'].forEach(v=>$(v).classList.toggle('hidden', v!==view)); state.view=view; }
+function message(txt){ $('message').textContent = txt; }
+function selectedCards(){ const p=state.players[0]; return liveCards(p).filter(c=>state.selected.has(c.id)); }
+function startSetup(mode='ai'){
+  state.mode = mode;
+  const title = $('setupTitle');
+  const intro = $('setupIntro');
+  const multi = $('multiplayerPanel');
+  const invite = $('inviteLink');
 
-
-function resetRoundControls(){
-  state.handEnded = false;
-  state.phase = 'draw';
-  state.selected.clear();
-  state.selectedMeld = null;
-  const next = $('nextHandBtn');
-  if(next){
-    next.classList.add('hidden');
-    next.disabled = true;
+  if(mode === 'pvp'){
+    if(title) title.textContent = 'Player vs Player';
+    if(intro) intro.textContent = 'Invite another player, or play a local two-player table on this device.';
+    if(multi) multi.classList.remove('hidden');
+    if(invite) invite.value = location.origin + location.pathname + '?mode=pvp';
+  } else {
+    if(title) title.textContent = 'Player vs AI';
+    if(intro) intro.textContent = 'Choose a robot difficulty level, then deal the cards.';
+    if(multi) multi.classList.add('hidden');
   }
-}
 
+  show('setup');
+}
+function startGame(){
+  state.difficulty = document.querySelector('input[name="ai"]:checked')?.value || 'club';
+  state.askPartner = $('askPartner').checked;
+  state.requireBooks = $('requireBooks').checked;
+  state.handNo=1; state.current=0; state.gameEnded=false;
+  state.players = [makePlayer('You',false), makePlayer('Robot East'), makePlayer('Robot Partner'), makePlayer('Robot West')];
+  state.teams = [makeTeam('Your Team'), makeTeam('Opponents')];
+  dealHand(); show('game');
+}
 function dealHand(){
-  UID=0;
-  resetRoundControls();
-  state.stock=makeDeck(5); state.discard=[];
-  state.players.forEach(p=>{ p.hand=[]; p.foot=[]; p.inFoot=false; p.melds=[]; p.opened=false; p.wentOut=false; p.handScore=0; });
+  UID=0; state.stock=makeDeck(5); state.discard=[]; state.selected.clear(); state.selectedMeld=null; state.phase='draw'; state.handEnded=false; state.pileIntent=false;
+  state.teams.forEach(t=>{ t.melds=[]; t.opened=false; t.handScore=0; t.wentOut=false; });
+  state.players.forEach(p=>{ p.hand=[]; p.foot=[]; p.inFoot=false; p.out=false; });
   for(let i=0;i<11;i++) state.players.forEach(p=>p.hand.push(state.stock.pop()));
   for(let i=0;i<11;i++) state.players.forEach(p=>p.foot.push(state.stock.pop()));
   state.players.forEach(p=>sortCards(p.hand));
   let up;
-  do { up=state.stock.pop(); } while(up && isWild(up));
+  do { up = state.stock.pop(); if(!up) break; } while(isWild(up));
   if(up) state.discard.push(up);
-  state.current=(state.handNo-1)%2;
-  render();
-  if($('nextHandBtn')) { $('nextHandBtn').classList.add('hidden'); $('nextHandBtn').disabled = true; }
-  if(state.current===0){ sound('turn'); message(isPhoneLayout() ? 'Phone mode: Draw 2 or Take 7 first. Swipe your hand sideways to see cards.' : 'Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.'); }
-  else beginAiTurn();
+  state.current = (state.handNo-1) % 4;
+  render(); message(`${state.players[state.current].name} starts Hand ${state.handNo}. Draw 2 or take the discard pile.`); maybeRobotTurn();
 }
-
-function drawFor(p,n,sort=false){
-  const target=liveCards(p);
-  for(let i=0;i<n;i++){
-    if(!state.stock.length) recycleDiscard();
-    if(state.stock.length) target.push(state.stock.pop());
-  }
-  if(sort) sortCards(target);
-  cardMoveSound(n);
-}
-function recycleDiscard(){ if(state.discard.length<=1) return; const top=state.discard.pop(); state.stock=shuffle(state.discard.splice(0)); state.discard=[top]; }
-
 function drawTwo(){
-  if(state.current!==0 || state.phase!=='draw') return;
+  if(state.phase!=='draw' || state.current!==0) return;
   sound('draw');
-  drawFor(player(),2,false);
-  state.phase='play';
-  render();
-  message(isPhoneLayout() ? 'You drew 2. Swipe your hand sideways. Use Peek Melds to check your melds.' : 'You drew 2. New cards are at the far right. Make sets, add to melds, then discard.');
+  drawFor(currentPlayer(),2); state.phase='play'; state.pileIntent=false; render(); message('You drew 2. Make sets, add to books, then discard.');
 }
-function canTakePile(idx){
-  if(state.phase!=='draw') return {ok:false,reason:'You must draw or take the pile first.'};
-  const p=state.players[idx], top=topDiscard();
-  if(!top) return {ok:false,reason:'Discard pile is empty.'};
-  if(isThree(top) || isWild(top)) return {ok:false,reason:'The pile is frozen because the top card is a 3 or wild.'};
-  if(p.melds.some(m=>m.rank===top.rank)) return {ok:false,reason:'You already have a meld or book of that face.'};
-  const matches=liveCards(p).filter(c=>c.rank===top.rank && !isWild(c));
-  if(matches.length<2) return {ok:false,reason:'You need two natural cards matching the top discard.'};
-  return {ok:true};
+function drawFor(p,n){ for(let i=0;i<n;i++){ if(!state.stock.length) recycleDiscard(); if(state.stock.length) liveCards(p).push(state.stock.pop()); } cardMoveSound(n); }
+function recycleDiscard(){ if(state.discard.length<=1) return; const top=state.discard.pop(); state.stock=shuffle(state.discard.splice(0)); state.discard=[top]; }
+function topDiscard(){ return state.discard[state.discard.length-1]; }
+function canTakePile(playerIndex){
+  if(state.phase!=='draw') return {ok:false, reason:'You must draw or take the pile first.'};
+  const top=topDiscard(); if(!top) return {ok:false, reason:'Discard pile is empty.'};
+  if(isThree(top) || isWild(top)) return {ok:false, reason:'The pile is frozen because the top card is a 3 or wild card.'};
+  const team=state.teams[teamOf(playerIndex)];
+  if(team.melds.some(m=>m.rank===top.rank)) return {ok:false, reason:'Your team already has a set or book of that face.'};
+  const cards=liveCards(state.players[playerIndex]);
+  const matches=cards.filter(c=>c.rank===top.rank && !isWild(c));
+  if(matches.length<2) return {ok:false, reason:'You need two natural cards matching the top discard.'};
+  return {ok:true, matches};
 }
 function takePile(){
   if(state.current!==0) return;
-  const chk=canTakePile(0);
-  if(!chk.ok){ sound('error'); message(chk.reason); return; }
-  const take=state.discard.splice(Math.max(0,state.discard.length-7));
-  liveCards(player()).push(...take);
-  sound('draw'); cardMoveSound(take.length);
-  state.phase='play';
-  render();
-  message(isPhoneLayout() ? `You took ${take.length} cards. Swipe sideways, or tap Peek Melds to check the table.` : `You took ${take.length} cards. New cards are at the far right.`);
+  sound('draw');
+  const chk=canTakePile(0); if(!chk.ok){ message(chk.reason); return; }
+  const take = state.discard.splice(Math.max(0,state.discard.length-7));
+  liveCards(currentPlayer()).push(...take); cardMoveSound(take.length);
+  state.phase='play'; render(); message(`You took ${take.length} cards from the discard pile. Use the top card in a new set.`);
+}
+function validateSet(cards, team){
+  if(cards.length<3) return {ok:false, reason:'A set needs at least 3 cards.'};
+  if(cards.some(isThree)) return {ok:false, reason:'3s cannot be melded.'};
+  const naturals=cards.filter(c=>!isWild(c));
+  const wilds=cards.filter(isWild);
+  if(!naturals.length) return {ok:false, reason:'You may not make a wild-card set.'};
+  const rank=naturals[0].rank;
+  if(!meldRanks.includes(rank)) return {ok:false, reason:'Sets must be 4 through Ace.'};
+  if(naturals.some(c=>c.rank!==rank)) return {ok:false, reason:'Natural cards in a set must match.'};
+  if(wilds.length>naturals.length) return {ok:false, reason:'A black set must have at least as many natural cards as wilds.'};
+  if(team.melds.some(m=>m.rank===rank)) return {ok:false, reason:'Your team already has a set or book of that face.'};
+  const meldPoints=cards.reduce((s,c)=>s+points(c),0);
+  if(!team.opened && meldPoints < openMinimums[state.handNo-1]) return {ok:false, reason:`Your team needs ${openMinimums[state.handNo-1]} points to open.`};
+  return {ok:true, rank, wilds:wilds.length, meldPoints};
 }
 
-function analyzeSelectedSets(cards,p){
-  if(!cards.length) return {ok:false,reason:'Select cards to meld.'};
-  if(cards.some(isThree)) return {ok:false,reason:'3s cannot be melded.'};
-  const groups=new Map(), wilds=[];
+function analyzeSelectedSets(cards, team){
+  if(!cards.length) return {ok:false, reason:'Select cards to meld.'};
+  if(cards.some(isThree)) return {ok:false, reason:'3s cannot be melded.'};
+
+  const naturalGroups = new Map();
+  const wilds = [];
   for(const c of cards){
     if(isWild(c)) wilds.push(c);
     else {
-      if(!meldRanks.includes(c.rank)) return {ok:false,reason:'Sets must be 4 through Ace.'};
-      if(!groups.has(c.rank)) groups.set(c.rank,[]);
-      groups.get(c.rank).push(c);
+      if(!meldRanks.includes(c.rank)) return {ok:false, reason:'Sets must be 4 through Ace.'};
+      if(!naturalGroups.has(c.rank)) naturalGroups.set(c.rank, []);
+      naturalGroups.get(c.rank).push(c);
     }
   }
-  if(!groups.size) return {ok:false,reason:'You may not make a wild-card set.'};
-  const sets=[]; let remainingWilds=[...wilds];
-  for(const rank of [...groups.keys()].sort((a,b)=>rankOrder.indexOf(a)-rankOrder.indexOf(b))){
-    if(p.melds.some(m=>m.rank===rank)) return {ok:false,reason:`You already have ${rank}s on the table.`};
-    const naturals=groups.get(rank), needed=Math.max(0,3-naturals.length);
-    if(needed>naturals.length) return {ok:false,reason:`${rank}s need more natural cards before wilds can be used.`};
-    const setWilds=remainingWilds.splice(0,needed);
-    if(setWilds.length<needed) return {ok:false,reason:`${rank}s need at least 3 cards.`};
-    const setCards=[...naturals,...setWilds];
-    if(setCards.length<3) return {ok:false,reason:`${rank}s need at least 3 cards.`};
-    sets.push({rank,cards:setCards,wilds:setWilds.length});
+
+  if(!naturalGroups.size) return {ok:false, reason:'You may not make a wild-card set.'};
+
+  const sets = [];
+  const ranks = [...naturalGroups.keys()].sort((a,b)=>rankOrder.indexOf(a)-rankOrder.indexOf(b));
+  let remainingWilds = [...wilds];
+
+  for(const rank of ranks){
+    if(team.melds.some(m=>m.rank===rank)) return {ok:false, reason:`Your team already has a set or book of ${rank}s.`};
+    const naturals = naturalGroups.get(rank);
+    let setWilds = [];
+    const needed = Math.max(0, 3 - naturals.length);
+
+    if(needed > 0){
+      const maxWilds = naturals.length;
+      if(needed > maxWilds) return {ok:false, reason:`${rank}s need more natural cards before wilds can be used.`};
+      setWilds = remainingWilds.splice(0, needed);
+      if(setWilds.length < needed) return {ok:false, reason:`${rank}s need at least 3 cards to make a set.`};
+    }
+
+    const setCards = [...naturals, ...setWilds];
+    if(setCards.length < 3) return {ok:false, reason:`${rank}s need at least 3 cards to make a set.`};
+    if(setWilds.length > naturals.length) return {ok:false, reason:'A black set must have at least as many natural cards as wild cards.'};
+    sets.push({rank, cards:setCards, wilds:setWilds.length});
   }
+
   if(remainingWilds.length){
-    if(sets.length!==1) return {ok:false,reason:'Extra wilds can only be added when one new set is selected.'};
-    const s=sets[0], naturals=s.cards.length-s.wilds, maxExtra=Math.max(0,naturals-s.wilds);
-    if(remainingWilds.length>maxExtra) return {ok:false,reason:'Too many wilds. Naturals must be at least wilds.'};
-    s.cards.push(...remainingWilds); s.wilds+=remainingWilds.length;
+    if(sets.length !== 1) return {ok:false, reason:'Extra wilds can only be added when one new set is selected.'};
+    const s = sets[0];
+    const naturalCount = s.cards.length - s.wilds;
+    const maxExtraWilds = Math.max(0, naturalCount - s.wilds);
+    if(remainingWilds.length > maxExtraWilds) return {ok:false, reason:'Too many wilds. Natural cards must be at least wild cards.'};
+    s.cards.push(...remainingWilds);
+    s.wilds += remainingWilds.length;
   }
-  const meldPoints=sets.reduce((sum,set)=>sum+set.cards.reduce((s,c)=>s+points(c),0),0);
-  if(!p.opened && meldPoints<openingMinimum()) return {ok:false,reason:`You need ${openingMinimum()} points to open. Selected cards total ${meldPoints}.`};
-  return {ok:true,sets,meldPoints};
+
+  const meldPoints = sets.reduce((sum,set)=>sum + set.cards.reduce((s,c)=>s+points(c),0), 0);
+  if(!team.opened && meldPoints < openMinimums[state.handNo-1]){
+    return {ok:false, reason:`Your team needs ${openMinimums[state.handNo-1]} points to open. Selected cards total ${meldPoints}.`};
+  }
+
+  return {ok:true, sets, meldPoints};
 }
-function removeCards(p,cards){ const ids=new Set(cards.map(c=>c.id)); p.hand=p.hand.filter(c=>!ids.has(c.id)); p.foot=p.foot.filter(c=>!ids.has(c.id)); }
+
 function makeSet(){
   if(state.current!==0 || state.phase!=='play') return;
-  const cards=selectedCards(), p=player(), v=analyzeSelectedSets(cards,p);
+  const cards=selectedCards();
+  const team=currentTeam();
+
+  const v=analyzeSelectedSets(cards, team);
   if(!v.ok){ sound('error'); message(v.reason); return; }
+
   for(const set of v.sets){
-    removeCards(p,set.cards);
-    p.melds.push({rank:set.rank,cards:[...set.cards],black:set.wilds>0,booked:set.cards.length>=7});
+    removeCards(currentPlayer(), set.cards);
+    team.melds.push({
+      rank:set.rank,
+      cards:[...set.cards],
+      black:set.wilds>0,
+      booked:set.cards.length>=7
+    });
   }
-  p.opened=true; state.selected.clear(); cardMoveSound(cards.length); sound('meld'); checkFoot(p);
-  render(); message(`Melded ${v.sets.map(s=>s.rank+'s').join(', ')} for ${v.meldPoints} points.`);
+
+  team.opened=true;
+  state.selected.clear();
+  checkFoot(currentPlayer());
+  render();
+
+  const label = v.sets.map(s => `${s.rank}s`).join(', ');
+  cardMoveSound(cards.length); sound('meld'); message(`Melded ${label} for ${v.meldPoints} points.`);
   checkHumanEmpty();
 }
+function removeCards(p,cards){ const ids=new Set(cards.map(c=>c.id)); p.hand=p.hand.filter(c=>!ids.has(c.id)); p.foot=p.foot.filter(c=>!ids.has(c.id)); }
 function canAddToMeld(cards, meld){
-  if(!cards.length) return {ok:false,reason:'Select cards to add.'};
-  if(cards.some(isThree)) return {ok:false,reason:'3s cannot be melded.'};
-  if(cards.some(c=>!isWild(c) && c.rank!==meld.rank)) return {ok:false,reason:`Only ${meld.rank}s or wilds can be added.`};
-  const curWild=meld.cards.filter(isWild).length, curNat=meld.cards.length-curWild;
-  const addWild=cards.filter(isWild).length, addNat=cards.length-addWild;
-  if(!meld.black && meld.booked && addWild>0) return {ok:false,reason:'A red book can only receive natural cards.'};
-  if(!meld.booked && curWild+addWild > curNat+addNat) return {ok:false,reason:'Naturals must be at least wilds before booking.'};
+  if(!cards.length) return {ok:false, reason:'Select cards to add.'};
+  if(cards.some(isThree)) return {ok:false, reason:'3s cannot be melded.'};
+  if(meld.rank && cards.some(c=>!isWild(c) && c.rank!==meld.rank)) return {ok:false, reason:`Only ${meld.rank}s or wilds can be added.`};
+  const currentWild = meld.cards.filter(isWild).length;
+  const currentNat = meld.cards.length-currentWild;
+  const addWild = cards.filter(isWild).length;
+  const addNat = cards.length-addWild;
+  if(!meld.black && addWild>0 && meld.booked) return {ok:false, reason:'A red book can only receive natural cards.'};
+  if(!meld.booked && currentWild+addWild > currentNat+addNat) return {ok:false, reason:'Before booking, natural cards must be at least wild cards.'};
   return {ok:true};
 }
 function addToMeld(){
   if(state.current!==0 || state.phase!=='play') return;
-  const p=player();
-  if(!p.opened){ sound('error'); message('You must open before adding cards.'); return; }
+  const team=currentTeam(); if(!team.opened){ message('Your team must open before adding cards.'); return; }
   const cards=selectedCards();
-  let meld=state.selectedMeld!==null ? p.melds[state.selectedMeld] : null;
-  if(!meld){ const natural=cards.find(c=>!isWild(c)); if(natural) meld=p.melds.find(m=>m.rank===natural.rank); }
-  if(!meld){ sound('error'); message('Tap one of your melds, then press Add.'); return; }
-  const v=canAddToMeld(cards,meld);
-  if(!v.ok){ sound('error'); message(v.reason); return; }
-  removeCards(p,cards); meld.cards.push(...cards); if(cards.some(isWild)) meld.black=true; if(meld.cards.length>=7) meld.booked=true;
-  state.selected.clear(); state.selectedMeld=null; cardMoveSound(cards.length); checkFoot(p);
-  render(); message(`Added ${cards.length} card${cards.length===1?'':'s'} to ${meld.rank}s.`);
-  checkHumanEmpty();
+  let meld = state.selectedMeld!==null ? team.melds[state.selectedMeld] : null;
+  if(!meld && cards.length){ const natural=cards.find(c=>!isWild(c)); if(natural) meld=team.melds.find(m=>m.rank===natural.rank); }
+  if(!meld){ message('Tap one of your team melds, then press Add.'); return; }
+  const v=canAddToMeld(cards,meld); if(!v.ok){ message(v.reason); return; }
+  removeCards(currentPlayer(),cards); meld.cards.push(...cards); if(cards.some(isWild)) meld.black=true; if(meld.cards.length>=7) meld.booked=true;
+  state.selected.clear(); state.selectedMeld=null; checkFoot(currentPlayer()); render(); cardMoveSound(cards.length); message(`Added ${cards.length} card${cards.length===1?'':'s'} to ${meld.rank}s.`); checkHumanEmpty();
 }
 function discardSelected(){
   if(state.current!==0 || state.phase!=='play') return;
-  const cards=selectedCards();
-  if(cards.length!==1){ sound('error'); message('Select exactly one card to discard.'); return; }
-  const c=cards[0], p=player();
-  removeCards(p,[c]); state.discard.push(c); state.selected.clear(); state.selectedMeld=null; sound('discard'); cardMoveSound(1);
+  sound('discard'); cardMoveSound(1);
+  const cards=selectedCards(); if(cards.length!==1){ message('Select exactly one card to discard.'); return; }
+  const c=cards[0]; removeCards(currentPlayer(),[c]); state.discard.push(c); state.selected.clear(); state.selectedMeld=null;
+  const p=currentPlayer();
   if(!p.inFoot && p.hand.length===0){ p.inFoot=true; message('You discarded your last hand card. Your foot starts next turn.'); }
   if(p.inFoot && p.foot.length===0){ finishHand(0); return; }
   nextTurn();
 }
-function checkFoot(p){ if(!p.inFoot && p.hand.length===0){ p.inFoot=true; message(p.isAI ? 'AI picked up its foot.' : 'You picked up your foot and may keep playing.'); } }
-function checkHumanEmpty(){ const p=player(); if(p.inFoot && p.foot.length===0) finishHand(0); else render(); }
-function manualSortHand(){ sortCards(liveCards(player())); render(); message(state.phase==='draw' ? 'Your cards are sorted. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.' : 'Your cards are sorted.'); }
-
-function canGoOut(idx){
-  const p=state.players[idx];
-  if(!p.inFoot) return {ok:false,reason:'You must be in your foot before going out.'};
-  if(liveCards(p).length>0) return {ok:false,reason:'Play or discard all foot cards to go out.'};
+function checkFoot(p){ if(!p.inFoot && p.hand.length===0){ p.inFoot=true; message('You picked up your foot and may keep playing.'); } }
+function checkHumanEmpty(){ const p=state.players[0]; if(p.inFoot && p.foot.length===0) finishHand(0); else render(); }
+function canGoOut(playerIndex){
+  const p=state.players[playerIndex], team=state.teams[teamOf(playerIndex)];
+  if(!p.inFoot) return {ok:false, reason:'You must be in your foot before going out.'};
+  if(liveCards(p).length>0) return {ok:false, reason:'Play or discard all foot cards to go out.'};
   if(state.requireBooks){
-    const red=p.melds.some(m=>m.booked && !m.black), black=p.melds.some(m=>m.booked && m.black);
-    if(!red || !black) return {ok:false,reason:'This table requires one red and one black book to go out.'};
+    const hasRed=team.melds.some(m=>m.booked && !m.black), hasBlack=team.melds.some(m=>m.booked && m.black);
+    if(!hasRed || !hasBlack) return {ok:false, reason:'This table requires one red and one black book to go out.'};
   }
   return {ok:true};
 }
-function goOutClick(){ const chk=canGoOut(0); if(!chk.ok){ sound('error'); message(chk.reason); return; } finishHand(0); }
-function nextTurn(){
-  state.phase='draw'; state.selected.clear(); state.selectedMeld=null; state.current=state.current===0?1:0; render();
-  if(state.current===0){ sound('turn'); message('Your turn. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.'); }
-  else beginAiTurn();
+function goOutClick(){
+  const chk=canGoOut(0); if(!chk.ok){ message(chk.reason); return; }
+  if(state.askPartner && !partnerApproves()){ message('Robot Partner says: wait if you can. Build one more book first.'); return; }
+  finishHand(0);
+}
+function partnerApproves(){ const team=state.teams[0]; return team.melds.filter(m=>m.booked).length>=2 || liveCards(state.players[2]).length<8; }
+
+function aiDelay(min=2000,max=5000){
+  return Math.floor(Math.random() * (max-min+1)) + min;
 }
 function aiDelayByDifficulty(){
-  const d=state.difficulty || 'club';
-  if(d==='easy') return 9000 + Math.floor(Math.random()*1000);
-  if(d==='shark') return 5000 + Math.floor(Math.random()*2000);
-  return 7000 + Math.floor(Math.random()*2000);
+  const d = state.difficulty || 'club';
+  if(d === 'easy') return aiDelay(3800,5000);
+  if(d === 'shark') return aiDelay(2000,3200);
+  return aiDelay(2800,4200);
 }
-function beginAiTurn(){
-  sound('turn');
-  render();
-  message(`${ai().name} is thinking...`);
-  setTimeout(aiTurn, aiDelayByDifficulty());
+
+function nextTurn(){
+  state.phase='draw'; state.pileIntent=false; state.selected.clear(); state.selectedMeld=null;
+  for(let i=1;i<=4;i++){ const n=(state.current+i)%4; if(!state.players[n].out){ state.current=n; break; } }
+  render(); message(`${state.players[state.current].name}'s turn. Draw 2 or take the pile.`); maybeRobotTurn();
 }
-function aiTurn(){
-  if(state.current!==1 || state.handEnded) return;
-  const p=ai();
-  const take=aiShouldTakePile();
-  if(take){
-    const cards=state.discard.splice(Math.max(0,state.discard.length-7));
-    liveCards(p).push(...cards); cardMoveSound(cards.length); sound('draw');
-  } else {
-    drawFor(p,2,false); sound('draw');
-  }
-  state.phase='play';
-  aiPlayMelds();
-  if(state.handEnded) return;
-  aiDiscard();
-}
-function aiShouldTakePile(){
-  const chk=canTakePile(1);
-  if(!chk.ok) return false;
-  if(state.difficulty==='easy') return Math.random()<.15;
-  if(state.difficulty==='club') return Math.random()<.45;
-  return true;
-}
-function aiPlayMelds(){
-  const p=ai(); let safety=0, moved=true;
-  while(moved && safety++<12){
-    moved=false;
-    for(const m of p.melds){
-      const add=[];
-      for(const c of [...liveCards(p)]){
-        const wildRoom = m.cards.filter(isWild).length < (m.cards.length - m.cards.filter(isWild).length);
-        if(c.rank===m.rank || (isWild(c) && (m.black || (!m.booked && wildRoom)))) add.push(c);
-      }
-      const use=add.slice(0, state.difficulty==='shark'?3:1);
-      if(use.length && canAddToMeld(use,m).ok){ removeCards(p,use); m.cards.push(...use); if(use.some(isWild)) m.black=true; if(m.cards.length>=7) m.booked=true; moved=true; cardMoveSound(use.length); }
-    }
-    const candidate=bestAiSet();
-    if(candidate){
-      const v=analyzeSelectedSets(candidate,p);
-      if(v.ok){ for(const set of v.sets){ removeCards(p,set.cards); p.melds.push({rank:set.rank,cards:[...set.cards],black:set.wilds>0,booked:set.cards.length>=7}); } p.opened=true; moved=true; sound('meld'); cardMoveSound(candidate.length); }
-    }
-    checkFoot(p);
-    if(p.inFoot && p.foot.length===0){ finishHand(1); return; }
-  }
-}
-function bestAiSet(){
-  const p=ai(), cards=liveCards(p);
-  const byRank=new Map(), wilds=cards.filter(isWild);
-  for(const c of cards){ if(!isWild(c) && !isThree(c) && meldRanks.includes(c.rank)){ if(!byRank.has(c.rank)) byRank.set(c.rank,[]); byRank.get(c.rank).push(c); } }
-  let best=null, bestPts=0;
-  for(const [rank,nats] of byRank){
-    if(p.melds.some(m=>m.rank===rank)) continue;
-    let combo=[...nats];
-    if(combo.length<3){
-      const needed=3-combo.length;
-      if(needed<=combo.length && wilds.length>=needed) combo=combo.concat(wilds.slice(0,needed));
-    } else if(state.difficulty!=='easy' && wilds.length && combo.length<7 && wilds.length<=combo.length) {
-      combo=combo.concat(wilds.slice(0,Math.min(wilds.length,7-combo.length,combo.length)));
-    }
-    if(combo.length>=3){
-      const pts=combo.reduce((s,c)=>s+points(c),0);
-      if((p.opened || pts>=openingMinimum()) && pts>bestPts){ best=combo; bestPts=pts; }
-    }
-  }
-  return best;
-}
-function aiDiscard(){
-  const p=ai(), cards=liveCards(p);
-  if(!cards.length){ if(p.inFoot) finishHand(1); else nextTurn(); return; }
-  let c = cards.find(isThree);
-  if(!c){
-    const avoidRanks=new Set(p.melds.map(m=>m.rank));
-    const candidates=cards.filter(x=>!isWild(x) && !avoidRanks.has(x.rank));
-    c=(candidates.length?candidates:cards.filter(x=>!isWild(x)))[0] || cards[0];
-  }
-  removeCards(p,[c]); state.discard.push(c); sound('discard'); cardMoveSound(1);
-  if(!p.inFoot && p.hand.length===0) p.inFoot=true;
-  if(p.inFoot && p.foot.length===0){ finishHand(1); return; }
-  nextTurn();
-}
-function finishHand(winnerIdx){
-  state.handEnded=true;
-  state.players[winnerIdx].wentOut=true;
-  scoreHand();
-  render();
-  showRoundWinner(winnerIdx);
-  if(state.handNo>=4) state.gameOver=true;
-}
-function scoreHand(){
-  state.players.forEach(p=>{
-    let score=0;
-    for(const m of p.melds){
-      score+=m.cards.reduce((s,c)=>s+points(c),0);
-      if(m.booked) score+=m.black?300:500;
-    }
-    for(const c of [...p.hand,...p.foot]){
-      score += isThree(c) ? (isRed(c)?-500:-300) : -points(c);
-    }
-    if(p.wentOut) score+=100;
-    p.handScore=score; p.score+=score;
-  });
-}
-function nextHand(){ if(state.handNo>=4){ showFinalScores(); return; } state.handNo++; resetRoundControls(); dealHand(); }
-function showRoundWinner(winnerIdx){
-  const p0=player(), p1=ai(), handWinner=p0.handScore>=p1.handScore?p0:p1, isGameOver=state.handNo>=4;
+
+function showRoundWinner(playerIndex){
+  const my = state.teams[0];
+  const opp = state.teams[1];
+  const winningTeam = my.handScore >= opp.handScore ? my : opp;
+  const isGameOver = state.handNo >= 4;
   sound('win');
   showModal(`
     <section class="winner-card">
-      <div class="winner-badge">${handWinner===p0?'🏆':'🤖'}</div>
-      <h2>${isGameOver?'Game Complete':`Hand ${state.handNo} Complete`}</h2>
-      <p>${state.players[winnerIdx].name} went out. <b>${handWinner.name}</b> won this hand.</p>
+      <div class="winner-badge">${winningTeam === my ? '🏆' : '🤖'}</div>
+      <h2>${isGameOver ? 'Game Complete' : `Hand ${state.handNo} Complete`}</h2>
+      <p>${state.players[playerIndex].name} went out. <b>${winningTeam.name}</b> won this hand.</p>
       <div class="winner-score">
-        <div>You<strong>${p0.handScore}</strong><small>Total: ${p0.score}</small></div>
-        <div>AI<strong>${p1.handScore}</strong><small>Total: ${p1.score}</small></div>
+        <div>Your Team<strong>${my.handScore}</strong><small>Total: ${my.score}</small></div>
+        <div>Opponents<strong>${opp.handScore}</strong><small>Total: ${opp.score}</small></div>
       </div>
       <p>${isGameOver ? finalWinnerText() : 'Close this window, then press Next Hand when ready.'}</p>
     </section>
   `);
 }
-function finalWinnerText(){ const p0=player(), p1=ai(); if(p0.score===p1.score) return `Final score is tied at ${p0.score}.`; const winner=p0.score>p1.score?p0:p1; return `${winner.name} wins the game, ${p0.score} to ${p1.score}.`; }
+function finalWinnerText(){
+  const my = state.teams[0], opp = state.teams[1];
+  if(my.score === opp.score) return `Final score is tied at ${my.score}.`;
+  const winner = my.score > opp.score ? my : opp;
+  return `${winner.name} wins the game, ${my.score} to ${opp.score}.`;
+}
 
+function finishHand(playerIndex){
+  state.handEnded=true; state.teams[teamOf(playerIndex)].wentOut=true;
+  scoreHand(); render();
+  const winner = state.teams[0].handScore >= state.teams[1].handScore ? state.teams[0] : state.teams[1];
+  message(`${state.players[playerIndex].name} went out. ${winner.name} won this hand.`);
+  $('nextHandBtn').classList.toggle('hidden', state.handNo>=4);
+  showRoundWinner(playerIndex);
+  if(state.handNo>=4) setTimeout(showFinalScores, 600);
+}
+function scoreHand(){
+  state.teams.forEach((t,ti)=>{
+    let score=0;
+    for(const m of t.melds){ score += m.cards.reduce((s,c)=>s+points(c),0); if(m.booked) score += m.black ? bookBonus.black : bookBonus.red; }
+    state.players.forEach((p,pi)=>{ if(teamOf(pi)!==ti) return; for(const c of [...p.hand,...p.foot]) score += isThree(c) ? (isRed(c)?penalty3.red:penalty3.black) : -points(c); });
+    if(t.wentOut) score += 100;
+    t.handScore=score; t.score+=score;
+  });
+}
+function nextHand(){ if(state.handNo>=4) return; state.handNo++; dealHand(); }
+function robotTurn(){
+  if(state.current===0 || state.handEnded) return;
+  const idx=state.current, p=currentPlayer(), team=currentTeam();
+  const take = robotShouldTake(idx);
+  if(take){ const cards=state.discard.splice(Math.max(0,state.discard.length-7)); liveCards(p).push(...cards); cardMoveSound(cards.length); }
+  else drawFor(p,2);
+  state.phase='play';
+  robotPlay(idx);
+  robotDiscard(idx);
+}
+function robotShouldTake(idx){
+  const chk=canTakePile(idx); if(!chk.ok) return false;
+  if(state.difficulty==='easy') return false;
+  if(state.difficulty==='club') return Math.random()<.55;
+  return true;
+}
+function robotPlay(idx){
+  cardMoveSound(1);
+  const p=state.players[idx], team=state.teams[teamOf(idx)];
+  sortCards(liveCards(p));
+  let played=true, safety=0;
+  while(played && safety++<20){
+    played=false;
+    for(const m of team.melds){
+      const cardsNow=[...liveCards(p)];
+      const add=[];
+      for(const c of cardsNow){
+        const wildRoom = m.cards.filter(isWild).length < (m.cards.length - m.cards.filter(isWild).length);
+        if(c.rank===m.rank || (isWild(c) && (m.black || (!m.booked && wildRoom)))) add.push(c);
+      }
+      if(add.length){
+        const use=add.slice(0, state.difficulty==='shark'?3:1);
+        const v=canAddToMeld(use,m);
+        if(v.ok){ removeCards(p,use); m.cards.push(...use); if(use.some(isWild)) m.black=true; if(m.cards.length>=7) m.booked=true; played=true; }
+      }
+    }
+    const candidate=bestRobotSet(liveCards(p),team);
+    if(candidate){
+      const v=validateSet(candidate,team);
+      if(v.ok){ removeCards(p,candidate); team.melds.push({rank:v.rank,cards:[...candidate],black:v.wilds>0,booked:candidate.length>=7}); team.opened=true; played=true; }
+    }
+    checkFoot(p); sortCards(liveCards(p));
+  }
+}
+function bestRobotSet(cards,team){
+  const by={}; for(const c of cards){ if(!isWild(c) && !isThree(c) && meldRanks.includes(c.rank)){ (by[c.rank] ||= []).push(c); } }
+  const wilds=cards.filter(isWild);
+  const ranks=Object.keys(by).sort((a,b)=>by[b].length-by[a].length);
+  for(const r of ranks){
+    if(team.melds.some(m=>m.rank===r)) continue;
+    const naturals=by[r]; if(naturals.length<3 && state.difficulty==='easy') continue;
+    const use=[...naturals];
+    if(state.difficulty!=='easy' && use.length>=2 && wilds.length) use.push(...wilds.slice(0,Math.min(wilds.length,use.length)));
+    if(use.length>=3){ const pts=use.reduce((s,c)=>s+points(c),0); if(team.opened || pts>=openMinimums[state.handNo-1]) return use; }
+  }
+  return null;
+}
+function robotDiscard(idx){
+  cardMoveSound(1);
+  const p=state.players[idx], cards=liveCards(p); if(!cards.length){ finishHand(idx); return; }
+  let choice = cards.find(isThree);
+  if(!choice){
+    const team=state.teams[teamOf(idx)], opp=state.teams[1-teamOf(idx)];
+    const danger=new Set(opp.melds.map(m=>m.rank));
+    choice=[...cards].reverse().find(c=>!isWild(c) && !danger.has(c.rank)) || cards.find(c=>!isWild(c)) || cards[0];
+  }
+  removeCards(p,[choice]); state.discard.push(choice);
+  if(!p.inFoot && p.hand.length===0) p.inFoot=true;
+  if(p.inFoot && p.foot.length===0){ finishHand(idx); return; }
+  nextTurn();
+}
+function maybeRobotTurn(){ if(state.current!==0 && !state.handEnded) setTimeout(robotTurn, 550); }
+function cardHtml(c, selected=false){
+  if(!c) return `<div class="card back"></div>`;
+  return `<button class="card ${colorClass(c)}${selected?' selected':''}" data-card="${c.id}" title="${c.rank}${c.suit}"><span>${c.rank}</span><span class="suit">${c.suit}</span><span class="bottom">${c.rank}</span></button>`;
+}
+function renderMeld(m, i, teamIndex){
+  const tag = m.booked ? (m.black?'BLACK BOOK':'RED BOOK') : (m.black?'BLACK SET':'RED SET');
+  const cls = m.booked ? (m.black?'black-book':'red-book') : (m.black?'dirty':'');
+  const suit = m.black ? '♣' : '♥';
+  const selectable = teamIndex===0 && state.current===0 && state.phase==='play';
+  return `<button class="meld ${cls}${selectable?' selectable':''}" data-meld="${i}"><div>${m.rank}</div><div class="m-suit">${suit}</div><div class="m-count">${m.cards.length}</div><div class="m-tag">${tag}</div></button>`;
+}
 
-function togglePeekMelds(){
-  document.body.classList.toggle('peek-melds');
-  const btn = $('peekMeldsBtn');
-  if(btn) btn.textContent = document.body.classList.contains('peek-melds') ? 'Show Hand' : 'Peek Melds';
+function updateHumanStatsDisplay(){
+  const p = state.players[0];
+  const handMode = $('handMode');
+  const cardsLeft = $('cardsLeft');
+  if(handMode && p){
+    handMode.textContent = `${p.inFoot ? 'Foot' : 'Hand'} · ${liveCards(p).length} cards · ${playerMeldCount(0)} melds`;
+  }
+  if(cardsLeft) cardsLeft.textContent = '';
 }
 
 function render(){
-  if(!$('game')) return;
-  $('roundBadge').textContent=`Hand ${state.handNo} · Open ${openingMinimum()}`;
-  $('stockCount').textContent=state.stock.length;
-  renderScores(); renderAiStatus(); renderPile(); renderMelds(); renderHand(); renderButtons();
-  $('turnName').textContent=state.current===0?'Your Turn':'AI Turn';
-}
-function renderScores(){
-  const p0=state.players[0], p1=state.players[1];
-  $('scoreBadges').innerHTML = state.players.length ? `
-    <div class="score-chip ${state.current===0?'active':''}">You: ${p0.score}</div>
-    <div class="score-chip ${state.current===1?'active':''}">AI: ${p1.score}</div>` : '';
-}
-function renderAiStatus(){
-  const p=ai();
-  if(!p){ $('aiStatus').innerHTML=''; return; }
-  $('aiStatus').classList.toggle('active',state.current===1);
-  $('aiStatus').innerHTML=`<strong>🤖 ${p.name}<span class="mode-pill">${p.inFoot?'FOOT':'HAND'}</span></strong><span>${p.inFoot?'FOOT':'HAND'} • ${liveCards(p).length} card${liveCards(p).length===1?'':'s'} • ${p.melds.length} meld${p.melds.length===1?'':'s'}</span>`;
-}
-function renderPile(){
-  const top=topDiscard(), el=$('discardPileBtn');
-  if(!top){ el.innerHTML=''; return; }
-  el.innerHTML=cardHTML(top,false);
-}
-function renderMelds(){
-  renderMeldZone('playerMelds',player(),true);
-  renderMeldZone('aiMelds',ai(),false);
-}
-function renderMeldZone(id,p,selectable){
-  $(id).innerHTML=p.melds.map((m,i)=>{
-    const book=m.cards.length>=7 || m.booked; m.booked=book;
-    const cleanDirtyCls = m.black ? 'dirty-meld' : 'clean-meld';
-    const cls=book?(m.black?'black-book':'red-book'):(m.black?'dirty':'clean');
-    return `<button class="meld ${cls} ${cleanDirtyCls} ${selectable?'selectable':''}" data-meld="${i}">
-      <div>${m.rank}</div><div class="m-suit">${m.black?'★':'◆'}</div><div class="m-count">${m.cards.length}</div><div class="m-tag">${book?(m.black?'DIRTY BOOK':'CLEAN BOOK'):(m.black?'DIRTY SET':'CLEAN SET')}</div>
-    </button>`;
+  setTimeout(updateHumanStatsDisplay,0);
+  $('roundBadge').textContent = `Hand ${state.handNo} · Meld ${openMinimums[state.handNo-1]}`;
+  $('scoreBadges').innerHTML = state.teams.map((t,i)=>`<span class="score-chip ${teamOf(state.current)===i?'active':''}">${t.name}: ${t.score}</span>`).join('');
+  $('opponentStrip').innerHTML = state.players.slice(1).map((p,offset)=>{
+    const idx=offset+1, count=liveCards(p).length;
+    return `<div class="mini-player ${idx===state.current?'active':''}"><strong>${p.name}</strong><span>${p.inFoot?'Foot':'Hand'} · ${count}</span><div class="mini-card-stack">${Array.from({length:Math.min(6,count)},()=>'<i class="mini-card"></i>').join('')}</div></div>`;
   }).join('');
-  if(selectable){
-    document.querySelectorAll('#playerMelds .meld').forEach(b=>b.onclick=()=>{ state.selectedMeld=Number(b.dataset.meld); message(`Selected ${player().melds[state.selectedMeld].rank}s. Choose cards and press Add.`); });
+  $('team0Melds').innerHTML = state.teams[0].melds.map((m,i)=>renderMeld(m,i,0)).join('') || '<p class="muted">No melds yet.</p>';
+  $('team1Melds').innerHTML = state.teams[1].melds.map((m,i)=>renderMeld(m,i,1)).join('') || '<p class="muted">No melds yet.</p>';
+  const p=state.players[0]; $('handMode').textContent = `${state.players[0].inFoot ? 'Foot' : 'Hand'} · ${liveCards(state.players[0]).length} cards · ${playerMeldCount(0)} melds`; $('cardsLeft').textContent = '';
+  $('humanCards').innerHTML = liveCards(p).map(c=>cardHtml(c,state.selected.has(c.id))).join('');
+  $('stockCount').textContent=state.stock.length;
+  const top=topDiscard(); $('discardPileBtn').innerHTML = top ? `<div class="card ${colorClass(top)}"><span>${top.rank}</span><span class="suit">${top.suit}</span><span class="bottom">${top.rank}</span></div><small>${state.discard.length}</small>` : '';
+  $('turnName').textContent = state.handEnded ? 'Hand Complete' : state.current===0 ? 'Your Turn' : `${currentPlayer().name}'s Turn`;
+  bindClicks(); updateActions();
+}
+function updateActions(){
+  const humanTurn=state.current===0 && !state.handEnded;
+  $('drawBtn').disabled=!(humanTurn && state.phase==='draw'); $('discardPileBtn').disabled=!(humanTurn && state.phase==='draw');
+  $('setBtn').disabled=!(humanTurn && state.phase==='play'); $('addBtn').disabled=!(humanTurn && state.phase==='play'); $('discardBtn').disabled=!(humanTurn && state.phase==='play');
+  $('goOutBtn').disabled=!(humanTurn && canGoOut(0).ok);
+}
+function bindClicks(){
+  document.querySelectorAll('[data-card]').forEach(btn=>btn.onclick=()=>{ if(state.current!==0 || state.handEnded) return; const id=btn.dataset.card; state.selected.has(id)?state.selected.delete(id):state.selected.add(id); render(); });
+  document.querySelectorAll('[data-meld]').forEach(btn=>btn.onclick=()=>{ state.selectedMeld=Number(btn.dataset.meld); message('Meld selected. Choose cards, then press Add.'); render(); });
+}
+function sortHuman(){ sortCards(liveCards(state.players[0])); render(); }
+function clearSelection(){ state.selected.clear(); state.selectedMeld=null; render(); }
+function showModal(html){
+  const modal = $('modal');
+  const body = $('modalBody');
+  if(!modal || !body) return;
+  body.innerHTML = html;
+  try{
+    if(modal.open) modal.close();
+    modal.showModal();
+  }catch(e){
+    modal.setAttribute('open','');
   }
 }
-function renderHand(){
-  const p=player(), cards=liveCards(p);
-  $('handMode').textContent=p.inFoot?'FOOT':'HAND';
-  $('cardsLeft').textContent=`${cards.length} card${cards.length===1?'':'s'}`;
-  $('humanCards').innerHTML=cards.map(c=>cardHTML(c,true)).join('');
-  document.querySelectorAll('#humanCards .card').forEach(el=>el.onclick=()=>{
-    const id=el.dataset.id;
-    if(state.selected.has(id)) state.selected.delete(id); else state.selected.add(id);
-    renderHand();
-    if(state.current===0 && state.phase==='draw'){
-      message('Cards selected. Draw 2 or Take 7 first. Then Set, Add, and Discard unlock.');
-    }
-  });
-}
-function cardHTML(c,clickable){
-  const red=isRed(c), wild=isWild(c);
-  const cls=red?'red':wild?'wild':'';
-  const selected=clickable && state.selected.has(c.id)?'selected':'';
-  const r=c.rank==='JK'?'JK':c.rank, s=c.rank==='JK'?'★':c.suit;
-  return `<div class="card ${cls} ${selected}" data-id="${c.id}"><div>${r}<br>${s}</div><div class="suit">${s}</div><div class="bottom">${r}<br>${s}</div></div>`;
-}
-function renderButtons(){
-  const humanTurn = state.current===0 && !state.handEnded;
-  const canDraw = humanTurn && state.phase==='draw';
-  const canPlay = humanTurn && state.phase==='play';
-
-  if($('drawBtn')) $('drawBtn').disabled = !canDraw;
-  if($('discardPileBtn')) $('discardPileBtn').disabled = !canDraw;
-
-  ['setBtn','addBtn','discardBtn'].forEach(id=>{
-    const b = $(id);
-    if(b) b.disabled = !canPlay;
-  });
-
-  const next = $('nextHandBtn');
-  if(next){
-    const showNext = state.handEnded && state.handNo < 4;
-    next.classList.toggle('hidden', !showNext);
-    next.disabled = !showNext;
-  }
-}
-function clearSelection(){ state.selected.clear(); state.selectedMeld=null; renderHand(); }
-function showModal(html){ const modal=$('modal'), body=$('modalBody'); if(!modal||!body) return; body.innerHTML=html; try{ if(modal.open) modal.close(); modal.showModal(); }catch(e){ modal.setAttribute('open',''); } }
 function showRules(){
   sound('click');
   showModal(`
-    <section class="rules-panel readable-rules">
+    <section class="rules-panel">
       <div class="rules-hero">
         <div class="rules-hero-icon">🃏</div>
         <div>
-          <h2>How to Play</h2>
-          <p>Hand Over Foot is inspired by Hand and Foot Canasta, a Rummy-family card game. This version is a clean Player vs AI game.</p>
+          <h2>Hand Over Foot Rules</h2>
+          <p>Build team sets, complete red and black books, then empty your hand and foot before the other team.</p>
         </div>
       </div>
 
       <div class="rules-grid">
-        <article class="rule-card">
-          <h3>🎯 Goal</h3>
-          <p>Make melds, build books, empty your Hand, then empty your Foot. Highest score after four hands wins.</p>
-        </article>
-
-        <article class="rule-card">
-          <h3>🔄 Your Turn</h3>
-          <ol>
-            <li>Draw 2 cards or Take 7 from the discard pile.</li>
-            <li>Set new melds or add to existing melds.</li>
-            <li>Discard 1 card to end your turn.</li>
-          </ol>
-        </article>
-
         <article class="rule-card">
           <h3>🎯 Opening Meld</h3>
           <table class="opening-table">
@@ -543,312 +491,223 @@ function showRules(){
         </article>
 
         <article class="rule-card">
+          <h3>🔄 Your Turn</h3>
+          <ul>
+            <li>Draw 2 from the stock, or take up to 7 from discard.</li>
+            <li>To take discard, you need 2 natural cards matching the top card.</li>
+            <li>You cannot take a pile topped by a 3 or wild card.</li>
+          </ul>
+        </article>
+
+        <article class="rule-card">
           <h3>📚 Sets & Books</h3>
           <ul>
-            <li>Sets need 3 or more cards of the same rank, 4 through Ace.</li>
+            <li>Sets need 3+ cards of the same rank, 4 through Ace.</li>
             <li>2s and Jokers are wild.</li>
-            <li>3s cannot be melded.</li>
             <li>7 cards completes a book.</li>
+            <li>Clean red books score 500. Black books score 300.</li>
           </ul>
         </article>
 
         <article class="rule-card">
+          <h3>👣 Foot & Going Out</h3>
+          <ul>
+            <li>Each player gets 11 hand cards and 11 foot cards.</li>
+            <li>Empty your hand to pick up your foot.</li>
+            <li>Empty your foot to end the hand and score the round.</li>
+          </ul>
+        </article>
+
+        <article class="rule-card full">
           <h3>💰 Scoring</h3>
-          <ul>
-            <li>3 through 9 = 5 points</li>
-            <li>10, Jack, Queen, King = 10 points</li>
-            <li>Aces and 2s = 20 points</li>
-            <li>Jokers = 50 points</li>
-          </ul>
-        </article>
-
-        <article class="rule-card">
-          <h3>⚠️ Penalties</h3>
-          <ul>
-            <li>Black 3 left in Hand or Foot = -300</li>
-            <li>Red 3 left in Hand or Foot = -500</li>
-          </ul>
-        </article>
-
-        <article class="rule-card full">
-          <h3>📜 Open Source</h3>
-          <p>This project is open source under the MIT “as is” license. You may use it freely to study, remix, or develop your own creations.</p>
-          <p><a class="github-link" href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">View the Hand Over Foot GitHub repository</a></p>
+          <p><b>4–7:</b> 5 points · <b>8–K:</b> 10 · <b>A/2:</b> 20 · <b>Jokers:</b> 50</p>
+          <p><b>Penalty:</b> Black 3s left in hand/foot are −300. Red 3s are −500.</p>
         </article>
       </div>
 
-      <div class="rules-tip"><b>Tip:</b> New cards from Draw 2 or Take 7 appear at the far right of your hand so you can see what you just received before using Sort.</div>
+      <div class="rules-tip"><b>Tip:</b> Your first meld can combine multiple legal sets. Four Kings plus four Aces can open a 90-point hand because the total counts together.</div>
     </section>
   `);
 }
-
 function showScores(){
-  sound('click');
-  const p0=state.players[0]||{score:0,handScore:0,name:'You'}, p1=state.players[1]||{score:0,handScore:0,name:'AI'};
-  showModal(`<section class="rules-panel"><div class="rules-hero"><div class="rules-hero-icon">🏆</div><div><h2>Scores</h2><p>Current hand and game totals.</p></div></div><article class="rule-card full"><table class="opening-table"><tr><th>Player</th><th>Hand</th><th>Total</th></tr><tr><td>You</td><td>${p0.handScore}</td><td>${p0.score}</td></tr><tr><td>AI</td><td>${p1.handScore}</td><td>${p1.score}</td></tr></table></article></section>`);
+  openModal(`<h2>Scores</h2><p><b>${state.teams[0]?.name || 'Your Team'}:</b> ${state.teams[0]?.score || 0}</p><p><b>${state.teams[1]?.name || 'Opponents'}:</b> ${state.teams[1]?.score || 0}</p><p>Scores appear after each completed hand.</p>`);
 }
-function showSettings(){
-  sound('click');
-  showModal(`
-    <section class="settings-grid">
-      <div class="rules-hero"><div class="rules-hero-icon">⚙️</div><div><h2>Settings</h2><p>Adjust subtle game sounds.</p></div></div>
-      <article class="setting-card"><h3>🔊 Audio</h3><label class="toggle-pill"><input type="checkbox" id="audioToggle" ${state.audioOn?'checked':''}> Subtle sound effects</label><div class="audio-row"><span>Volume</span><input type="range" id="audioVolume" min="0" max="1" step="0.05" value="${state.audioVolume??.7}"></div></article>
-    </section>`);
-  setTimeout(()=>{ const t=$('audioToggle'), v=$('audioVolume'); if(t) t.onchange=()=>{setAudio(t.checked); sound('click');}; if(v) v.oninput=()=>{setVolume(v.value); sound('click');}; },0);
-}
-function showFinalScores(){ showScores(); }
-
-
-
-function buildGameSaveData(){
-  const safeState = {
-    app: 'Hand Over Foot',
-    version: '4.7.0',
-    savedAt: new Date().toISOString(),
-    handNo: state.handNo,
-    currentTurn: state.current===0 ? 'You' : 'AI Opponent',
-    phase: state.phase,
-    difficulty: state.difficulty,
-    requireBooks: state.requireBooks,
-    handEnded: state.handEnded,
-    gameOver: state.gameOver,
-    stockCount: state.stock ? state.stock.length : 0,
-    discardTop: topDiscard() ? cardLabel(topDiscard()) : null,
-    discardCount: state.discard ? state.discard.length : 0,
-    players: (state.players || []).map(p => ({
-      name: p.name,
-      score: p.score,
-      handScore: p.handScore,
-      mode: p.inFoot ? 'FOOT' : 'HAND',
-      activeCardCount: liveCards(p).length,
-      handCount: p.hand.length,
-      footCount: p.foot.length,
-      opened: p.opened,
-      wentOut: p.wentOut,
-      melds: p.melds.map(m => ({
-        rank: m.rank,
-        cardCount: m.cards.length,
-        type: m.black ? 'DIRTY' : 'CLEAN',
-        booked: !!m.booked
-      }))
-    }))
-  };
-  return safeState;
+function showFinalScores(){ const t0=state.teams[0], t1=state.teams[1]; openModal(`<h2>Game Complete</h2><p><b>${t0.name}:</b> ${t0.score}</p><p><b>${t1.name}:</b> ${t1.score}</p><h3>${t0.score>=t1.score?'Your team wins!':'Opponents win.'}</h3>`); }
+function openModal(html){ $('modalBody').innerHTML=html; $('modal').showModal(); }
+function hint(){
+  if(state.current!==0){ message('Wait for your turn.'); return; }
+  if(state.phase==='draw'){ const chk=canTakePile(0); message(chk.ok ? 'You can take the discard pile if you want those cards.' : 'Best move: draw 2. ' + chk.reason); return; }
+  const cards=liveCards(state.players[0]); const team=state.teams[0]; const candidate=bestRobotSet(cards,team); if(candidate){ message(`Hint: you can make a set with ${candidate.map(c=>c.rank+c.suit).join(', ')}.`); } else { message('Hint: add to existing melds if possible, then discard a 3 or a low card.'); }
 }
 
-function cardLabel(c){
-  if(!c) return '';
-  return c.rank === 'JK' ? 'Joker' : `${c.rank}${c.suit}`;
-}
 
-function buildGameSaveText(){
-  const data = buildGameSaveData();
-  return JSON.stringify(data, null, 2);
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
 }
-
-function saveGameToFile(){
-  sound('click');
-  const text = buildGameSaveText();
-  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
-  const stamp = new Date().toISOString().replace(/[:.]/g,'-');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `hand-over-foot-save-${stamp}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
-  message('Game state saved to a text file.');
-}
-
-async function copyGameToClipboard(){
-  sound('click');
-  const text = buildGameSaveText();
+function tone(freq=440, duration=.08, type='sine', gain=.08){
+  if(!state.audioOn) return;
   try{
-    await navigator.clipboard.writeText(text);
-    message('Game state copied to clipboard.');
-    showModal(`
-      <section class="menu-panel">
-        <div class="rules-hero">
-          <div class="rules-hero-icon">📋</div>
-          <div>
-            <h2>Copied to Clipboard</h2>
-            <p>Your current game state was copied as text.</p>
-          </div>
-        </div>
-      </section>
-    `);
-  }catch(e){
-    showModal(`
-      <section class="menu-panel">
-        <div class="rules-hero">
-          <div class="rules-hero-icon">📋</div>
-          <div>
-            <h2>Copy Manually</h2>
-            <p>Your browser blocked automatic clipboard access. Select the text below and copy it manually.</p>
-          </div>
-        </div>
-        <textarea class="save-textarea" readonly>${escapeHTML(text)}</textarea>
-      </section>
-    `);
-    const box = document.querySelector('.save-textarea');
-    if(box){ box.focus(); box.select(); }
-  }
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    const vol = Math.max(0, Math.min(1, state.audioVolume ?? .55));
+    g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(gain * vol, audioCtx.currentTime + .015);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.connect(g).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration + .02);
+  }catch(e){}
 }
 
-function escapeHTML(s){
-  return String(s).replace(/[&<>"']/g, ch => ({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-  }[ch]));
-}
+function sound(name){
+  if(!state.audioOn) return;
+  try{
+    ensureAudio();
+    const now = audioCtx.currentTime;
+    const vol = Math.max(0, Math.min(1, state.audioVolume ?? .55));
 
-
-function showGameMenu(){
-  sound('click');
-  showModal(`
-    <section class="menu-panel">
-      <div class="rules-hero">
-        <div class="rules-hero-icon">☰</div>
-        <div>
-          <h2>Menu</h2>
-          <p>Game options, rules, settings, and source code.</p>
-        </div>
-      </div>
-      <div class="menu-actions">
-        <button type="button" data-menu-action="scores">Scoreboard</button>
-        <button type="button" data-menu-action="rules">Game Rules</button>
-        <button type="button" data-menu-action="about">About Hand Over Foot</button>
-        <a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">GitHub Repository</a>
-        <button type="button" data-menu-action="settings">Audio Settings</button>
-        <button type="button" data-menu-action="save-file">Save to File</button>
-        <button type="button" data-menu-action="copy-clipboard">Copy to Clipboard</button>
-      </div>
-    </section>
-  `);
-
-  document.querySelectorAll('[data-menu-action]').forEach(btn=>{
-    btn.onclick=()=>{
-      const action = btn.dataset.menuAction;
-      const modal = $('modal');
-      if(modal && modal.open) modal.close();
-
-      if(action==='scores') showScores();
-      else if(action==='rules') showRules();
-      else if(action==='about') showAbout();
-      else if(action==='settings') showSettings();
-      else if(action==='save-file') saveGameToFile();
-      else if(action==='copy-clipboard') copyGameToClipboard();
+    const play = (freq, dur, type='triangle', gain=.055, delay=0) => {
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, now + delay);
+      g.gain.exponentialRampToValueAtTime(gain * vol, now + delay + .015);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + delay + dur);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + dur + .03);
     };
-  });
-}
 
-function showAbout(){
-  sound('click');
-  showModal(`
-    <section class="rules-panel readable-rules">
-      <div class="rules-hero">
-        <div class="rules-hero-icon">🃏</div>
-        <div>
-          <h2>About Hand Over Foot</h2>
-          <p>A free browser-based Rummy-family card game inspired by Hand and Foot Canasta.</p>
-        </div>
-      </div>
-      <div class="rules-grid">
-        <article class="rule-card full">
-          <h3>About the Game</h3>
-          <p>Hand Over Foot is a single-player Player vs AI card game with three difficulty levels, clean/dirty meld tracking, tablet and phone layouts, and an MIT “as is” open-source license.</p>
-        </article>
-        <article class="rule-card full">
-          <h3>About the Developer</h3>
-          <p>Created by David Fliesen, a Hybrid AI / Multimedia Developer exploring AI-assisted coding, interactive media, web apps, comics, and creative production workflows.</p>
-          <p><a class="github-link" href="https://davidfliesen.github.io/" target="_blank" rel="noopener">Portfolio</a></p>
-        </article>
-        <article class="rule-card full">
-          <h3>Open Source</h3>
-          <p>Use this project freely to study, remix, or develop your own creations under the MIT “as is” license.</p>
-          <p><a class="github-link" href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">View the GitHub Repository</a></p>
-        </article>
-      </div>
-    </section>
-  `);
-}
-
-function showPauseMenu(){
-  sound('click');
-  showModal(`
-    <section class="menu-panel">
-      <div class="rules-hero">
-        <div class="rules-hero-icon">⏸</div>
-        <div>
-          <h2>Pause Game</h2>
-          <p>Your current game is still here. Resume to keep playing, or quit to return to the opening screen.</p>
-        </div>
-      </div>
-      <div class="pause-actions">
-        <button class="resume-btn" type="button" onclick="document.getElementById('modal').close()">Resume</button>
-        <button class="quit-btn" type="button" onclick="window.hofQuitGame && window.hofQuitGame()">Quit Game</button>
-      </div>
-    </section>
-  `);
-}
-
-function quitGame(){
-  const modal = $('modal');
-  if(modal && modal.open) modal.close();
-  show('home');
-}
-
-function updateFullscreenButton(){
-  const btn = $('fullscreenBtn');
-  if(!btn) return;
-  btn.textContent = document.fullscreenElement ? '−' : '□';
-  btn.title = document.fullscreenElement ? 'Leave full screen' : 'Full screen';
-}
-
-async function toggleFullscreen(){
-  sound('click');
-  try{
-    if(!document.fullscreenElement){
-      await document.documentElement.requestFullscreen();
-    }else{
-      await document.exitFullscreen();
+    if(name === 'click'){
+      play(700,.025,'sine',.018);
     }
-  }catch(e){
-    message('Full screen mode is not available in this browser.');
+
+    if(name === 'draw'){
+      play(180,.05,'triangle',.025);
+      play(240,.045,'triangle',.02,.045);
+    }
+
+    if(name === 'meld'){
+      play(392,.08,'sine',.025);
+      play(523,.11,'sine',.03,.07);
+      play(659,.13,'sine',.03,.14);
+    }
+
+    if(name === 'discard'){
+      play(160,.045,'triangle',.022);
+    }
+
+    if(name === 'error'){
+      play(140,.08,'sawtooth',.018);
+    }
+
+    if(name === 'win'){
+      play(392,.12,'sine',.03);
+      play(523,.16,'sine',.035,.12);
+      play(659,.22,'sine',.04,.26);
+      play(784,.28,'sine',.045,.46);
+    }
+  }catch(e){}
+}
+
+function setAudio(on){
+  state.audioOn = !!on;
+  try{ localStorage.setItem('hofAudioOn', state.audioOn ? '1':'0'); }catch(e){}
+}
+function cardMoveSound(count=1){
+  if(!state.audioOn) return;
+  const n = Math.min(6, Math.max(1, count || 1));
+  for(let i=0;i<n;i++){
+    setTimeout(()=>sound('move'), i*55);
   }
-  updateFullscreenButton();
+}
+function setVolume(v){
+  state.audioVolume = Math.max(0, Math.min(1, Number(v)));
+  try{ localStorage.setItem('hofAudioVolume', String(state.audioVolume)); }catch(e){}
+}
+function loadAudioPrefs(){
+  try{
+    const on = localStorage.getItem('hofAudioOn');
+    const vol = localStorage.getItem('hofAudioVolume');
+    if(on !== null) state.audioOn = on === '1';
+    if(vol !== null && !Number.isNaN(Number(vol))) state.audioVolume = Number(vol);
+  }catch(e){}
+}
+
+function applyZoom(){
+  const clamped = Math.max(.7, Math.min(1.45, state.zoom || 1));
+  state.zoom = clamped;
+  document.documentElement.style.setProperty('--zoom', clamped.toFixed(2));
+  const zl = $('zoomLevel');
+  if(zl) zl.textContent = Math.round(clamped*100) + '%';
+}
+function zoomBy(delta){
+  state.zoom = Math.max(.7, Math.min(1.45, (state.zoom || 1) + delta));
+  applyZoom();
 }
 
 function init(){
-  if($('menuBtn')) $('menuBtn').onclick=showGameMenu;
-  if($('fullscreenBtn')) $('fullscreenBtn').onclick=toggleFullscreen;
-  document.addEventListener('fullscreenchange', updateFullscreenButton);
-  updateFullscreenButton();
+  loadAudioPrefs();
 
-  loadAudioPrefs(); applyZoom();
-  $('playAiBtn').onclick=startSetup;
-  $('rulesBtn').onclick=showRules;
-  $('scoresBtn').onclick=showScores;
-  $('settingsBtn').onclick=showSettings;
-  $('dealBtn').onclick=startGame;
+  const playAiBtn = $('playAiBtn');
+  const playHumanBtn = $('playHumanBtn');
+  const playBtn = $('playBtn');
+  const settingsBtn = $('settingsBtn');
+  const rulesBtn = $('rulesBtn');
+  const scoresBtn = $('scoresBtn');
+  const dealBtn = $('dealBtn');
+  const copyInviteBtn = $('copyInviteBtn');
+  const inviteLink = $('inviteLink');
+
+  if(playAiBtn) playAiBtn.onclick = () => { sound('click'); startSetup('ai'); };
+  if(playHumanBtn) playHumanBtn.onclick = () => { sound('click'); startSetup('pvp'); };
+  if(playBtn) playBtn.onclick = () => { sound('click'); startSetup('ai'); };
+  if(settingsBtn) settingsBtn.onclick = showSettings;
+  if(rulesBtn) rulesBtn.onclick = showRules;
+  if(scoresBtn) scoresBtn.onclick = showScores;
+  if(dealBtn) dealBtn.onclick = startGame;
+
+  if(copyInviteBtn) copyInviteBtn.onclick = async () => {
+    const link = inviteLink?.value || (location.origin + location.pathname + '?mode=pvp');
+    try {
+      await navigator.clipboard.writeText(link);
+      copyInviteBtn.textContent = 'Copied!';
+      setTimeout(() => copyInviteBtn.textContent = 'Copy Link', 1200);
+    } catch {
+      if(inviteLink){
+        inviteLink.focus();
+        inviteLink.select();
+        document.execCommand('copy');
+      }
+    }
+  };
+
   document.querySelectorAll('[data-nav="home"]').forEach(b=>b.onclick=()=>show('home'));
   document.querySelectorAll('input[name="ai"]').forEach(i=>i.onchange=()=>document.querySelectorAll('.choice').forEach(l=>l.classList.toggle('checked', l.querySelector('input').checked)));
-  $('drawBtn').onclick=drawTwo;
-  $('discardPileBtn').onclick=takePile;
-  $('setBtn').onclick=makeSet;
-  $('addBtn').onclick=addToMeld;
-  $('discardBtn').onclick=discardSelected;
-  $('sortBtn').onclick=manualSortHand;
-  $('clearBtn').onclick=clearSelection;
-  $('nextHandBtn').onclick=nextHand;
-  $('zoomOutBtn').onclick=()=>zoomBy(-.1);
-  $('zoomInBtn').onclick=()=>zoomBy(.1);
-  if($('peekMeldsBtn')) $('peekMeldsBtn').onclick=togglePeekMelds;
-  $('closeModal').onclick=()=>$('modal').close();
+
+  if($('drawBtn')) $('drawBtn').onclick=drawTwo;
+  if($('discardPileBtn')) $('discardPileBtn').onclick=takePile;
+  if($('setBtn')) $('setBtn').onclick=makeSet;
+  if($('addBtn')) $('addBtn').onclick=addToMeld;
+  if($('discardBtn')) $('discardBtn').onclick=discardSelected;
+  if($('goOutBtn')) $('goOutBtn').onclick=goOutClick;
+  if($('sortBtn')) $('sortBtn').onclick=sortHuman;
+  if($('clearBtn')) $('clearBtn').onclick=clearSelection;
+  if($('nextHandBtn')) $('nextHandBtn').onclick=nextHand;
+  if($('zoomOutBtn')) $('zoomOutBtn').onclick=()=>zoomBy(-.1);
+  if($('zoomInBtn')) $('zoomInBtn').onclick=()=>zoomBy(.1);
+  applyZoom();
+
+  if($('closeModal')) $('closeModal').onclick=()=>$('modal').close();
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && $('modal')?.open) $('modal').close();
+  });
 }
 document.addEventListener('DOMContentLoaded', init);
 })();
