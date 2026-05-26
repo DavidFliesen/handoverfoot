@@ -69,7 +69,7 @@ function startSetup(mode='ai'){
 }
 function startGame(){
   state.difficulty = document.querySelector('input[name="ai"]:checked')?.value || 'club';
-  state.askPartner = $('askPartner').checked;
+  state.askPartner = $('askPartner') ? $('askPartner').checked : false;
   state.requireBooks = $('requireBooks').checked;
   state.handNo=1; state.current=0; state.gameEnded=false;
   state.players = [makePlayer('You',false), makePlayer('AI Opponent')];
@@ -265,7 +265,7 @@ function canGoOut(playerIndex){
 }
 function goOutClick(){
   const chk=canGoOut(0); if(!chk.ok){ message(chk.reason); return; }
-  if(state.askPartner && !partnerApproves()){ message('Robot Partner says: wait if you can. Build one more book first.'); return; }
+  if(state.askPartner && $('askPartner') && !partnerApproves()){ message('Robot Partner says: wait if you can. Build one more book first.'); return; }
   finishHand(0);
 }
 function partnerApproves(){ const team=state.teams[0]; return team.melds.filter(m=>m.booked).length>=2 || liveCards(state.players[2]).length<8; }
