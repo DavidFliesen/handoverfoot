@@ -642,3 +642,19 @@ button{font:inherit;cursor:pointer}
   width:18px;
   height:2px;
 }
+
+
+/* v4.7.0 save/copy text options */
+.save-textarea{
+  width:100%;
+  min-height:260px;
+  resize:vertical;
+  border-radius:14px;
+  border:2px solid rgba(255,223,116,.55);
+  background:rgba(0,0,0,.45);
+  color:#fff7e6;
+  padding:12px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  font-size:.86rem;
+  line-height:1.45;
+}

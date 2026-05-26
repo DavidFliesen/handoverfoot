@@ -464,7 +464,7 @@ function renderMeldZone(id,p,selectable){
 function renderHand(){
   const p=player(), cards=liveCards(p);
   $('handMode').textContent=p.inFoot?'FOOT':'HAND';
-  $('cardsLeft').textContent=`${p.inFoot?'FOOT':'HAND'} • ${cards.length} card${cards.length===1?'':'s'} • ${p.melds.length} meld${p.melds.length===1?'':'s'}`;
+  $('cardsLeft').textContent=`${cards.length} card${cards.length===1?'':'s'}`;
   $('humanCards').innerHTML=cards.map(c=>cardHTML(c,true)).join('');
   document.querySelectorAll('#humanCards .card').forEach(el=>el.onclick=()=>{
     const id=el.dataset.id;
@@ -599,6 +599,114 @@ function showSettings(){
 function showFinalScores(){ showScores(); }
 
 
+
+function buildGameSaveData(){
+  const safeState = {
+    app: 'Hand Over Foot',
+    version: '4.7.0',
+    savedAt: new Date().toISOString(),
+    handNo: state.handNo,
+    currentTurn: state.current===0 ? 'You' : 'AI Opponent',
+    phase: state.phase,
+    difficulty: state.difficulty,
+    requireBooks: state.requireBooks,
+    handEnded: state.handEnded,
+    gameOver: state.gameOver,
+    stockCount: state.stock ? state.stock.length : 0,
+    discardTop: topDiscard() ? cardLabel(topDiscard()) : null,
+    discardCount: state.discard ? state.discard.length : 0,
+    players: (state.players || []).map(p => ({
+      name: p.name,
+      score: p.score,
+      handScore: p.handScore,
+      mode: p.inFoot ? 'FOOT' : 'HAND',
+      activeCardCount: liveCards(p).length,
+      handCount: p.hand.length,
+      footCount: p.foot.length,
+      opened: p.opened,
+      wentOut: p.wentOut,
+      melds: p.melds.map(m => ({
+        rank: m.rank,
+        cardCount: m.cards.length,
+        type: m.black ? 'DIRTY' : 'CLEAN',
+        booked: !!m.booked
+      }))
+    }))
+  };
+  return safeState;
+}
+
+function cardLabel(c){
+  if(!c) return '';
+  return c.rank === 'JK' ? 'Joker' : `${c.rank}${c.suit}`;
+}
+
+function buildGameSaveText(){
+  const data = buildGameSaveData();
+  return JSON.stringify(data, null, 2);
+}
+
+function saveGameToFile(){
+  sound('click');
+  const text = buildGameSaveText();
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const stamp = new Date().toISOString().replace(/[:.]/g,'-');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `hand-over-foot-save-${stamp}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  message('Game state saved to a text file.');
+}
+
+async function copyGameToClipboard(){
+  sound('click');
+  const text = buildGameSaveText();
+  try{
+    await navigator.clipboard.writeText(text);
+    message('Game state copied to clipboard.');
+    showModal(`
+      <section class="menu-panel">
+        <div class="rules-hero">
+          <div class="rules-hero-icon">📋</div>
+          <div>
+            <h2>Copied to Clipboard</h2>
+            <p>Your current game state was copied as text.</p>
+          </div>
+        </div>
+      </section>
+    `);
+  }catch(e){
+    showModal(`
+      <section class="menu-panel">
+        <div class="rules-hero">
+          <div class="rules-hero-icon">📋</div>
+          <div>
+            <h2>Copy Manually</h2>
+            <p>Your browser blocked automatic clipboard access. Select the text below and copy it manually.</p>
+          </div>
+        </div>
+        <textarea class="save-textarea" readonly>${escapeHTML(text)}</textarea>
+      </section>
+    `);
+    const box = document.querySelector('.save-textarea');
+    if(box){ box.focus(); box.select(); }
+  }
+}
+
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, ch => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[ch]));
+}
+
+
 function showGameMenu(){
   sound('click');
   showModal(`
@@ -616,6 +724,8 @@ function showGameMenu(){
         <button type="button" data-menu-action="about">About Hand Over Foot</button>
         <a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">GitHub Repository</a>
         <button type="button" data-menu-action="settings">Audio Settings</button>
+        <button type="button" data-menu-action="save-file">Save to File</button>
+        <button type="button" data-menu-action="copy-clipboard">Copy to Clipboard</button>
       </div>
     </section>
   `);
@@ -630,6 +740,8 @@ function showGameMenu(){
       else if(action==='rules') showRules();
       else if(action==='about') showAbout();
       else if(action==='settings') showSettings();
+      else if(action==='save-file') saveGameToFile();
+      else if(action==='copy-clipboard') copyGameToClipboard();
     };
   });
 }
