@@ -1,116 +1,1210 @@
-<!doctype html>
+<!--
+  TV-WATCHLIST - TV Schedule Tracker
+  Copyright (c) 2026 David Fliesen / Cibola Studios
+
+  MIT License - provided "as is" without warranty of any kind.
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+
+  Developer : David Fliesen (SunTzu) - Cibola Studios, Summerville SC
+  Portfolio : https://davidfliesen.github.io
+  GitHub    : https://github.com/DavidFliesen
+  LinkedIn  : https://linkedin.com/in/fliesen
+-->
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#06331e" />
-  <title>Hand Over Foot</title>
-  <meta name="description" content="Hand Over Foot, a browser card game inspired by Hand and Foot Canasta." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:ital,wght@1,800&family=Bree+Serif&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4.6.1" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TV-Watchlist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    :root{--bg:#0d0d14;--surface:#16161f;--border:#2e2e42;--text:#f0f0f8;--muted:#9090b0;--accent:#e8b84b;--accent2:#e85b4b;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+    #root{min-height:100%;}
+    .app{min-height:100vh;background:radial-gradient(ellipse at 15% 0%,rgba(232,184,75,.09) 0%,transparent 50%),radial-gradient(ellipse at 85% 100%,rgba(100,80,220,.09) 0%,transparent 50%),var(--bg);padding-bottom:80px;}
+    .header{padding:36px 24px 28px;border-bottom:1px solid var(--border);text-align:center;position:relative;background:linear-gradient(180deg,rgba(232,184,75,.05) 0%,transparent 100%);}
+    .header::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);}
+    .header h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,9vw,88px);letter-spacing:8px;line-height:1;}
+    .header h1 span{color:var(--accent);}
+    .header-sub{color:var(--muted);font-size:15px;letter-spacing:2px;text-transform:uppercase;margin-top:8px;font-weight:500;}
+    .header-badges{margin-top:16px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+    .badge{background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.25);color:var(--accent);font-size:13px;font-weight:600;padding:5px 16px;border-radius:20px;}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 24px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+    .filter-bar{display:flex;gap:8px;flex-wrap:wrap;}
+    .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Inter',sans-serif;font-size:16px;font-weight:500;padding:7px 16px;border-radius:22px;cursor:pointer;transition:all .15s;}
+    .filter-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .filter-btn.active{background:rgba(232,184,75,.12);border-color:var(--accent);color:var(--accent);font-weight:700;}
+    .add-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0a0a0f;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;border:none;padding:10px 26px;cursor:pointer;border-radius:6px;white-space:nowrap;transition:opacity .2s;flex-shrink:0;}
+    .add-btn:hover{opacity:.88;}
+    .data-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:10px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+    .data-btn{display:flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;padding:8px 16px;border-radius:6px;cursor:pointer;border:1px solid;transition:all .15s;white-space:nowrap;}
+    .data-btn-save{background:rgba(75,222,128,.1);border-color:rgba(75,222,128,.35);color:#4ade80;}
+    .data-btn-save:hover{background:rgba(75,222,128,.2);border-color:#4ade80;}
+    .data-btn-upload{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.35);color:#38bdf8;}
+    .data-btn-upload:hover{background:rgba(56,189,248,.2);border-color:#38bdf8;}
+    .data-btn-clear{background:rgba(232,91,75,.1);border-color:rgba(232,91,75,.35);color:#f87171;}
+    .data-btn-clear:hover{background:rgba(232,91,75,.2);border-color:var(--accent2);}
+    input[type=file]{display:none;}
+    .view-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:8px 24px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+    .zoom-group{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px;}
+    .zoom-btn{background:transparent;border:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:15px;font-weight:700;width:32px;height:32px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+    .zoom-btn:hover{background:rgba(255,255,255,.1);color:var(--text);}
+    .zoom-label{color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;min-width:38px;text-align:center;cursor:pointer;transition:color .15s;}
+    .zoom-label:hover{color:var(--accent);}
+    .fs-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+    .fs-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:var(--text);}
+    .app.css-fullscreen{position:fixed;inset:0;z-index:9998;overflow-y:auto;zoom:1!important;}
+    .app.css-fullscreen .toolbar{position:sticky;top:0;z-index:10;}
+    .count-bar{padding:12px 24px;color:var(--muted);font-size:16px;font-weight:500;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;padding:8px 24px;max-width:1440px;margin:0 auto;}
+    .card{border-radius:12px;overflow:hidden;transition:transform .2s,box-shadow .2s;animation:fadeUp .4s ease both;position:relative;border-width:1px;border-style:solid;}
+    .card:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,.6);}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+    .card-inner{padding:20px;}
+    .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px;}
+    .card-top-left{flex:1;min-width:0;}
+    .show-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;line-height:1.1;margin-bottom:6px;}
+    .network-pill{display:inline-block;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 12px;border-radius:20px;border:1px solid;}
+    .card-actions{display:flex;gap:8px;flex-shrink:0;}
+    .icon-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+    .icon-btn:hover{background:rgba(255,255,255,.13);color:#fff;}
+    .next-season-banner{border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;border:1px solid;}
+    .next-season-icon{font-size:20px;flex-shrink:0;}
+    .next-season-label{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:.75;margin-bottom:3px;}
+    .next-season-date{font-size:17px;font-weight:700;line-height:1.2;}
+    .air-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .air-chip{font-size:15px;font-weight:600;padding:5px 13px;border-radius:6px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);display:flex;align-items:center;gap:5px;}
+    .status-pill{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:600;padding:5px 13px;border-radius:6px;border:1px solid;margin-bottom:14px;}
+    .summary-text{font-size:17px;line-height:1.75;color:rgba(255,255,255,.78);margin-bottom:16px;}
+    .recs-section{padding-top:14px;border-top:1px solid rgba(255,255,255,.08);}
+    .recs-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.5;margin-bottom:8px;}
+    .recs-list{display:flex;flex-wrap:wrap;gap:6px;}
+    .rec-tag{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.75);font-size:15px;font-weight:500;padding:4px 12px;border-radius:6px;transition:all .15s;}
+    .rec-tag:hover{background:rgba(255,255,255,.13);color:#fff;}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s ease;}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .modal{background:#1a1a28;border:1px solid #3a3a55;border-radius:14px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;animation:slideUp .2s ease;}
+    @keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .modal-header{padding:24px 26px 18px;border-bottom:1px solid #2e2e42;display:flex;justify-content:space-between;align-items:center;}
+    .modal-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:var(--accent);}
+    .modal-close{background:transparent;border:1px solid #3a3a55;color:var(--muted);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+    .modal-close:hover{border-color:var(--accent2);color:var(--accent2);}
+    .modal-body{padding:22px 26px;display:flex;flex-direction:column;gap:14px;}
+    .search-hint{color:var(--muted);font-size:15px;line-height:1.7;text-align:center;padding:4px 0 8px;}
+    .search-hint strong{color:var(--accent);}
+    .search-input{width:100%;background:#0f0f1a;border:2px solid #3a3a55;color:var(--text);font-family:'Inter',sans-serif;font-size:18px;font-weight:500;padding:14px 18px;border-radius:10px;outline:none;transition:border-color .15s;}
+    .search-input:focus{border-color:var(--accent);}
+    .search-input::placeholder{color:#4a4a6a;}
+    .results-list{display:flex;flex-direction:column;gap:6px;}
+    .result-item{background:#0f0f1a;border:1px solid #3a3a55;border-radius:8px;padding:12px 16px;cursor:pointer;transition:all .15s;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+    .result-item:hover{border-color:var(--accent);background:#1a1a2e;}
+    .result-name{font-size:16px;font-weight:600;color:var(--text);}
+    .result-meta{font-size:15px;color:var(--muted);margin-top:2px;}
+    .result-arrow{color:var(--accent);font-size:18px;flex-shrink:0;}
+    .no-results{text-align:center;padding:16px;color:var(--muted);font-size:16px;}
+    .no-results strong{color:var(--accent);}
+    .results-section-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:6px 2px 4px;display:flex;align-items:center;gap:8px;}
+    .results-section-label.local{color:#e8b84b;}
+    .results-section-label.internet{color:#38bdf8;}
+    .results-section-label::after{content:'';flex:1;height:1px;background:currentColor;opacity:0.2;}
+    .result-item.internet{border-color:#1a3a4a;}
+    .result-item.internet:hover{border-color:#38bdf8;background:#0f1f2e;}
+    .internet-badge{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);color:#38bdf8;padding:2px 7px;border-radius:4px;flex-shrink:0;}
+    .searching-indicator{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;color:var(--muted);font-size:14px;}
+    .mini-spinner{width:14px;height:14px;border:2px solid #2e2e42;border-top-color:#38bdf8;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .form-group{display:flex;flex-direction:column;gap:7px;}
+    .form-group.full{grid-column:1/-1;}
+    label{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+    input,select,textarea{background:#0f0f1a;border:1px solid #3a3a55;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;padding:11px 14px;border-radius:8px;transition:border-color .15s;outline:none;width:100%;}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+    textarea{resize:vertical;min-height:90px;}
+    select option{background:#1a1a28;}
+    .modal-footer{padding:18px 26px;border-top:1px solid #2e2e42;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+    .footer-right{display:flex;gap:10px;}
+    .btn-cancel{background:transparent;border:1px solid #3a3a55;color:var(--muted);font-family:'Inter',sans-serif;font-size:15px;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;transition:all .15s;}
+    .btn-cancel:hover{border-color:var(--accent2);color:var(--accent2);}
+    .btn-save{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0a0a0f;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;border:none;padding:10px 32px;border-radius:8px;cursor:pointer;}
+    .btn-save:hover{opacity:.85;}
+    .btn-link{background:transparent;border:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:15px;font-weight:500;padding:6px 4px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+    .btn-link:hover{color:var(--accent);}
+    .auto-filled-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(75,222,128,.1);border:1px solid rgba(75,222,128,.25);color:#4ade80;font-size:14px;font-weight:600;padding:4px 12px;border-radius:6px;}
+    .duplicate-warning{background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.4);border-radius:10px;padding:18px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;}
+    .duplicate-warning .dup-icon{font-size:36px;}
+    .duplicate-warning .dup-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#e8b84b;}
+    .duplicate-warning .dup-msg{color:rgba(255,255,255,.75);font-size:15px;line-height:1.6;}
+    .duplicate-warning .dup-name{color:#fff;font-weight:700;}
+    .confirm-modal{background:#1a1018;border:2px solid rgba(232,91,75,.4);border-radius:14px;width:100%;max-width:400px;padding:32px;text-align:center;animation:slideUp .2s ease;}
+    .confirm-modal h3{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent2);margin-bottom:12px;}
+    .confirm-modal p{color:#b0b0c8;font-size:17px;line-height:1.6;margin-bottom:26px;}
+    .confirm-btns{display:flex;gap:12px;justify-content:center;}
+    .btn-confirm-del{background:var(--accent2);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;border:none;padding:11px 30px;border-radius:8px;cursor:pointer;}
+    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1e1e30;border:1px solid #4a4a65;color:var(--text);font-size:16px;font-weight:500;padding:12px 24px;border-radius:10px;z-index:200;animation:toastIn .2s ease;box-shadow:0 8px 32px rgba(0,0,0,.5);white-space:nowrap;}
+    @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    .empty{grid-column:1/-1;text-align:center;padding:60px 32px;color:var(--muted);font-size:17px;line-height:2;}
+    .empty strong{color:var(--accent);}
+    .footer-note{text-align:center;padding:40px 24px 0;color:var(--muted);font-size:12px;letter-spacing:1px;opacity:.4;}
+
+    /* ── TABS ── */
+    .tabs-bar{display:flex;align-items:center;gap:0;background:var(--surface);border-bottom:2px solid var(--border);padding:0 24px;}
+    .tab-btn{font-family:'Inter',sans-serif;font-size:16px;font-weight:600;padding:14px 32px;border:none;background:transparent;color:var(--muted);cursor:pointer;position:relative;transition:color .15s;white-space:nowrap;}
+    .tab-btn::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--accent);transform:scaleX(0);transition:transform .2s;}
+    .tab-btn.active{color:var(--text);}
+    .tab-btn.active::after{transform:scaleX(1);}
+    .tab-btn:hover{color:var(--text);}
+    .tab-count{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);color:var(--muted);font-size:12px;font-weight:700;min-width:22px;height:22px;border-radius:11px;padding:0 6px;margin-left:8px;}
+    .tab-btn.active .tab-count{background:rgba(232,184,75,.18);color:var(--accent);}
+
+    /* ── DRAG & DROP ── */
+    .card{cursor:default;}
+    .card.dragging{opacity:0.30;transform:scale(0.97);}
+    .card.drag-over{outline:2px dashed var(--accent);outline-offset:3px;}
+    .drag-handle{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);font-size:18px;cursor:grab;letter-spacing:1px;flex-shrink:0;user-select:none;-webkit-user-select:none;touch-action:none;transition:background .15s,color .15s;}
+    .drag-handle:hover{background:rgba(255,255,255,.13);color:rgba(255,255,255,.75);}
+    .drag-handle:active{cursor:grabbing;}
+
+    /* ── MOVE TAB BUTTON on card ── */
+    .move-tab-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.55);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:4px 11px;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+    .move-tab-btn.to-awaiting{border-color:rgba(56,189,248,.35);color:#38bdf8;}
+    .move-tab-btn.to-awaiting:hover{background:rgba(56,189,248,.12);border-color:#38bdf8;}
+    .move-tab-btn.to-watching{border-color:rgba(74,222,128,.35);color:#4ade80;}
+    .move-tab-btn.to-watching:hover{background:rgba(74,222,128,.12);border-color:#4ade80;}
+
+    /* ── iOS save modal ── */
+    .save-modal{background:#1a1a28;border:1px solid #3a3a55;border-radius:14px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;animation:slideUp .2s ease;}
+    .save-modal-header{padding:20px 24px 14px;border-bottom:1px solid #2e2e42;display:flex;justify-content:space-between;align-items:center;}
+    .save-modal-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:var(--accent);}
+    .save-modal pre{background:#0f0f1a;border:1px solid #2e2e42;border-radius:8px;padding:16px;font-size:12px;color:#9090b0;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow-y:auto;margin:0;}
+    .save-instructions{color:var(--muted);font-size:14px;line-height:1.7;padding:16px 24px 0;}
+    .recs-input-group{display:flex;flex-direction:column;gap:10px;}
+    @media(max-width:600px){
+      .grid{grid-template-columns:1fr;padding:8px 14px;}
+      .toolbar{padding:14px;}
+      .count-bar{padding:10px 14px;}
+      .show-name{font-size:28px;}
+      .form-row{grid-template-columns:1fr;}
+      .search-input{font-size:16px;}
+    }
+  </style>
 </head>
 <body>
-  <div id="app">
-    <section id="home" class="view home-view">
-      <img class="side-badge hand-badge" src="assets/hand-badge.png" alt="Hand badge" />
-      <img class="side-badge foot-badge" src="assets/foot-badge.png" alt="Foot badge" />
-      <main class="home-stack">
-        <img class="hero-logo" src="assets/hof-logo.png?v=4.3.0" alt="Hand Over Foot logo" />
-        <div class="home-buttons" aria-label="Main menu">
-          <button class="home-btn green" id="playAiBtn"><span>🤖</span>Player vs AI</button>
-          <button class="home-btn blue" id="rulesBtn"><span>📘</span>Rules</button>
-          <button class="home-btn purple" id="scoresBtn"><span>🏆</span>Scores</button>
-          <button class="home-btn gold" id="settingsBtn"><span>⚙️</span>Settings</button>
-        </div>
-        <p class="home-credit">Created by David Fliesen</p>
-      </main>
-    </section>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
 
-    <section id="setup" class="view panel-view hidden">
-      <div class="glass-panel narrow">
-        <button class="back-btn" data-nav="home">← Home</button>
-        <h1>Player vs AI</h1>
-        <p>Choose the robot skill level. This version is now a clean two-player game: you versus one AI opponent.</p>
-        <div class="choice-grid">
-          <label class="choice"><input type="radio" name="ai" value="easy"><span>😊</span><b>Easy</b><small>Casual and forgiving</small></label>
-          <label class="choice checked"><input type="radio" name="ai" value="club" checked><span>🃏</span><b>Club</b><small>Balanced table play</small></label>
-          <label class="choice"><input type="radio" name="ai" value="shark"><span>🦈</span><b>Shark</b><small>Faster and sharper</small></label>
-        </div>
-        <label class="option-line"><input type="checkbox" id="requireBooks" checked> Require one red book and one black book to go out</label>
-        <button class="primary" id="dealBtn">Deal Cards</button>
-      </div>
-    </section>
+const SHOW_DB = [
+  { name:"Outlander", network:"Starz", nextSeason:"Final Season \u2013 Ended 2025", airDay:"Friday", airTime:"9:00 PM ET", status:"Ended", summary:"Epic time-travel romance following Jamie and Claire Fraser across centuries of adventure and passion. The final season wrapped up Diana Gabaldon's beloved saga.", recommendations:["Poldark","Reign","The Last Kingdom"] },
+  { name:"Landman", network:"Paramount+", nextSeason:"Season 2 \u2013 Est. Fall 2026", airDay:"", airTime:"", status:"Renewed", summary:"Billy Bob Thornton stars as a fixer navigating the cutthroat world of the West Texas oil boom. Created by Taylor Sheridan, it blends gritty drama with sharp wit.", recommendations:["Yellowstone","Mayor of Kingstown","Tulsa King"] },
+  { name:"Tulsa King", network:"Paramount+", nextSeason:"Season 3 \u2013 TBD 2026", airDay:"", airTime:"", status:"Renewed", summary:"Sylvester Stallone plays a New York mob boss exiled to Tulsa to build a new criminal operation. The fish-out-of-water comedy-drama is a big hit for Paramount+.", recommendations:["Landman","Yellowstone","Justified"] },
+  { name:"Fallout", network:"Prime Video", nextSeason:"Season 2 \u2013 TBD Late 2025", airDay:"", airTime:"", status:"In Production", summary:"Based on the legendary video game franchise, it follows survivors navigating a retro-futuristic post-nuclear wasteland. Season 2 is currently in production.", recommendations:["The Last of Us","Severance","The Boys"] },
+  { name:"High Potential", network:"ABC", nextSeason:"Season 2 \u2013 Fall 2025", airDay:"Thursday", airTime:"10:00 PM ET", status:"Renewed", summary:"Kaitlin Olson plays Morgan, a sharp single mom with an extraordinary mind who partners with a detective to solve baffling cases. A fresh, funny take on the crime procedural.", recommendations:["Ghosts","Abbott Elementary","Monk"] },
+  { name:"Ghosts", network:"CBS", nextSeason:"Season 5 \u2013 Fall 2025", airDay:"Thursday", airTime:"8:30 PM ET", status:"Renewed", summary:"A couple inherits a crumbling mansion only to discover it's haunted by ghosts from different eras of American history. One of CBS's biggest and warmest comedies.", recommendations:["High Potential","Abbott Elementary","The Good Place"] },
+  { name:"Shifting Gears", network:"ABC", nextSeason:"Season 2 \u2013 TBD 2026", airDay:"Wednesday", airTime:"8:30 PM ET", status:"Renewed", summary:"Tim Allen returns to ABC as a classic car mechanic whose estranged daughter and her kids unexpectedly move into his life. Reunites Allen with his Last Man Standing team.", recommendations:["Last Man Standing","Home Improvement","The Middle"] },
+  { name:"Lioness", network:"Paramount+", nextSeason:"Season 3 \u2013 TBD 2026", airDay:"", airTime:"", status:"Renewed", summary:"Zoe Saldana leads an elite CIA undercover program embedding female operatives as companions to high-value targets. Taylor Sheridan's action thriller blends espionage with character drama.", recommendations:["The Americans","Jack Ryan","Homeland"] },
+  { name:"Lincoln Lawyer", network:"Netflix", nextSeason:"Season 3 \u2013 TBD 2025/2026", airDay:"", airTime:"", status:"Renewed", summary:"Manuel Garcia-Rulfo plays Mickey Haller, a defense attorney who runs his law practice from the back of his Lincoln Town Car. Based on Michael Connelly's bestselling novels.", recommendations:["Bosch","The Good Wife","Suits"] },
+  { name:"George & Mandy's First Marriage", network:"CBS", nextSeason:"Season 2 \u2013 Fall 2025", airDay:"Thursday", airTime:"8:30 PM ET", status:"Renewed", summary:"The Big Bang Theory spinoff follows Georgie Cooper and Mandy McAllister as they navigate newlywed life and parenthood in Texas. Picks up directly from the events of Young Sheldon.", recommendations:["Ghosts","Young Sheldon","The Big Bang Theory"] },
+  { name:"Only Murders in the Building", network:"Hulu", nextSeason:"Season 5 \u2013 Summer 2025", airDay:"Tuesday", airTime:"", status:"Renewed", summary:"Steve Martin, Martin Short, and Selena Gomez play true-crime podcast obsessives who keep stumbling into real murders in their Manhattan apartment building.", recommendations:["Poker Face","The Afterparty","Knives Out"] },
+  { name:"Reacher", network:"Prime Video", nextSeason:"Season 4 \u2013 TBD 2026", airDay:"", airTime:"", status:"Renewed", summary:"Alan Ritchson plays Jack Reacher, a hulking ex-military cop who drifts across America and gets pulled into explosive confrontations. Season 3 aired February 2025.", recommendations:["The Terminal List","Jack Ryan","Bosch"] },
+  { name:"Yellowstone", network:"Paramount+", nextSeason:"Final Season \u2013 2025", airDay:"Sunday", airTime:"8:00 PM ET", status:"Airing", summary:"Kevin Costner leads the powerful Dutton family as they fight to protect their Montana ranch from developers, politicians, and rival land buyers. A modern Western epic.", recommendations:["Landman","1883","Mayor of Kingstown"] },
+  { name:"1883", network:"Paramount+", nextSeason:"Limited Series \u2013 Ended", airDay:"", airTime:"", status:"Ended", summary:"A prequel to Yellowstone following the Dutton family's journey west through the Great Plains. A sweeping, brutal portrait of pioneer life in 19th century America.", recommendations:["Yellowstone","1923","Godless"] },
+  { name:"1923", network:"Paramount+", nextSeason:"Season 2 \u2013 2025", airDay:"", airTime:"", status:"Airing", summary:"Another Yellowstone prequel starring Harrison Ford and Helen Mirren as the Dutton family battles prohibition, drought, and enemies in early 20th century America.", recommendations:["Yellowstone","1883","Landman"] },
+  { name:"Mayor of Kingstown", network:"Paramount+", nextSeason:"Season 4 \u2013 TBD 2025", airDay:"", airTime:"", status:"Renewed", summary:"Jeremy Renner stars as a power broker in a small Michigan town whose economy revolves entirely around its prisons. A gritty Taylor Sheridan crime drama.", recommendations:["Yellowstone","Tulsa King","Justified"] },
+  { name:"The Last of Us", network:"Max", nextSeason:"Season 3 \u2013 TBD 2026", airDay:"", airTime:"", status:"Renewed", summary:"Pedro Pascal and Bella Ramsey star in this post-apocalyptic drama based on the beloved video game. A deeply emotional journey across a fungus-ravaged United States.", recommendations:["Fallout","The Walking Dead","Station Eleven"] },
+  { name:"The Bear", network:"Hulu", nextSeason:"Season 4 \u2013 TBD 2025", airDay:"", airTime:"", status:"Renewed", summary:"Jeremy Allen White plays a fine-dining chef who returns to Chicago to run his family's chaotic sandwich shop. An intense drama about food, family, and trauma.", recommendations:["Severance","Beef","Chef's Table"] },
+  { name:"Severance", network:"Apple TV+", nextSeason:"Season 3 \u2013 TBD 2026", airDay:"", airTime:"", status:"Renewed", summary:"Office workers undergo a procedure to surgically divide their work and personal memories. A mind-bending sci-fi thriller with a phenomenal ensemble cast.", recommendations:["The Bear","Fallout","Dark"] },
+  { name:"The Boys", network:"Prime Video", nextSeason:"Season 5 \u2013 TBD 2025/2026", airDay:"", airTime:"", status:"Final Season", summary:"A group of vigilantes fight back against corrupt superheroes who abuse their powers. Amazon's darkly comedic, ultra-violent deconstruction of superhero culture.", recommendations:["Invincible","Gen V","Peacemaker"] },
+  { name:"Jack Ryan", network:"Prime Video", nextSeason:"Ended \u2013 4 Seasons", airDay:"", airTime:"", status:"Ended", summary:"John Krasinski stars as CIA analyst Jack Ryan as he uncovers massive conspiracies threatening the world. A propulsive action-thriller based on Tom Clancy's iconic character.", recommendations:["Reacher","Lioness","The Terminal List"] },
+  { name:"The Terminal List", network:"Prime Video", nextSeason:"Season 2 \u2013 TBD 2025", airDay:"", airTime:"", status:"Renewed", summary:"Chris Pratt plays a Navy SEAL who returns home to discover those he served alongside may be responsible for the deaths of his entire family. A tense revenge thriller.", recommendations:["Reacher","Jack Ryan","Special Ops: Lioness"] },
+  { name:"Bosch", network:"Prime Video", nextSeason:"Ended \u2013 Bosch: Legacy continues", airDay:"", airTime:"", status:"Ended", summary:"Titus Welliver plays LAPD detective Harry Bosch navigating corruption and crime in Los Angeles. Based on Michael Connelly's bestselling novels, it ran for 7 acclaimed seasons.", recommendations:["Lincoln Lawyer","The Wire","True Detective"] },
+  { name:"Bosch: Legacy", network:"Prime Video", nextSeason:"Season 3 \u2013 TBD 2025", airDay:"", airTime:"", status:"Renewed", summary:"The continuation of Bosch's story, now as a private investigator in Los Angeles. Titus Welliver reprises his iconic role in this Amazon Freevee continuation.", recommendations:["Bosch","Lincoln Lawyer","Poker Face"] },
+  { name:"Succession", network:"Max", nextSeason:"Ended \u2013 4 Seasons", airDay:"", airTime:"", status:"Ended", summary:"The Roy family battles for control of their global media empire in this darkly comedic drama. One of the most acclaimed and beloved TV series of the 2020s.", recommendations:["The Bear","Industry","Billions"] },
+  { name:"House of the Dragon", network:"Max", nextSeason:"Season 3 \u2013 TBD 2025/2026", airDay:"", airTime:"", status:"Renewed", summary:"The prequel to Game of Thrones chronicles the Targaryen civil war known as the Dance of the Dragons. Fire, blood, and political intrigue on a massive scale.", recommendations:["The Last Kingdom","Vikings","Game of Thrones"] },
+  { name:"The White Lotus", network:"Max", nextSeason:"Season 4 \u2013 TBD 2026", airDay:"", airTime:"", status:"Renewed", summary:"Each season follows wealthy guests at a luxury resort exploring themes of class, privilege, and the dark side of paradise. One of the sharpest social satires on TV.", recommendations:["Succession","Nine Perfect Strangers","The Undoing"] },
+  { name:"Abbott Elementary", network:"ABC", nextSeason:"Season 5 \u2013 Fall 2025", airDay:"Wednesday", airTime:"9:00 PM ET", status:"Renewed", summary:"A mockumentary sitcom following dedicated teachers at an underfunded Philadelphia public school. Warm, funny, and instantly lovable \u2014 one of the best comedies in years.", recommendations:["Ghosts","Schitt's Creek","The Office"] },
+  { name:"Suits", network:"Netflix", nextSeason:"Suits LA \u2013 2025", airDay:"", airTime:"", status:"Spinoff Airing", summary:"Harvey Specter and Mike Ross navigate high-stakes corporate law in New York, despite Mike never attending law school. The legal drama that became a Netflix sensation years after airing.", recommendations:["Lincoln Lawyer","The Good Wife","Billions"] },
+  { name:"Suits LA", network:"NBC", nextSeason:"Season 2 \u2013 TBD 2025/2026", airDay:"Sunday", airTime:"9:00 PM ET", status:"Renewed", summary:"The Suits spinoff moves to Los Angeles following a former federal prosecutor who now runs an entertainment law firm. Stars Stephen Amell in the lead role.", recommendations:["Suits","Lincoln Lawyer","The Good Wife"] },
+  { name:"Grey's Anatomy", network:"ABC", nextSeason:"Season 22 \u2013 Spring 2025", airDay:"Thursday", airTime:"10:00 PM ET", status:"Airing", summary:"The long-running medical drama follows surgeons at Grey Sloan Memorial Hospital navigating personal and professional challenges. Now in its landmark 22nd season.", recommendations:["Station 19","ER","The Good Doctor"] },
+  { name:"9-1-1", network:"ABC", nextSeason:"Season 9 \u2013 Spring 2025", airDay:"Thursday", airTime:"8:00 PM ET", status:"Airing", summary:"Follows the high-pressure experiences of first responders in Los Angeles including firefighters, paramedics, and police dispatchers. Fast-paced and emotionally gripping.", recommendations:["Station 19","9-1-1: Lone Star","Chicago Fire"] },
+  { name:"9-1-1 Lone Star", network:"FOX", nextSeason:"Season 5 \u2013 2025", airDay:"Monday", airTime:"8:00 PM ET", status:"Airing", summary:"Rob Lowe stars as an Austin Texas firefighter captain who transferred from New York. A spinoff of 9-1-1 with its own distinct Texas setting and ensemble cast.", recommendations:["9-1-1","Chicago Fire","Station 19"] },
+  { name:"NCIS", network:"CBS", nextSeason:"Season 22 \u2013 Spring 2025", airDay:"Monday", airTime:"9:00 PM ET", status:"Airing", summary:"The Naval Criminal Investigative Service team solves murders and crimes connected to the Navy and Marine Corps. One of the longest-running most-watched dramas on American television.", recommendations:["FBI","Blue Bloods","NCIS: Origins"] },
+  { name:"FBI", network:"CBS", nextSeason:"Season 7 \u2013 Fall 2025", airDay:"Tuesday", airTime:"8:00 PM ET", status:"Renewed", summary:"The New York field office of the FBI tackles major cases with high national security stakes. Dick Wolf's procedural drama is a staple of the CBS primetime lineup.", recommendations:["NCIS","Law & Order","Blue Bloods"] },
+  { name:"Blue Bloods", network:"CBS", nextSeason:"Ended \u2013 Season 14 (2024)", airDay:"", airTime:"", status:"Ended", summary:"The Reagan family of New York City police officers and a district attorney navigates justice and family across generations. Ended after 14 celebrated seasons in 2024.", recommendations:["NCIS","FBI","Law & Order"] },
+  { name:"Law & Order", network:"NBC", nextSeason:"Season 24 \u2013 Fall 2025", airDay:"Thursday", airTime:"8:00 PM ET", status:"Renewed", summary:"The granddaddy of legal procedurals follows police investigations and the subsequent prosecutions in New York City. A TV institution now in its 24th season.", recommendations:["FBI","NCIS","The Good Wife"] },
+  { name:"Law & Order SVU", network:"NBC", nextSeason:"Season 27 \u2013 Fall 2025", airDay:"Thursday", airTime:"9:00 PM ET", status:"Renewed", summary:"Olivia Benson leads the Special Victims Unit investigating sexually based crimes in New York City. The longest-running live-action primetime TV drama in US history.", recommendations:["Law & Order","Criminal Minds","FBI"] },
+  { name:"Criminal Minds: Evolution", network:"Paramount+", nextSeason:"Season 3 \u2013 TBD 2025", airDay:"", airTime:"", status:"Renewed", summary:"The BAU returns to hunt a network of serial killers unleashed by the pandemic. The revival brings back the original cast for a darker streaming-era take on the hit procedural.", recommendations:["FBI","Law & Order SVU","Mindhunter"] },
+  { name:"Poker Face", network:"Peacock", nextSeason:"Season 2 \u2013 2025", airDay:"", airTime:"", status:"Renewed", summary:"Natasha Lyonne plays Charlie Cale, a woman with an extraordinary ability to detect lies who goes on the run and solves crimes across America. A stylish and witty whodunit.", recommendations:["Only Murders in the Building","Columbo","The Afterparty"] },
+  { name:"Ted Lasso", network:"Apple TV+", nextSeason:"Season 4 \u2013 TBD 2025/2026", airDay:"", airTime:"", status:"Renewed", summary:"Jason Sudeikis plays an American football coach who becomes manager of an English soccer club. Widely regarded as the warmest and most optimistic comedy on television.", recommendations:["Shrinking","Abbott Elementary","Schitt's Creek"] },
+  { name:"Shrinking", network:"Apple TV+", nextSeason:"Season 3 \u2013 TBD 2025", airDay:"", airTime:"", status:"Renewed", summary:"Jason Segel plays a grieving therapist who starts breaking the rules and telling his clients exactly what he thinks. A heartfelt comedy from the Ted Lasso creative team.", recommendations:["Ted Lasso","Abbott Elementary","The Bear"] },
+  { name:"The Diplomat", network:"Netflix", nextSeason:"Season 3 \u2013 TBD 2025", airDay:"", airTime:"", status:"Renewed", summary:"Keri Russell stars as a newly appointed US Ambassador to the UK thrust into an international crisis. A sharp political thriller with witty dialogue and high stakes.", recommendations:["Madam Secretary","Veep","Designated Survivor"] },
+  { name:"Emily in Paris", network:"Netflix", nextSeason:"Season 5 \u2013 TBD 2025", airDay:"", airTime:"", status:"Renewed", summary:"An American marketing executive moves to Paris for work and navigates love, fashion, and culture clashes. A glossy and binge-worthy romantic drama.", recommendations:["Ginny & Georgia","The Diplomat","Bridgerton"] },
+  { name:"Bridgerton", network:"Netflix", nextSeason:"Season 4 \u2013 TBD 2025/2026", airDay:"", airTime:"", status:"Renewed", summary:"Set in Regency-era London, each season follows a different Bridgerton sibling navigating society, scandal, and romance. Netflix's most-watched original drama series.", recommendations:["Outlander","Emily in Paris","Queen Charlotte"] },
+  { name:"Stranger Things", network:"Netflix", nextSeason:"Season 5 \u2013 2025", airDay:"", airTime:"", status:"Final Season", summary:"A group of kids in 1980s Indiana encounter supernatural forces tied to a mysterious parallel dimension. The defining Netflix original series ends with its fifth and final season.", recommendations:["Dark","The OA","Severance"] },
+  { name:"Wednesday", network:"Netflix", nextSeason:"Season 2 \u2013 2025", airDay:"", airTime:"", status:"Renewed", summary:"Jenna Ortega stars as Wednesday Addams navigating Nevermore Academy and a supernatural murder mystery. Tim Burton's stylish take on the Addams Family universe was a massive hit.", recommendations:["Stranger Things","The Umbrella Academy","Merlin"] },
+  { name:"Squid Game", network:"Netflix", nextSeason:"Season 3 \u2013 June 2025", airDay:"", airTime:"", status:"Airing", summary:"Desperate people compete in deadly children's games for a life-changing cash prize. The Korean survival thriller became a global phenomenon and Netflix's most-watched show ever.", recommendations:["Alice in Borderland","The Hunger Games","Dark"] },
+  { name:"The Crown", network:"Netflix", nextSeason:"Ended \u2013 6 Seasons", airDay:"", airTime:"", status:"Ended", summary:"The epic biographical drama chronicles the reign of Queen Elizabeth II and the British Royal Family. An opulent, meticulously researched portrait of the monarchy across six seasons.", recommendations:["Bridgerton","Victoria","The Tudors"] },
+  { name:"Ozark", network:"Netflix", nextSeason:"Ended \u2013 4 Seasons", airDay:"", airTime:"", status:"Ended", summary:"A financial advisor launders money for a drug cartel in Missouri's Ozarks while trying to keep his family alive. A tense, slow-burn crime thriller from start to finish.", recommendations:["Breaking Bad","Succession","Better Call Saul"] },
+  { name:"The Handmaid's Tale", network:"Hulu", nextSeason:"Ended \u2013 Season 6", airDay:"", airTime:"", status:"Ended", summary:"Based on Margaret Atwood's novel, a woman struggles to survive in the totalitarian theocratic society of Gilead. One of the most powerful and acclaimed dramas of the streaming era.", recommendations:["The Testaments","Outlander","1984"] },
+  { name:"True Detective", network:"Max", nextSeason:"Season 5 \u2013 TBD", airDay:"", airTime:"", status:"Renewed", summary:"An anthology crime series that reinvents itself each season with new detectives and mysteries. Season 4 Night Country starred Jodie Foster investigating a haunting Arctic case.", recommendations:["Mindhunter","Fargo","Sharp Objects"] },
+  { name:"Fargo", network:"FX", nextSeason:"Season 6 \u2013 TBD", airDay:"", airTime:"", status:"Renewed", summary:"An anthology crime series inspired by the Coen Brothers film, each season set in the snowy Midwest with dark comedy and shocking violence. Among the finest TV of its era.", recommendations:["True Detective","The Outsider","Ozark"] },
+  { name:"It's Always Sunny in Philadelphia", network:"FX", nextSeason:"Season 17 \u2013 2025", airDay:"", airTime:"", status:"Renewed", summary:"Four selfish friends and a father figure run a dive bar in Philadelphia while hatching terrible schemes. The longest-running live-action comedy series in US TV history.", recommendations:["Seinfeld","Arrested Development","The League"] },
+  { name:"For All Mankind", network:"Apple TV+", nextSeason:"Season 5 \u2013 2025", airDay:"", airTime:"", status:"Renewed", summary:"An alternate history where the Soviet Union landed on the moon first, accelerating the space race for decades. A thoughtful, gripping sci-fi drama that spans decades of alt-history.", recommendations:["Severance","The Expanse","Station Eleven"] },
+  { name:"Slow Horses", network:"Apple TV+", nextSeason:"Season 5 \u2013 2025", airDay:"", airTime:"", status:"Renewed", summary:"Gary Oldman leads a team of disgraced British intelligence agents who handle MI5's mistakes and misfits. A brilliant, sardonic spy thriller based on Mick Herron's novels.", recommendations:["The Americans","Killing Eve","Tinker Tailor"] },
+  { name:"Mike & Molly", network:"CBS", nextSeason:"Ended \u2013 6 Seasons (2016)", airDay:"", airTime:"", status:"Ended", summary:"A Chicago police officer and a schoolteacher meet at an Overeaters Anonymous meeting and fall in love. A warm-hearted sitcom that ran for six seasons on CBS through 2016.", recommendations:["Mom","Two Broke Girls","Young Sheldon"] },
+  { name:"The Pitt", network:"Max", nextSeason:"Season 2 \u2013 TBD 2025", airDay:"", airTime:"", status:"Renewed", summary:"A real-time medical drama set in a Pittsburgh ER, following doctors and nurses through a single 15-hour shift. Noah Wyle stars in this gripping and authentic hospital drama.", recommendations:["ER","Grey's Anatomy","House"] },
+  { name:"Matlock", network:"CBS", nextSeason:"Season 2 \u2013 Fall 2025", airDay:"Thursday", airTime:"9:00 PM ET", status:"Renewed", summary:"Kathy Bates stars as an older woman who joins a prestigious law firm with hidden motives. A twist-filled legal drama that became a surprise CBS hit in its first season.", recommendations:["Lincoln Lawyer","The Good Wife","Suits"] },
+  { name:"Daredevil: Born Again", network:"Disney+", nextSeason:"Season 2 \u2013 TBD 2026", airDay:"", airTime:"", status:"Renewed", summary:"Matt Murdock returns as Daredevil in this continuation of the beloved Netflix series, now part of the MCU. Charlie Cox and Vincent D'Onofrio reprise their iconic roles.", recommendations:["The Boys","Reacher","Punisher"] },
+  { name:"Shogun", network:"FX / Hulu", nextSeason:"Season 2 \u2013 TBD 2026", airDay:"", airTime:"", status:"Renewed", summary:"Based on James Clavell's epic novel, a shipwrecked English navigator becomes embroiled in the violent struggle for control of feudal Japan. The Emmy-sweeping masterpiece of 2024.", recommendations:["The Last Kingdom","Marco Polo","Vikings"] },
+  { name:"The Penguin", network:"Max", nextSeason:"Limited Series \u2013 Ended", airDay:"", airTime:"", status:"Ended", summary:"Colin Farrell's Emmy-winning turn as Oz Cobb rising to power in Gotham City's criminal underworld after the events of The Batman film. A brilliant limited series.", recommendations:["The Wire","Daredevil","Peaky Blinders"] },
+  { name:"Peaky Blinders", network:"Netflix", nextSeason:"Film \u2013 TBD 2025", airDay:"", airTime:"", status:"Film Coming", summary:"Cillian Murphy leads the Shelby crime family from post-WWI Birmingham through the 1930s in this stylish gangster epic. A film conclusion to the beloved series is in production.", recommendations:["The Penguin","Boardwalk Empire","Gangs of London"] },
+];
 
-    <section id="game" class="view game-view hidden">
-      <header class="game-top">
-        <div class="mini-logo static-logo"><b>HAND</b><i>over</i><b>FOOT</b></div>
-        <div id="roundBadge" class="round-badge">Hand 1 · Open 50</div>
-        <div class="zoom-controls" aria-label="Card zoom controls">
-          <button id="zoomOutBtn" type="button" title="Zoom cards out">−</button>
-          <span id="zoomLevel">100%</span>
-          <button id="zoomInBtn" type="button" title="Zoom cards in">+</button>
-        </div>
-        <div id="scoreBadges" class="score-badges"></div>
-        <div class="nav-controls"><button id="fullscreenBtn" type="button" class="icon-btn" title="Full screen">□</button><button id="menuBtn" type="button" class="icon-btn hamburger" title="Menu"><span></span><span></span><span></span></button></div>
-      </header>
+const CARD_COLORS = [
+  {bg:"#1a1040",border:"#6c4fd4",accent:"#a78bfa"},
+  {bg:"#0f2318",border:"#2d7a4a",accent:"#4ade80"},
+  {bg:"#1a0f1a",border:"#8b3a8b",accent:"#e879f9"},
+  {bg:"#1a1200",border:"#8a6000",accent:"#fbbf24"},
+  {bg:"#0e1f2e",border:"#1e6fa0",accent:"#38bdf8"},
+  {bg:"#1f0f0f",border:"#8b2020",accent:"#f87171"},
+  {bg:"#0f1f1a",border:"#1a7a5e",accent:"#34d399"},
+  {bg:"#1a1500",border:"#7a6200",accent:"#f59e0b"},
+  {bg:"#160f1f",border:"#5a2d8b",accent:"#c084fc"},
+  {bg:"#0f1a1f",border:"#1a6070",accent:"#22d3ee"},
+  {bg:"#1f1510",border:"#8b5a1a",accent:"#fb923c"},
+  {bg:"#101a10",border:"#2a6a2a",accent:"#86efac"},
+];
 
-      <main class="table two-player-table">
-        <section class="opponent-area player-card" id="aiStatus"></section>
+const STATUS_COLORS = {
+  "Ended":         {bg:"rgba(150,50,50,0.25)",border:"rgba(220,80,80,0.5)",text:"#fca5a5"},
+  "Renewed":       {bg:"rgba(30,100,60,0.25)",border:"rgba(50,180,100,0.5)",text:"#86efac"},
+  "In Production": {bg:"rgba(30,70,120,0.25)",border:"rgba(50,130,220,0.5)",text:"#93c5fd"},
+  "Cancelled":     {bg:"rgba(120,50,20,0.25)",border:"rgba(200,90,30,0.5)",text:"#fdba74"},
+  "Airing":        {bg:"rgba(80,30,120,0.25)",border:"rgba(150,80,220,0.5)",text:"#d8b4fe"},
+  "Final Season":  {bg:"rgba(120,80,20,0.25)",border:"rgba(200,140,30,0.5)",text:"#fde68a"},
+  "Film Coming":   {bg:"rgba(20,80,100,0.25)",border:"rgba(30,150,180,0.5)",text:"#67e8f9"},
+  "Spinoff Airing":{bg:"rgba(60,30,100,0.25)",border:"rgba(120,60,180,0.5)",text:"#c4b5fd"},
+};
 
-        <section class="play-board">
-          <article class="team-panel enemy">
-            <h2>AI Melds</h2>
-            <div id="aiMelds" class="meld-zone"></div>
-          </article>
+function getStatusStyle(status) {
+  for (const [key, val] of Object.entries(STATUS_COLORS)) {
+    if (status && status.includes(key)) return val;
+  }
+  return {bg:"rgba(255,255,255,0.06)",border:"rgba(255,255,255,0.15)",text:"#cbd5e1"};
+}
 
-          <section class="center-piles">
-            <div class="pile-wrap">
-              <button id="drawBtn" class="pile stock-pile"><span>◆</span><small id="stockCount">0</small></button>
-              <em>Draw 2</em>
-            </div>
-            <div class="pile-wrap">
-              <button id="discardPileBtn" class="pile discard-pile"></button>
-              <em>Take 7</em>
-            </div>
-            <div class="turn-box">
-              <strong id="turnName">Your Turn</strong>
-              <p id="message">Draw two cards or take the discard pile.</p>
-            </div>
-          </section>
+function getNextSeasonIcon(ns) {
+  if (!ns) return "📺";
+  const s = ns.toLowerCase();
+  if (s.includes("ended") || s.includes("cancelled")) return "🏁";
+  if (s.includes("production") || s.includes("film")) return "🎬";
+  if (s.includes("tbd") || s.includes("tba")) return "⏳";
+  return "📅";
+}
 
-          <article class="team-panel friendly">
-            <h2>Your Melds</h2>
-            <div id="playerMelds" class="meld-zone"></div>
-          </article>
-        </section>
+function fuzzySearch(query, limit=6) {
+  if (!query.trim()) return [];
+  const q = query.toLowerCase().trim();
+  const scored = SHOW_DB.map(show => {
+    const name = show.name.toLowerCase();
+    if (name === q) return {show, score:100};
+    if (name.startsWith(q)) return {show, score:80};
+    if (name.includes(q)) return {show, score:60};
+    const words = q.split(" ");
+    const matched = words.filter(w => w.length > 1 && name.includes(w));
+    if (matched.length > 0) return {show, score:40*(matched.length/words.length)};
+    return {show, score:0};
+  }).filter(x => x.score > 0).sort((a,b) => b.score - a.score);
+  return scored.slice(0, limit).map(x => x.show);
+}
 
-        <section class="player-area">
-          <div class="player-head">
-            <div><strong id="playerLabel">You</strong><span id="handMode">Hand</span></div>
-            <div class="player-tools"><div class="cards-left" id="cardsLeft">0 cards</div><button type="button" id="peekMeldsBtn">Peek Melds</button></div>
+const STORAGE_KEY = "tv-watchlist-github-v1";
+const EMPTY_FORM = {name:"",network:"",nextSeason:"",airDay:"",airTime:"",status:"",summary:"",rec1:"",rec2:"",rec3:""};
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+function saveToStorage(shows) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(shows)); } catch(e) {}
+}
+
+const DEFAULT_SHOWS = [];
+
+function ShowCard({show, colorIdx, onEdit, onDelete, onMoveTab, onDragStart, onDragOver, onDrop, dragId, index}) {
+  const col = CARD_COLORS[colorIdx % CARD_COLORS.length];
+  const ss = getStatusStyle(show.status);
+  const isDragging = dragId === show.id;
+  const isWatching = (show.tab || 'watching') === 'watching';
+  const handleRef = useRef(null);
+  const lastOverId = useRef(null);
+
+  // Non-passive touch events on the drag handle for iPad/mobile
+  useEffect(() => {
+    const handle = handleRef.current;
+    if (!handle) return;
+    function onTouchStart(e) {
+      e.stopPropagation();
+      lastOverId.current = null;
+      onDragStart(show.id);
+    }
+    function onTouchMove(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const card = el && el.closest('[data-card-id]');
+      if (card) {
+        const tid = parseInt(card.getAttribute('data-card-id'));
+        if (!isNaN(tid) && tid !== show.id) {
+          lastOverId.current = tid;
+          onDragOver(tid);
+        }
+      }
+    }
+    function onTouchEnd(e) {
+      e.preventDefault();
+      onDrop(lastOverId.current);
+      lastOverId.current = null;
+    }
+    handle.addEventListener('touchstart',  onTouchStart, {passive:false});
+    handle.addEventListener('touchmove',   onTouchMove,  {passive:false});
+    handle.addEventListener('touchend',    onTouchEnd,   {passive:false});
+    return () => {
+      handle.removeEventListener('touchstart',  onTouchStart);
+      handle.removeEventListener('touchmove',   onTouchMove);
+      handle.removeEventListener('touchend',    onTouchEnd);
+    };
+  }, [show.id, onDragStart, onDragOver, onDrop]);
+
+  return (
+    <div
+      className={`card${isDragging ? ' dragging' : ''}`}
+      data-card-id={show.id}
+      style={{background:col.bg, borderColor:col.border, animationDelay:`${index*0.035}s`}}
+      draggable
+      onDragStart={e => { e.dataTransfer.effectAllowed='move'; onDragStart(show.id); }}
+      onDragOver={e => { e.preventDefault(); onDragOver(show.id); }}
+      onDrop={e => { e.preventDefault(); onDrop(show.id); }}
+      onDragEnd={() => onDrop(null)}
+    >
+      <div className="card-inner">
+        <div className="card-top">
+          <div className="card-top-left">
+            <div className="show-name" style={{color:col.accent}}>{show.name}</div>
+            {show.network && <span className="network-pill" style={{color:col.accent,borderColor:col.border,background:"rgba(0,0,0,0.3)"}}>{show.network}</span>}
           </div>
-          <div id="humanCards" class="hand-row"></div>
-        </section>
-      </main>
+          <div className="card-actions">
+            <button
+              className={`move-tab-btn ${isWatching ? 'to-awaiting' : 'to-watching'}`}
+              title={isWatching ? 'Move to Awaiting' : 'Move to Watching'}
+              onClick={() => onMoveTab(show.id)}
+            >{isWatching ? '→ Awaiting' : '→ Watching'}</button>
+            <button className="icon-btn" title="Edit" onClick={() => onEdit(show)}>✏️</button>
+            <button className="icon-btn" title="Delete" onClick={() => onDelete(show)}>🗑️</button>
+            <div ref={handleRef} className="drag-handle" title="Drag to reorder">⠿</div>
+          </div>
+        </div>
+        {show.nextSeason && (
+          <div className="next-season-banner" style={{background:"rgba(0,0,0,0.35)",borderColor:col.border}}>
+            <div className="next-season-icon">{getNextSeasonIcon(show.nextSeason)}</div>
+            <div>
+              <div className="next-season-label" style={{color:col.accent}}>Next Season</div>
+              <div className="next-season-date">{show.nextSeason}</div>
+            </div>
+          </div>
+        )}
+        {(show.airDay || show.airTime) && (
+          <div className="air-row">
+            {show.airDay && <span className="air-chip">📺 {show.airDay}</span>}
+            {show.airTime && <span className="air-chip">🕐 {show.airTime}</span>}
+          </div>
+        )}
+        {show.status && (
+          <div className="status-pill" style={{background:ss.bg,borderColor:ss.border,color:ss.text}}>
+            <span style={{fontSize:10}}>●</span> {show.status}
+          </div>
+        )}
+        {show.summary && <p className="summary-text">{show.summary}</p>}
+        {show.recommendations && show.recommendations.filter(Boolean).length > 0 && (
+          <div className="recs-section">
+            <div className="recs-label">If you like this, also watch</div>
+            <div className="recs-list">
+              {show.recommendations.filter(Boolean).map((r,i) => <span key={i} className="rec-tag">{r}</span>)}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-      <footer class="game-actions">
-        <button id="setBtn">Set</button>
-        <button id="addBtn">Add</button>
-        <button id="discardBtn" class="danger">Discard</button>
-        <button id="sortBtn">Sort</button>
-        <button id="clearBtn">Clear</button>
-        <button id="nextHandBtn" class="hidden">Next Hand</button>
-      </footer>
-    </section>
-  </div>
+// ── TVmaze internet search ──────────────────────────────────────────────────
+// Genre → recommended shows mapping
+const GENRE_RECS = {
+  "Drama":       ["Yellowstone","Succession","The Crown","Ozark","The White Lotus"],
+  "Crime":       ["Bosch","Lincoln Lawyer","True Detective","Fargo","Mindhunter"],
+  "Comedy":      ["Abbott Elementary","Ted Lasso","Ghosts","Shrinking","Schitt's Creek"],
+  "Thriller":    ["Reacher","Slow Horses","Jack Ryan","The Terminal List","Lioness"],
+  "Action":      ["Reacher","Jack Ryan","The Terminal List","Fallout","The Boys"],
+  "Adventure":   ["Outlander","The Last Kingdom","Shogun","1883","For All Mankind"],
+  "Horror":      ["Stranger Things","The Walking Dead","The Haunting of Hill House","American Horror Story","Dark"],
+  "Sci-Fi":      ["Fallout","Severance","For All Mankind","Stranger Things","The Expanse"],
+  "Fantasy":     ["House of the Dragon","The Last Kingdom","Wednesday","Shogun","The Witcher"],
+  "Mystery":     ["Only Murders in the Building","Poker Face","True Detective","Fargo","The Afterparty"],
+  "Romance":     ["Outlander","Bridgerton","Emily in Paris","Virgin River","Sweet Magnolias"],
+  "Family":      ["Abbott Elementary","Ghosts","George & Mandy's First Marriage","Shifting Gears","Schitt's Creek"],
+  "History":     ["Shogun","The Crown","1883","Peaky Blinders","Vikings"],
+  "Western":     ["Yellowstone","1883","Justified","Deadwood","Godless"],
+  "Medical":     ["Grey's Anatomy","The Pitt","ER","The Good Doctor","House"],
+  "Legal":       ["Lincoln Lawyer","Suits","The Good Wife","Matlock","Bosch: Legacy"],
+  "Espionage":   ["Slow Horses","Lioness","The Americans","Killing Eve","Jack Ryan"],
+  "War":         ["Band of Brothers","The Pacific","Masters of the Air","Generation Kill","The Terror"],
+  "Sport":       ["Ted Lasso","All or Nothing","Last Chance U","Welcome to Wrexham","A League of Their Own"],
+  "Music":       ["Daisy Jones & The Six","Nashville","Empire","Vinyl","This Is Us"],
+  "Nature":      ["Planet Earth","Our Planet","Frozen Planet","Night on Earth","Life"],
+  "Documentary": ["Making a Murderer","The Last Dance","Wild Wild Country","The Vow","Don't F**k With Cats"],
+  "Religion":    ["The Young Pope","Midnight Mass","Fleabag","The Righteous Gemstones","Seven Seconds"],
+  "Supernatural":["Supernatural","Stranger Things","Wednesday","The OA","The Haunting of Hill House"],
+  "Animation":   ["Arcane","Invincible","Lower Decks","The Bad Batch","Primal"],
+  "Children":    ["Avatar: The Last Airbender","Bluey","Gravity Falls","Owl House","She-Ra"],
+  "Game Show":   ["Jeopardy!","Wheel of Fortune","The Price Is Right","Amazing Race","Survivor"],
+  "Reality":     ["Survivor","Amazing Race","The Bachelor","Love Is Blind","Squid Game: The Challenge"],
+  "Talk Show":   ["The Daily Show","Last Week Tonight","Late Night with Seth Meyers","Conan","The Late Show"],
+};
 
-  <dialog id="modal" class="modal">
-    <button id="closeModal" class="modal-close">×</button>
-    <div id="modalBody"></div>
-  </dialog>
+function getGenreRecs(genres, showName) {
+  if (!genres || genres.length === 0) return [];
+  const seen = new Set([showName.toLowerCase()]);
+  const recs = [];
+  for (const genre of genres) {
+    const list = GENRE_RECS[genre] || [];
+    for (const r of list) {
+      if (!seen.has(r.toLowerCase()) && recs.length < 3) {
+        seen.add(r.toLowerCase());
+        recs.push(r);
+      }
+    }
+    if (recs.length >= 3) break;
+  }
+  // If still under 3, pull from Drama as fallback
+  if (recs.length < 3) {
+    for (const r of (GENRE_RECS["Drama"] || [])) {
+      if (!seen.has(r.toLowerCase()) && recs.length < 3) {
+        seen.add(r.toLowerCase());
+        recs.push(r);
+      }
+    }
+  }
+  return recs;
+}
 
-  <script src="game.js?v=4.6.2"></script>
+async function searchTVMaze(query) {
+  try {
+    const res = await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.slice(0, 5).map(item => {
+      const s = item.show;
+      const network = s.network?.name || s.webChannel?.name || '';
+      const days = (s.schedule?.days || []).join('/');
+      const time = s.schedule?.time || '';
+      const rawSummary = s.summary || '';
+      const summary = rawSummary.replace(/<[^>]*>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim();
+      let status = '';
+      if (s.status === 'Running') status = 'Airing';
+      else if (s.status === 'Ended') status = 'Ended';
+      else if (s.status === 'In Development') status = 'In Production';
+      else status = s.status || '';
+      const genres = s.genres || [];
+      const recommendations = getGenreRecs(genres, s.name || '');
+      return {
+        name: s.name || '',
+        network,
+        airDay: days,
+        airTime: time ? `${time} ET` : '',
+        status,
+        nextSeason: status === 'Ended' ? 'Ended' : 'TBD',
+        summary: summary.length > 300 ? summary.slice(0, 297) + '…' : summary,
+        recommendations,
+        _fromInternet: true,
+      };
+    });
+  } catch(e) {
+    return [];
+  }
+}
+
+function ShowForm({initial, onSave, onClose, existingShows=[]}) {
+  const isEdit = !!initial;
+  const [view, setView] = useState(isEdit ? "form" : "search");
+  const [query, setQuery] = useState("");
+  const [localResults, setLocalResults] = useState([]);
+  const [netResults, setNetResults] = useState([]);
+  const [netSearching, setNetSearching] = useState(false);
+  const [netSearched, setNetSearched] = useState(false);
+  const [dupWarning, setDupWarning] = useState('');
+  const [autoFilled, setAutoFilled] = useState(false);
+  const [autoFilledSource, setAutoFilledSource] = useState('');
+  const [form, setForm] = useState(
+    isEdit
+      ? {...initial, tab:initial.tab||'watching', rec1:initial.recommendations?.[0]||"", rec2:initial.recommendations?.[1]||"", rec3:initial.recommendations?.[2]||""}
+      : {...EMPTY_FORM}
+  );
+  // Position within tab (edit mode only)
+  const initTabShows = isEdit ? (existingShows||[]).filter(s=>(s.tab||'watching')===(initial?.tab||'watching')) : [];
+  const initPos = isEdit ? (initTabShows.findIndex(s=>s.id===initial?.id)+1 || 1) : 1;
+  const [editPosition, setEditPosition] = useState(initPos);
+  const inputRef = useRef(null);
+  const netTimerRef = useRef(null);
+
+  useEffect(() => { if (view==="search" && inputRef.current) inputRef.current.focus(); }, [view]);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => { if (netTimerRef.current) clearTimeout(netTimerRef.current); }, []);
+
+  function handleQuery(e) {
+    const q = e.target.value;
+    setQuery(q);
+    setDupWarning('');
+    const local = fuzzySearch(q);
+    setLocalResults(local);
+    setNetResults([]);
+    setNetSearched(false);
+    setNetSearching(false);
+    if (netTimerRef.current) clearTimeout(netTimerRef.current);
+    if (q.trim().length >= 2) {
+      // Auto-search internet after short pause
+      netTimerRef.current = setTimeout(async () => {
+        setNetSearching(true);
+        const results = await searchTVMaze(q);
+        // Deduplicate against local results
+        const localNames = new Set(local.map(s => s.name.toLowerCase()));
+        const filtered = results.filter(s => !localNames.has(s.name.toLowerCase()));
+        setNetResults(filtered);
+        setNetSearching(false);
+        setNetSearched(true);
+      }, 600);
+    }
+  }
+
+  function selectResult(show) {
+    const dupe = existingShows.find(s => s.name.toLowerCase() === show.name.toLowerCase());
+    if (dupe) { setDupWarning(show.name); return; }
+    setDupWarning('');
+    setForm({...show, rec1:show.recommendations?.[0]||"", rec2:show.recommendations?.[1]||"", rec3:show.recommendations?.[2]||""});
+    setAutoFilled(true);
+    setAutoFilledSource(show._fromInternet ? 'internet' : 'database');
+    setView("form");
+  }
+
+  function goManual() {
+    const name = query.trim();
+    const dupe = name && existingShows.find(s => s.name.toLowerCase() === name.toLowerCase());
+    if (dupe) { setDupWarning(name); return; }
+    setDupWarning('');
+    setForm(f => ({...f, name: name||f.name}));
+    setAutoFilled(false);
+    setView("form");
+  }
+
+  function set(k,v) { setForm(f => ({...f,[k]:v})); }
+
+  function handleSave() {
+    if (!form.name.trim()) return;
+    const cleanForm = {...form};
+    delete cleanForm._fromInternet;
+    onSave({...cleanForm, name:cleanForm.name.trim(), recommendations:[cleanForm.rec1,cleanForm.rec2,cleanForm.rec3].filter(Boolean), _targetPosition: isEdit ? editPosition : undefined});
+  }
+
+  const hasAnyResults = localResults.length > 0 || netResults.length > 0;
+
+  return (
+    <div className="overlay" onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-header">
+          <div className="modal-title">{isEdit ? "Edit Show" : "Add Show"}</div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        {view === "search" && (
+          <div className="modal-body">
+            <p className="search-hint">Type a show name — picks from our database or searches <strong>the internet</strong> automatically.</p>
+            <input ref={inputRef} className="search-input" placeholder="Search any TV show…" value={query} onChange={handleQuery}/>
+            {dupWarning !== '' && (
+              <div className="duplicate-warning">
+                <div className="dup-icon">📋</div>
+                <div className="dup-title">Already in Your Watchlist</div>
+                <div className="dup-msg"><span className="dup-name">{dupWarning}</span> is already on your watchlist. To make changes, close this and use the ✏️ edit button on that show's card.</div>
+                <button className="btn-cancel" style={{marginTop:4}} onClick={()=>setDupWarning('')}>Search Again</button>
+              </div>
+            )}
+            {dupWarning === '' && query.trim().length >= 2 && (
+              <div className="results-list">
+                {localResults.length > 0 && (
+                  <>
+                    <div className="results-section-label local">In Database</div>
+                    {localResults.map((show,i) => (
+                      <div key={`l${i}`} className="result-item" onClick={() => selectResult(show)}>
+                        <div>
+                          <div className="result-name">{show.name}</div>
+                          <div className="result-meta">{show.network} · {show.status}</div>
+                        </div>
+                        <div className="result-arrow">→</div>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {netSearching && (
+                  <div className="searching-indicator">
+                    <div className="mini-spinner"/>
+                    <span>Searching internet…</span>
+                  </div>
+                )}
+                {netResults.length > 0 && (
+                  <>
+                    <div className="results-section-label internet">Found Online 🌐</div>
+                    {netResults.map((show,i) => (
+                      <div key={`n${i}`} className="result-item internet" onClick={() => selectResult(show)}>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div className="result-name">{show.name}</div>
+                          <div className="result-meta">{show.network}{show.network && show.status ? ' · ' : ''}{show.status}</div>
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          <span className="internet-badge">WEB</span>
+                          <span className="result-arrow" style={{color:'#38bdf8'}}>→</span>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {netSearched && !netSearching && netResults.length === 0 && localResults.length === 0 && (
+                  <div className="no-results">
+                    No matches found for "<strong>{query}</strong>"<br/>
+                    <button className="btn-link" onClick={goManual}>Add "{query}" manually →</button>
+                  </div>
+                )}
+                {hasAnyResults && (
+                  <div style={{textAlign:"center",paddingTop:4}}>
+                    <button className="btn-link" onClick={goManual}>None of these — enter manually →</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {view === "form" && (
+          <>
+            <div className="modal-body">
+              {autoFilled && !isEdit && (
+                <div className="auto-filled-tag" style={autoFilledSource==='internet'?{background:'rgba(56,189,248,.1)',borderColor:'rgba(56,189,248,.3)',color:'#38bdf8'}:{}}>
+                  {autoFilledSource==='internet' ? '🌐 Details found online — review & fill in Next Season below' : '✓ Details filled from database — edit anything below'}
+                </div>
+              )}
+              {isEdit && (() => {
+                const selTab = form.tab || 'watching';
+                const countInTab = (existingShows||[]).filter(s=>(s.tab||'watching')===selTab).length;
+                const maxPos = Math.max(countInTab, 1);
+                return (
+                  <div className="form-row" style={{background:'rgba(232,184,75,.06)',border:'1px solid rgba(232,184,75,.2)',borderRadius:8,padding:'12px 14px',gap:14}}>
+                    <div className="form-group">
+                      <label>Tab</label>
+                      <select value={selTab} onChange={e=>{set('tab',e.target.value);setEditPosition(1);}}>
+                        <option value="watching">Now Watching</option>
+                        <option value="awaiting">Awaiting</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Position in list</label>
+                      <select value={Math.min(editPosition,maxPos)} onChange={e=>setEditPosition(parseInt(e.target.value))}>
+                        {Array.from({length:maxPos},(_,i)=>(
+                          <option key={i+1} value={i+1}>{i+1}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                );
+              })()}
+              <div className="form-group full">
+                <label>Show Title *</label>
+                <input value={form.name} onChange={e => set("name",e.target.value)} placeholder="Show title"/>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Network / Service</label>
+                  <select value={form.network} onChange={e => set("network",e.target.value)}>
+                    <option value="">Select…</option>
+                    {["ABC","CBS","NBC","FOX","Hulu","Netflix","Prime Video","Paramount+","Starz","Max","Apple TV+","Peacock","Disney+","FX","FX / Hulu","Other"].map(n=><option key={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Status</label>
+                  <select value={form.status} onChange={e => set("status",e.target.value)}>
+                    <option value="">Select…</option>
+                    {["Renewed","Airing","In Production","Final Season","Ended","Cancelled","Film Coming","Spinoff Airing"].map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-group full">
+                <label>Next Season / Return Date</label>
+                <input value={form.nextSeason} onChange={e => set("nextSeason",e.target.value)} placeholder="e.g. Season 3 – Fall 2026  or  Final Season – Ended 2025"/>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Air Day</label>
+                  <select value={form.airDay} onChange={e => set("airDay",e.target.value)}>
+                    <option value="">Select…</option>
+                    {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].map(d=><option key={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Air Time (ET)</label>
+                  <input value={form.airTime} onChange={e => set("airTime",e.target.value)} placeholder="9:00 PM ET"/>
+                </div>
+              </div>
+              <div className="form-group full">
+                <label>Description</label>
+                <textarea value={form.summary} onChange={e => set("summary",e.target.value)} placeholder="Brief description…"/>
+              </div>
+              <div className="form-group full">
+                <label>Similar Shows (up to 3)</label>
+                <div className="recs-input-group">
+                  <input value={form.rec1} onChange={e => set("rec1",e.target.value)} placeholder="Similar show 1"/>
+                  <input value={form.rec2} onChange={e => set("rec2",e.target.value)} placeholder="Similar show 2"/>
+                  <input value={form.rec3} onChange={e => set("rec3",e.target.value)} placeholder="Similar show 3"/>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <div>{!isEdit && <button className="btn-link" onClick={() => {setView("search");setAutoFilled(false);}}>← Back to search</button>}</div>
+              <div className="footer-right">
+                <button className="btn-cancel" onClick={onClose}>Cancel</button>
+                <button className="btn-save" onClick={handleSave} disabled={!form.name.trim()}>{isEdit?"Save Changes":"Add Show"}</button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConfirmDelete({show, onConfirm, onCancel}) {
+  return (
+    <div className="overlay" onClick={e => e.target===e.currentTarget && onCancel()}>
+      <div className="confirm-modal">
+        <h3>Remove Show?</h3>
+        <p>Remove <strong style={{color:"#fff"}}>{show.name}</strong> from your watchlist?</p>
+        <div className="confirm-btns">
+          <button className="btn-cancel" onClick={onCancel}>Keep It</button>
+          <button className="btn-confirm-del" onClick={onConfirm}>Remove</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [shows, setShows] = useState(() => loadFromStorage() || DEFAULT_SHOWS);
+  const [filter, setFilter] = useState("All");
+  const [activeTab, setActiveTab] = useState("watching"); // 'watching' | 'awaiting'
+  const [showForm, setShowForm] = useState(false);
+  const [editShow, setEditShow] = useState(null);
+  const [deleteShow, setDeleteShow] = useState(null);
+  const [toast, setToast] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [saveModalJson, setSaveModalJson] = useState(null);
+  const [dragId, setDragId] = useState(null);
+  const [zoom, setZoom] = useState(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Keep fullscreen state in sync with browser Esc key etc.
+  useEffect(() => {
+    function onFsChange() {
+      const fs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      setIsFullscreen(fs);
+      if (!fs) setCssFullscreen(false); // sync if user presses Esc
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
+  }, []);
+
+  function handleZoomIn()    { setZoom(z => Math.min(z + 10, 150)); }
+  function handleZoomOut()   { setZoom(z => Math.max(z - 10, 60));  }
+  function handleZoomReset() { setZoom(100); }
+
+  const [cssFullscreen, setCssFullscreen] = useState(false);
+
+  function handleFullscreen() {
+    // Try real Fullscreen API first (desktop Chrome/Firefox/Safari 16.4+)
+    const el = document.documentElement;
+    const canFS = !!(el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen);
+    if (canFS && !cssFullscreen) {
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+      req.call(el).then(()=>{}).catch(()=>{
+        // API available but blocked — fall through to CSS mode
+        setCssFullscreen(true);
+      });
+    } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      exit.call(document).catch(()=>{});
+    } else {
+      // CSS fallback for Chrome on iOS, older Safari, etc.
+      setCssFullscreen(p=>!p);
+    }
+  }
+
+  useEffect(() => { saveToStorage(shows); }, [shows]);
+
+  function showToast(msg) { setToast(msg); setTimeout(()=>setToast(""),2800); }
+
+  function handleAdd(f) {
+    setShows(p=>[...p,{...f,id:Date.now(),tab:activeTab}]);
+    setShowForm(false);
+    showToast(`✓ "${f.name}" added to ${activeTab==='watching'?'Watching':'Awaiting'}`);
+  }
+  function handleEdit(f) {
+    const targetTab = f.tab || 'watching';
+    const targetPos = (f._targetPosition || 1) - 1; // 0-based
+    const cleanF = {...f};
+    delete cleanF._targetPosition;
+    setShows(prev => {
+      // Remove the show being edited
+      const rest = prev.filter(s => s.id !== editShow.id);
+      const updatedShow = {...cleanF, id: editShow.id};
+      // Get shows in target tab (from rest, in their current order)
+      const targetTabShows = rest.filter(s => (s.tab||'watching') === targetTab);
+      // Insert at desired position
+      const pos = Math.max(0, Math.min(targetPos, targetTabShows.length));
+      targetTabShows.splice(pos, 0, updatedShow);
+      // Rebuild: walk rest, replacing target-tab slots with reordered list
+      let tIdx = 0;
+      const result = rest.map(s => {
+        if ((s.tab||'watching') === targetTab) return targetTabShows[tIdx++];
+        return s;
+      });
+      // Append any remaining (e.g. show moved into this tab from another)
+      while (tIdx < targetTabShows.length) result.push(targetTabShows[tIdx++]);
+      return result;
+    });
+    setEditShow(null);
+    showToast(`✓ "${f.name}" updated`);
+  }
+  function handleDelete(){ const n=deleteShow.name; setShows(p=>p.filter(s=>s.id!==deleteShow.id)); setDeleteShow(null); showToast(`"${n}" removed`); }
+
+  function handleMoveTab(id) {
+    setShows(p=>p.map(s=>{
+      if (s.id!==id) return s;
+      const newTab = (s.tab||'watching')==='watching' ? 'awaiting' : 'watching';
+      showToast(`"${s.name}" moved to ${newTab==='watching'?'Watching':'Awaiting'}`);
+      return {...s, tab:newTab};
+    }));
+  }
+
+  // ── Drag & drop (mouse + touch) ──────────────────────────────────────────
+  const dragOverId = useRef(null);
+  const dragIdRef  = useRef(null); // mirror of dragId for closures
+
+  function handleDragStart(id) {
+    setDragId(id);
+    dragIdRef.current = id;
+  }
+
+  function handleDragOver(id) {
+    dragOverId.current = id;
+  }
+
+  // targetId: the card dropped onto (HTML5), or last card hovered (touch), or null to cancel
+  function handleDrop(targetId) {
+    const fromId = dragIdRef.current;
+    setDragId(null);
+    dragIdRef.current = null;
+    const toId = targetId ?? dragOverId.current;
+    dragOverId.current = null;
+    if (!fromId || !toId || fromId === toId) return;
+    setShows(prev => {
+      const arr = [...prev];
+      const fromIdx = arr.findIndex(s=>s.id===fromId);
+      const toIdx   = arr.findIndex(s=>s.id===toId);
+      if (fromIdx<0||toIdx<0) return prev;
+      const [moved] = arr.splice(fromIdx,1);
+      arr.splice(toIdx,0,moved);
+      return arr;
+    });
+  }
+
+  // ── iOS-safe save ────────────────────────────────────────────────────────
+  function handleSaveData() {
+    const json = JSON.stringify(shows, null, 2);
+    // Detect iOS/iPadOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+    if (isIOS) {
+      // iOS can't trigger file downloads — show the JSON in a modal to copy or share
+      setSaveModalJson(json);
+    } else {
+      const blob = new Blob([json], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tv-watchlist-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      showToast('✓ Watchlist saved to file');
+    }
+  }
+
+  function handleUploadData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        if (!Array.isArray(parsed)) throw new Error('Not a valid watchlist file');
+        setShows(parsed);
+        showToast(`✓ Loaded ${parsed.length} shows from file`);
+      } catch(err) {
+        showToast('⚠️ Invalid file — could not load');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function handleClearConfirmed() {
+    setShows([]);
+    setConfirmClear(false);
+    showToast('Watchlist cleared');
+  }
+
+  // Ensure all shows have a tab value
+  const showsWithTab = shows.map(s=>({...s, tab:s.tab||'watching'}));
+  const tabShows = showsWithTab.filter(s=>s.tab===activeTab);
+  const networks = ["All",...Array.from(new Set(tabShows.map(s=>s.network).filter(Boolean))).sort()];
+  const filtered = filter==="All" ? tabShows : tabShows.filter(s=>s.network===filter);
+  const colorMap = {};
+  showsWithTab.forEach((s,i)=>{ colorMap[s.id]=i; });
+
+  const watchingCount = showsWithTab.filter(s=>s.tab==='watching').length;
+  const awaitingCount = showsWithTab.filter(s=>s.tab==='awaiting').length;
+
+  return (
+    <div className={`app${cssFullscreen?" css-fullscreen":""}`} style={{zoom:`${zoom}%`}}>
+      <div className="header">
+        <h1>TV-<span>WATCH</span>LIST</h1>
+        <div className="header-sub">2025–2026 TV Season Tracker</div>
+        <div className="header-badges">
+          <span className="badge">📺 {shows.length} Shows</span>
+          <a href="https://github.com/DavidFliesen/tv-watchlist" target="_blank" className="badge" style={{textDecoration:"none",cursor:"pointer"}}>📖 More About App</a>
+          <span className="badge">💾 Auto-Saved</span>
+        </div>
+      </div>
+
+      {/* ── TABS ── */}
+      <div className="tabs-bar">
+        <button className={`tab-btn${activeTab==='watching'?' active':''}`} onClick={()=>{setActiveTab('watching');setFilter('All');}}>
+          Now Watching <span className="tab-count">{watchingCount}</span>
+        </button>
+        <button className={`tab-btn${activeTab==='awaiting'?' active':''}`} onClick={()=>{setActiveTab('awaiting');setFilter('All');}}>
+          Awaiting <span className="tab-count">{awaitingCount}</span>
+        </button>
+      </div>
+
+      <div className="toolbar">
+        <div className="filter-bar">
+          {networks.map(n=>(
+            <button key={n} className={`filter-btn${filter===n?" active":""}`} onClick={()=>setFilter(n)}>{n}</button>
+          ))}
+        </div>
+        <button className="add-btn" onClick={()=>setShowForm(true)}>+ ADD SHOW</button>
+      </div>
+
+      <div className="data-toolbar">
+        <button className="data-btn data-btn-save" onClick={handleSaveData} title="Download your watchlist as a JSON file">
+          💾 Save Data
+        </button>
+        <button className="data-btn data-btn-upload" onClick={()=>fileInputRef.current.click()} title="Load a previously saved watchlist JSON file">
+          📂 Upload Data
+        </button>
+        <button className="data-btn data-btn-clear" onClick={()=>setConfirmClear(true)} title="Remove all shows from your watchlist">
+          🗑️ Clear All
+        </button>
+        <input type="file" ref={fileInputRef} accept=".json" onChange={handleUploadData}/>
+      </div>
+
+      {/* ── Zoom & Fullscreen ── */}
+      <div className="view-toolbar">
+        <div className="zoom-group">
+          <button className="zoom-btn" onClick={handleZoomOut}  title="Zoom out">−</button>
+          <span   className="zoom-label" onClick={handleZoomReset} title="Reset to 100%">{zoom}%</span>
+          <button className="zoom-btn" onClick={handleZoomIn}   title="Zoom in">+</button>
+        </div>
+        <button className="fs-btn" onClick={handleFullscreen} title={(isFullscreen||cssFullscreen) ? 'Exit full screen' : 'Enter full screen'}>
+          {(isFullscreen||cssFullscreen) ? '⛶  Exit Full Screen' : '⛶  Full Screen'}
+        </button>
+      </div>
+
+      <div className="count-bar">
+        <strong style={{color:"var(--accent)"}}>{activeTab==='watching'?'Now Watching':'Awaiting'}</strong>
+        {" — "}{filtered.length} show{filtered.length!==1?'s':''}{filter!=="All"?` on ${filter}`:""}
+        <span style={{color:'var(--muted)',fontSize:'13px',marginLeft:8}}>(drag cards to reorder)</span>
+      </div>
+
+      <div className="grid">
+        {filtered.length===0
+          ? <div className="empty">
+              No shows here yet.<br/>
+              {activeTab==='awaiting'
+                ? <>Use the <strong>→ Awaiting</strong> button on any Watching card to move it here.</>
+                : <>Click <strong>+ ADD SHOW</strong> to add one.</>
+              }
+            </div>
+          : filtered.map((show,i)=>(
+            <ShowCard key={show.id} show={show} colorIdx={colorMap[show.id]??i} index={i}
+              onEdit={s=>setEditShow(s)} onDelete={s=>setDeleteShow(s)}
+              onMoveTab={handleMoveTab}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              dragId={dragId}
+            />
+          ))
+        }
+      </div>
+
+      <div className="footer-note">DATABASE OF {SHOW_DB.length} SHOWS · SCHEDULE CURRENT AS OF 2026 · DATES SUBJECT TO CHANGE</div>
+
+      {showForm   && <ShowForm onSave={handleAdd}  onClose={()=>setShowForm(false)} existingShows={shows}/>}
+      {editShow   && <ShowForm initial={editShow} existingShows={shows} onSave={handleEdit} onClose={()=>setEditShow(null)}/>}
+      {deleteShow && <ConfirmDelete show={deleteShow} onConfirm={handleDelete} onCancel={()=>setDeleteShow(null)}/>}
+
+      {confirmClear && (
+        <div className="overlay" onClick={e=>e.target===e.currentTarget&&setConfirmClear(false)}>
+          <div className="confirm-modal" style={{borderColor:'rgba(248,113,113,0.5)'}}>
+            <h3>Clear All Shows?</h3>
+            <p>This will remove all <strong style={{color:'#fff'}}>{shows.length} shows</strong> from your watchlist. This cannot be undone.<br/><br/>
+              <span style={{fontSize:'13px',color:'#9090b0'}}>Tip: use <strong style={{color:'#38bdf8'}}>Save Data</strong> first to keep a backup.</span>
+            </p>
+            <div className="confirm-btns">
+              <button className="btn-cancel" onClick={()=>setConfirmClear(false)}>Cancel</button>
+              <button className="btn-confirm-del" onClick={handleClearConfirmed}>Clear All</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── iOS Save Modal ── */}
+      {saveModalJson && (
+        <div className="overlay" onClick={e=>e.target===e.currentTarget&&setSaveModalJson(null)}>
+          <div className="save-modal">
+            <div className="save-modal-header">
+              <div className="save-modal-title">Save Your Data</div>
+              <button className="modal-close" onClick={()=>setSaveModalJson(null)}>✕</button>
+            </div>
+            <div className="save-instructions">
+              <strong style={{color:'var(--text)'}}>On iPad/iPhone:</strong> Tap and hold the text below → Select All → Copy.
+              Then open the <strong style={{color:'var(--accent)'}}>Notes</strong> app (or any app), paste, and save it there.
+              To restore later, paste the text into a <code style={{background:'#1a1a28',padding:'2px 6px',borderRadius:4}}>.json</code> file and use <strong style={{color:'#38bdf8'}}>Upload Data</strong>.
+            </div>
+            <div style={{padding:'12px 24px 20px'}}>
+              <pre>{saveModalJson}</pre>
+              <button
+                className="btn-save" style={{marginTop:14,width:'100%',borderRadius:8,padding:'12px',fontSize:'16px'}}
+                onClick={()=>{
+                  try { navigator.clipboard.writeText(saveModalJson).then(()=>showToast('✓ Copied to clipboard!')); }
+                  catch(e){ showToast('Select all text above and copy manually'); }
+                  setSaveModalJson(null);
+                }}
+              >Copy to Clipboard</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+
+      <div style="margin-top:60px;padding:40px 24px;border-top:1px solid #2e2e42;max-width:860px;margin-left:auto;margin-right:auto;">
+        <div style="text-align:center;margin-bottom:28px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:4px;color:#e8b84b;margin-bottom:6px;">ABOUT THE DEVELOPER</div>
+          <div style="width:60px;height:2px;background:linear-gradient(90deg,#e8b84b,#e85b4b);margin:0 auto;border-radius:2px;"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start;">
+          <div style="flex:1;min-width:260px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:#f0f0f8;margin-bottom:4px;">David Fliesen &mdash; SunTzu</div>
+            <div style="color:#e8b84b;font-size:14px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">Cibola Studios &bull; Summerville, SC</div>
+            <p style="color:rgba(255,255,255,0.7);font-size:14px;line-height:1.75;margin-bottom:14px;">
+              Hybrid Generative AI Multimedia Developer with a background spanning U.S. Navy Combat Camera photojournalism,
+              20+ years in multimedia production, and DoD simulation &amp; virtual agent development.
+              Graduate of Purdue Online / Simplilearn's Applied Generative AI Specialization.
+            </p>
+            <p style="color:rgba(255,255,255,0.7);font-size:14px;line-height:1.75;">
+              Creator of the daily AI-generated comic strip <em>Sisters of Summerville</em>,
+              Suno AI music creator, voice over artist, and character animator.
+            </p>
+          </div>
+          <div style="flex:0 0 auto;min-width:200px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#9090b0;margin-bottom:12px;">Find Me Online</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <a href="https://davidfliesen.github.io" target="_blank" style="display:flex;align-items:center;gap:10px;background:#1a1a28;border:1px solid #3a3a55;border-radius:8px;padding:10px 14px;color:#f0f0f8;text-decoration:none;font-size:13px;font-weight:500;transition:border-color .15s;" onmouseover="this.style.borderColor='#e8b84b'" onmouseout="this.style.borderColor='#3a3a55'">
+                <span style="font-size:16px;">🌐</span> Portfolio
+              </a>
+              <a href="https://github.com/DavidFliesen" target="_blank" style="display:flex;align-items:center;gap:10px;background:#1a1a28;border:1px solid #3a3a55;border-radius:8px;padding:10px 14px;color:#f0f0f8;text-decoration:none;font-size:13px;font-weight:500;" onmouseover="this.style.borderColor='#e8b84b'" onmouseout="this.style.borderColor='#3a3a55'">
+                <span style="font-size:16px;">💻</span> GitHub
+              </a>
+              <a href="https://linkedin.com/in/fliesen" target="_blank" style="display:flex;align-items:center;gap:10px;background:#1a1a28;border:1px solid #3a3a55;border-radius:8px;padding:10px 14px;color:#f0f0f8;text-decoration:none;font-size:13px;font-weight:500;" onmouseover="this.style.borderColor='#e8b84b'" onmouseout="this.style.borderColor='#3a3a55'">
+                <span style="font-size:16px;">🔗</span> LinkedIn
+              </a>
+              <a href="https://sisters-of-summerville.github.io" target="_blank" style="display:flex;align-items:center;gap:10px;background:#1a1a28;border:1px solid #3a3a55;border-radius:8px;padding:10px 14px;color:#f0f0f8;text-decoration:none;font-size:13px;font-weight:500;" onmouseover="this.style.borderColor='#e8b84b'" onmouseout="this.style.borderColor='#3a3a55'">
+                <span style="font-size:16px;">🐾</span> Sisters of Summerville
+              </a>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:32px;padding-top:24px;border-top:1px solid #2e2e42;text-align:center;">
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.2);color:#e8b84b;font-size:12px;font-weight:600;padding:6px 18px;border-radius:20px;letter-spacing:1px;">
+            MIT LICENSE &bull; PROVIDED "AS IS" &bull; &copy; 2026 DAVID FLIESEN / CIBOLA STUDIOS
+          </div>
+        </div>
+      </div>
+
 </body>
 </html>
