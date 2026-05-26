@@ -72,7 +72,7 @@ function startGame(){
   state.askPartner = $('askPartner').checked;
   state.requireBooks = $('requireBooks').checked;
   state.handNo=1; state.current=0; state.gameEnded=false;
-  state.players = [makePlayer('You',false), makePlayer('Robot East'), makePlayer('Robot Partner'), makePlayer('Robot West')];
+  state.players = [makePlayer('You',false), makePlayer('AI Opponent')];
   state.teams = [makeTeam('Your Team'), makeTeam('Opponents')];
   dealHand(); show('game');
 }
@@ -86,7 +86,7 @@ function dealHand(){
   let up;
   do { up = state.stock.pop(); if(!up) break; } while(isWild(up));
   if(up) state.discard.push(up);
-  state.current = (state.handNo-1) % 4;
+  state.current = (state.handNo-1) % state.players.length;
   render(); message(`${state.players[state.current].name} starts Hand ${state.handNo}. Draw 2 or take the discard pile.`); maybeRobotTurn();
 }
 function drawTwo(){
@@ -282,8 +282,8 @@ function aiDelayByDifficulty(){
 
 function nextTurn(){
   state.phase='draw'; state.pileIntent=false; state.selected.clear(); state.selectedMeld=null;
-  for(let i=1;i<=4;i++){ const n=(state.current+i)%4; if(!state.players[n].out){ state.current=n; break; } }
-  render(); message(`${state.players[state.current].name}'s turn. Draw 2 or take the pile.`); maybeRobotTurn();
+  for(let i=1;i<=state.players.length;i++){ const n=(state.current+i)%state.players.length; if(!state.players[n].out){ state.current=n; break; } }
+  render(); message(state.current===0 ? 'Your turn. Draw 2 or take the pile.' : `${state.players[state.current].name}'s turn. Draw 2 or take the pile.`); maybeRobotTurn();
 }
 
 function showRoundWinner(playerIndex){
@@ -427,11 +427,12 @@ function updateHumanStatsDisplay(){
 
 function render(){
   setTimeout(updateHumanStatsDisplay,0);
+  setTimeout(updateHumanStatsDisplay,0);
   $('roundBadge').textContent = `Hand ${state.handNo} · Meld ${openMinimums[state.handNo-1]}`;
   $('scoreBadges').innerHTML = state.teams.map((t,i)=>`<span class="score-chip ${teamOf(state.current)===i?'active':''}">${t.name}: ${t.score}</span>`).join('');
   $('opponentStrip').innerHTML = state.players.slice(1).map((p,offset)=>{
     const idx=offset+1, count=liveCards(p).length;
-    return `<div class="mini-player ${idx===state.current?'active':''}"><strong>${p.name}</strong><span>${p.inFoot?'Foot':'Hand'} · ${count}</span><div class="mini-card-stack">${Array.from({length:Math.min(6,count)},()=>'<i class="mini-card"></i>').join('')}</div></div>`;
+    return `<div class="mini-player ${idx===state.current?'active':''}"><strong>${p.name}</strong><span>${p.inFoot?'Foot':'Hand'} · ${count} cards · ${playerMeldCount(idx)} melds</span><div class="mini-card-stack">${Array.from({length:Math.min(6,count)},()=>'<i class="mini-card"></i>').join('')}</div></div>`;
   }).join('');
   $('team0Melds').innerHTML = state.teams[0].melds.map((m,i)=>renderMeld(m,i,0)).join('') || '<p class="muted">No melds yet.</p>';
   $('team1Melds').innerHTML = state.teams[1].melds.map((m,i)=>renderMeld(m,i,1)).join('') || '<p class="muted">No melds yet.</p>';
