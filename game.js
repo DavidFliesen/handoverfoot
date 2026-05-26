@@ -464,7 +464,7 @@ function renderMeldZone(id,p,selectable){
 function renderHand(){
   const p=player(), cards=liveCards(p);
   $('handMode').textContent=p.inFoot?'FOOT':'HAND';
-  $('cardsLeft').textContent=`${cards.length} card${cards.length===1?'':'s'}`;
+  $('cardsLeft').textContent=`${p.inFoot?'FOOT':'HAND'} • ${cards.length} card${cards.length===1?'':'s'} • ${p.melds.length} meld${p.melds.length===1?'':'s'}`;
   $('humanCards').innerHTML=cards.map(c=>cardHTML(c,true)).join('');
   document.querySelectorAll('#humanCards .card').forEach(el=>el.onclick=()=>{
     const id=el.dataset.id;
