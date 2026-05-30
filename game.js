@@ -48,22 +48,12 @@ function show(view){ ['home','setup','game'].forEach(v=>$(v).classList.toggle('h
 function message(txt){ $('message').textContent = txt; }
 function selectedCards(){ const p=state.players[0]; return liveCards(p).filter(c=>state.selected.has(c.id)); }
 function startSetup(mode='ai'){
-  state.mode = mode;
+  state.mode = 'ai';
   const title = $('setupTitle');
   const intro = $('setupIntro');
-  const multi = $('multiplayerPanel');
-  const invite = $('inviteLink');
 
-  if(mode === 'pvp'){
-    if(title) title.textContent = 'Player vs Player';
-    if(intro) intro.textContent = 'Invite another player, or play a local two-player table on this device.';
-    if(multi) multi.classList.remove('hidden');
-    if(invite) invite.value = location.origin + location.pathname + '?mode=pvp';
-  } else {
-    if(title) title.textContent = 'Player vs AI';
-    if(intro) intro.textContent = 'Choose a robot difficulty level, then deal the cards.';
-    if(multi) multi.classList.add('hidden');
-  }
+  if(title) title.textContent = 'Player vs AI';
+  if(intro) intro.textContent = 'Choose a robot difficulty level, then deal the cards.';
 
   show('setup');
 }
@@ -530,6 +520,61 @@ function showRules(){
     </section>
   `);
 }
+
+function showSettings(){
+  sound('click');
+  showModal(`
+    <section class="settings-grid">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">⚙️</div>
+        <div>
+          <h2>Settings</h2>
+          <p>Adjust subtle sound effects and game display controls.</p>
+        </div>
+      </div>
+      <article class="setting-card">
+        <h3>🔊 Audio</h3>
+        <label class="toggle-pill">
+          <input type="checkbox" id="audioToggle" ${state.audioOn ? 'checked' : ''}>
+          Subtle sound effects
+        </label>
+        <div class="audio-row">
+          <span>Volume</span>
+          <input type="range" id="audioVolume" min="0" max="1" step="0.05" value="${state.audioVolume ?? .55}">
+        </div>
+      </article>
+    </section>
+  `);
+  setTimeout(()=>{
+    const t = $('audioToggle');
+    const v = $('audioVolume');
+    if(t) t.onchange = () => { setAudio(t.checked); sound('click'); };
+    if(v) v.oninput = () => { setVolume(v.value); };
+  },0);
+}
+
+function showAboutDeveloper(){
+  sound('click');
+  showModal(`
+    <section class="rules-panel">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">👤</div>
+        <div>
+          <h2>About Developer</h2>
+          <p><b>David Fliesen / Cibola Studios</b></p>
+          <p>Veteran multimedia creator, AI developer, animator, and builder of browser-based creative tools.</p>
+        </div>
+      </div>
+      <article class="rule-card full">
+        <h3>🔗 Links</h3>
+        <p><a href="https://github.com/DavidFliesen" target="_blank" rel="noopener">GitHub Profile</a></p>
+        <p><a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">Hand Over Foot Repository</a></p>
+        <p><a href="https://davidfliesen.github.io/" target="_blank" rel="noopener">David's Portfolio</a></p>
+      </article>
+    </section>
+  `);
+}
+
 function showScores(){
   openModal(`<h2>Scores</h2><p><b>${state.teams[0]?.name || 'Your Team'}:</b> ${state.teams[0]?.score || 0}</p><p><b>${state.teams[1]?.name || 'Opponents'}:</b> ${state.teams[1]?.score || 0}</p><p>Scores appear after each completed hand.</p>`);
 }
@@ -657,37 +702,31 @@ function init(){
   loadAudioPrefs();
 
   const playAiBtn = $('playAiBtn');
-  const playHumanBtn = $('playHumanBtn');
-  const playBtn = $('playBtn');
+    const playBtn = $('playBtn');
   const settingsBtn = $('settingsBtn');
   const rulesBtn = $('rulesBtn');
   const scoresBtn = $('scoresBtn');
+  const menuToggle = $('menuToggle');
+  const menuPanel = $('menuPanel');
+  const menuPlayAi = $('menuPlayAi');
+  const menuRules = $('menuRules');
+  const menuScores = $('menuScores');
+  const menuSettings = $('menuSettings');
+  const menuAbout = $('menuAbout');
   const dealBtn = $('dealBtn');
-  const copyInviteBtn = $('copyInviteBtn');
-  const inviteLink = $('inviteLink');
-
+  
   if(playAiBtn) playAiBtn.onclick = () => { sound('click'); startSetup('ai'); };
-  if(playHumanBtn) playHumanBtn.onclick = () => { sound('click'); startSetup('pvp'); };
   if(playBtn) playBtn.onclick = () => { sound('click'); startSetup('ai'); };
   if(settingsBtn) settingsBtn.onclick = showSettings;
   if(rulesBtn) rulesBtn.onclick = showRules;
   if(scoresBtn) scoresBtn.onclick = showScores;
+  if(menuToggle && menuPanel) menuToggle.onclick = () => { sound('click'); menuPanel.classList.toggle('hidden'); };
+  if(menuPlayAi) menuPlayAi.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); startSetup('ai'); };
+  if(menuRules) menuRules.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showRules(); };
+  if(menuScores) menuScores.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showScores(); };
+  if(menuSettings) menuSettings.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showSettings(); };
+  if(menuAbout) menuAbout.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showAboutDeveloper(); };
   if(dealBtn) dealBtn.onclick = startGame;
-
-  if(copyInviteBtn) copyInviteBtn.onclick = async () => {
-    const link = inviteLink?.value || (location.origin + location.pathname + '?mode=pvp');
-    try {
-      await navigator.clipboard.writeText(link);
-      copyInviteBtn.textContent = 'Copied!';
-      setTimeout(() => copyInviteBtn.textContent = 'Copy Link', 1200);
-    } catch {
-      if(inviteLink){
-        inviteLink.focus();
-        inviteLink.select();
-        document.execCommand('copy');
-      }
-    }
-  };
 
   document.querySelectorAll('[data-nav="home"]').forEach(b=>b.onclick=()=>show('home'));
   document.querySelectorAll('input[name="ai"]').forEach(i=>i.onchange=()=>document.querySelectorAll('.choice').forEach(l=>l.classList.toggle('checked', l.querySelector('input').checked)));

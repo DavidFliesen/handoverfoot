@@ -9,22 +9,39 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:ital,wght@1,800&family=Bree+Serif&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3.4.8" />
+  <link rel="stylesheet" href="styles.css?v=3.4.9" />
 </head>
 <body>
   <div id="app">
+    <nav class="top-menu" aria-label="Main navigation">
+      <button id="menuToggle" class="hamburger" type="button" aria-label="Open menu">☰</button>
+      <div id="menuPanel" class="menu-panel hidden">
+        <button id="menuPlayAi" type="button">🤖 Player vs AI</button>
+        <button id="menuRules" type="button">📘 Rules</button>
+        <button id="menuScores" type="button">🏆 Scores</button>
+        <button id="menuSettings" type="button">⚙️ Settings</button>
+        <button id="menuAbout" type="button">👤 About Developer</button>
+        <a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">GitHub Repository</a>
+        <a href="https://davidfliesen.github.io/" target="_blank" rel="noopener">David's Portfolio</a>
+      </div>
+    </nav>
     <section id="home" class="view home-view">
       <img class="side-badge hand-badge" src="assets/hand-badge.png" alt="Hand badge" />
       <img class="side-badge foot-badge" src="assets/foot-badge.png" alt="Foot badge" />
       <main class="home-stack">
         <img class="hero-logo" src="assets/hof-logo.png?v=3.4.0" alt="Hand Over Foot logo" />
-        <div class="home-buttons" aria-label="Main menu">
+        <div class="home-buttons single-player-menu" aria-label="Main menu">
           <button class="home-btn green" id="playAiBtn"><span>🤖</span>Player vs AI</button>
-          <button class="home-btn gold" id="playHumanBtn"><span>🔗</span>Player vs Player</button>
           <button class="home-btn blue" id="rulesBtn"><span>📘</span>Rules</button>
           <button class="home-btn purple" id="scoresBtn"><span>🏆</span>Scores</button>
         </div>
         <p class="home-credit">Created by David Fliesen / Cibola Studios</p>
+        <section class="developer-card" aria-label="About developer">
+          <strong>About Developer</strong>
+          <span>Veteran multimedia creator, AI developer, and founder of Cibola Studios.</span>
+          <a href="https://github.com/DavidFliesen" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://davidfliesen.github.io/" target="_blank" rel="noopener">Portfolio</a>
+        </section>
       </main>
     </section>
 
@@ -39,15 +56,7 @@
           <label class="choice"><input type="radio" name="ai" value="shark"><span>🦈</span><b>Shark</b><small>Aggressive robots</small></label>
         </div>
 <label class="option-line"><input type="checkbox" id="requireBooks"> Require one red and one black book to go out</label>
-        <div id="multiplayerPanel" class="multiplayer-panel hidden">
-          <h2>Invite Another Player</h2>
-          <p>This browser version is prepared for a two-player table: you versus one invited player. Online sync can be wired into the next build with PeerJS/WebRTC.</p>
-          <div class="invite-row">
-            <input id="inviteLink" readonly value="https://davidfliesen.github.io/handoverfoot/?mode=pvp" />
-            <button type="button" id="copyInviteBtn">Copy Link</button>
-          </div>
-        </div>
-        <button class="primary" id="dealBtn">Deal Cards</button>
+<button class="primary" id="dealBtn">Deal Cards</button>
       </div>
     </section>
 
@@ -119,6 +128,6 @@
     <div id="modalBody"></div>
   </dialog>
 
-  <script src="game.js?v=3.4.8"></script>
+  <script src="game.js?v=3.4.9"></script>
 </body>
 </html>
