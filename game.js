@@ -52,7 +52,7 @@ function startSetup(mode='ai'){
   const title = $('setupTitle');
   const intro = $('setupIntro');
 
-  if(title) title.textContent = 'Player vs AI';
+  if(title) title.textContent = 'Play';
   if(intro) intro.textContent = 'Choose a robot difficulty level, then deal the cards.';
 
   show('setup');
@@ -420,6 +420,7 @@ function render(){
   setTimeout(updateHumanStatsDisplay,0);
   $('roundBadge').textContent = `Hand ${state.handNo} · Meld ${openMinimums[state.handNo-1]}`;
   $('scoreBadges').innerHTML = state.teams.map((t,i)=>`<span class="score-chip ${teamOf(state.current)===i?'active':''}">${t.name}: ${t.score}</span>`).join('');
+  syncHeaderScores();
   $('opponentStrip').innerHTML = state.players.slice(1).map((p,offset)=>{
     const idx=offset+1, count=liveCards(p).length;
     return `<div class="mini-player ${idx===state.current?'active':''}"><strong>${p.name}</strong><span>${p.inFoot?'Foot':'Hand'} · ${count} cards · ${playerMeldCount(idx)} melds</span><div class="mini-card-stack">${Array.from({length:Math.min(6,count)},()=>'<i class="mini-card"></i>').join('')}</div></div>`;
@@ -457,124 +458,74 @@ function showModal(html){
     modal.setAttribute('open','');
   }
 }
+
+function toggleFullscreen(){
+  sound('click');
+  try{
+    if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.(); }
+    else { document.exitFullscreen?.(); }
+  }catch(e){}
+}
+function syncHeaderScores(){
+  const header=$('headerScoreBadges'), scores=$('scoreBadges');
+  if(header && scores) header.innerHTML=scores.innerHTML;
+}
 function showRules(){
   sound('click');
   showModal(`
     <section class="rules-panel">
       <div class="rules-hero">
-        <div class="rules-hero-icon">🃏</div>
+        <div class="rules-hero-icon">📘</div>
         <div>
-          <h2>Hand Over Foot Rules</h2>
-          <p>Build team sets, complete red and black books, then empty your hand and foot before the other team.</p>
+          <h2>How to Play</h2>
+          <p>Hand Over Foot is a card-matching game. Build groups of matching cards, turn them into books, and empty your Hand and then your Foot before the AI opponent does.</p>
         </div>
       </div>
-
       <div class="rules-grid">
+        <article class="rule-card full">
+          <h3>1. The Basic Idea</h3>
+          <p>You start with cards in your <b>Hand</b>. You also have a second pile called your <b>Foot</b>, which stays hidden until your Hand is empty.</p>
+          <p>You score by placing matching cards on the table. A group of matching cards is called a <b>set</b>. When a set reaches seven cards, it becomes a <b>book</b>.</p>
+        </article>
         <article class="rule-card">
-          <h3>🎯 Opening Meld</h3>
+          <h3>2. Start Each Turn</h3>
+          <ul>
+            <li>Choose <b>Draw 2</b> to take two cards from the face-down pile.</li>
+            <li>Or choose <b>Take 7</b> to take cards from the discard pile, if allowed.</li>
+            <li>New cards appear on the far right so you can see what you just got.</li>
+          </ul>
+        </article>
+        <article class="rule-card">
+          <h3>3. Make Sets</h3>
+          <ul>
+            <li>A set needs at least three cards of the same rank, such as three Kings.</li>
+            <li>You can make sets from 4s through Aces.</li>
+            <li>3s cannot be used in sets. They are penalty cards if left over.</li>
+            <li>2s and Jokers are wild cards and can help complete a set.</li>
+          </ul>
+        </article>
+        <article class="rule-card">
+          <h3>4. Your First Play</h3>
+          <p>Your first cards on the table must be worth enough points to “open.” You may combine multiple legal sets to reach the total.</p>
           <table class="opening-table">
-            <tr><th>Hand</th><th>Minimum</th></tr>
-            <tr><td>1</td><td>50</td></tr>
-            <tr><td>2</td><td>90</td></tr>
-            <tr><td>3</td><td>120</td></tr>
-            <tr><td>4</td><td>150</td></tr>
+            <tr><th>Hand</th><th>Needed</th></tr><tr><td>1</td><td>50</td></tr><tr><td>2</td><td>90</td></tr><tr><td>3</td><td>120</td></tr><tr><td>4</td><td>150</td></tr>
           </table>
         </article>
-
         <article class="rule-card">
-          <h3>🔄 Your Turn</h3>
+          <h3>5. Books</h3>
           <ul>
-            <li>Draw 2 from the stock, or take up to 7 from discard.</li>
-            <li>To take discard, you need 2 natural cards matching the top card.</li>
-            <li>You cannot take a pile topped by a 3 or wild card.</li>
+            <li>A clean/red book has no wild cards and scores a 500-point bonus.</li>
+            <li>A black book has at least one wild card and scores a 300-point bonus.</li>
           </ul>
         </article>
-
-        <article class="rule-card">
-          <h3>📚 Sets & Books</h3>
-          <ul>
-            <li>Sets need 3+ cards of the same rank, 4 through Ace.</li>
-            <li>2s and Jokers are wild.</li>
-            <li>7 cards completes a book.</li>
-            <li>Clean red books score 500. Black books score 300.</li>
-          </ul>
-        </article>
-
-        <article class="rule-card">
-          <h3>👣 Foot & Going Out</h3>
-          <ul>
-            <li>Each player gets 11 hand cards and 11 foot cards.</li>
-            <li>Empty your hand to pick up your foot.</li>
-            <li>Empty your foot to end the hand and score the round.</li>
-          </ul>
-        </article>
-
         <article class="rule-card full">
-          <h3>💰 Scoring</h3>
-          <p><b>4–7:</b> 5 points · <b>8–K:</b> 10 · <b>A/2:</b> 20 · <b>Jokers:</b> 50</p>
-          <p><b>Penalty:</b> Black 3s left in hand/foot are −300. Red 3s are −500.</p>
+          <h3>6. Winning</h3>
+          <p>Empty your Hand to pick up your Foot. Empty your Foot to end the hand. After four hands, the highest total score wins.</p>
         </article>
       </div>
-
-      <div class="rules-tip"><b>Tip:</b> Your first meld can combine multiple legal sets. Four Kings plus four Aces can open a 90-point hand because the total counts together.</div>
-    </section>
-  `);
+      <div class="rules-tip"><b>Plain-English tip:</b> Think of it as matching cards into piles. Match cards, make books, then get rid of everything.</div>
+    </section>`);
 }
-
-function showSettings(){
-  sound('click');
-  showModal(`
-    <section class="settings-grid">
-      <div class="rules-hero">
-        <div class="rules-hero-icon">⚙️</div>
-        <div>
-          <h2>Settings</h2>
-          <p>Adjust subtle sound effects and game display controls.</p>
-        </div>
-      </div>
-      <article class="setting-card">
-        <h3>🔊 Audio</h3>
-        <label class="toggle-pill">
-          <input type="checkbox" id="audioToggle" ${state.audioOn ? 'checked' : ''}>
-          Subtle sound effects
-        </label>
-        <div class="audio-row">
-          <span>Volume</span>
-          <input type="range" id="audioVolume" min="0" max="1" step="0.05" value="${state.audioVolume ?? .55}">
-        </div>
-      </article>
-    </section>
-  `);
-  setTimeout(()=>{
-    const t = $('audioToggle');
-    const v = $('audioVolume');
-    if(t) t.onchange = () => { setAudio(t.checked); sound('click'); };
-    if(v) v.oninput = () => { setVolume(v.value); };
-  },0);
-}
-
-function showAboutDeveloper(){
-  sound('click');
-  showModal(`
-    <section class="rules-panel">
-      <div class="rules-hero">
-        <div class="rules-hero-icon">👤</div>
-        <div>
-          <h2>About Developer</h2>
-          <p><b>David Fliesen / Cibola Studios</b></p>
-          <p>Veteran multimedia creator, AI developer, animator, and builder of browser-based creative tools.</p>
-        </div>
-      </div>
-      <article class="rule-card full">
-        <h3>🔗 Links</h3>
-        <p><a href="https://github.com/DavidFliesen" target="_blank" rel="noopener">GitHub Profile</a></p>
-        <p><a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">Hand Over Foot Repository</a></p>
-        <p><a href="https://davidfliesen.github.io/" target="_blank" rel="noopener">David's Portfolio</a></p>
-      </article>
-    </section>
-  `);
-}
-
 function showScores(){
   openModal(`<h2>Scores</h2><p><b>${state.teams[0]?.name || 'Your Team'}:</b> ${state.teams[0]?.score || 0}</p><p><b>${state.teams[1]?.name || 'Opponents'}:</b> ${state.teams[1]?.score || 0}</p><p>Scores appear after each completed hand.</p>`);
 }
@@ -713,6 +664,7 @@ function init(){
   const menuScores = $('menuScores');
   const menuSettings = $('menuSettings');
   const menuAbout = $('menuAbout');
+  const fullscreenBtn = $('fullscreenBtn');
   const dealBtn = $('dealBtn');
   
   if(playAiBtn) playAiBtn.onclick = () => { sound('click'); startSetup('ai'); };
@@ -726,6 +678,7 @@ function init(){
   if(menuScores) menuScores.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showScores(); };
   if(menuSettings) menuSettings.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showSettings(); };
   if(menuAbout) menuAbout.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showAboutDeveloper(); };
+  if(fullscreenBtn) fullscreenBtn.onclick = toggleFullscreen;
   if(dealBtn) dealBtn.onclick = startGame;
 
   document.querySelectorAll('[data-nav="home"]').forEach(b=>b.onclick=()=>show('home'));
