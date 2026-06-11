@@ -603,3 +603,24 @@
     grid-template-columns:1fr !important;
   }
 }
+
+
+/* v3.6.1 home/header cleanup */
+body:not(:has(#game:not(.hidden))) .app-header-center,
+body:not(:has(#game:not(.hidden))) .header-score-badges{
+  display:none !important;
+}
+
+/* Keep only hamburger, wordmark, and fullscreen on opening/setup screens */
+body:not(:has(#game:not(.hidden))) .app-header{
+  justify-content:space-between;
+}
+
+/* Remove old CSS-only fullscreen layer behavior; real browser fullscreen is handled in game.js */
+.app-fullscreen #app{
+  position:static !important;
+  inset:auto !important;
+  width:auto !important;
+  height:auto !important;
+  z-index:auto !important;
+}

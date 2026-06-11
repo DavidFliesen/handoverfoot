@@ -461,9 +461,18 @@ function showModal(html){
 
 function toggleFullscreen(){
   sound('click');
-  document.body.classList.toggle('app-fullscreen');
+  try{
+    const root = document.documentElement;
+    if(!document.fullscreenElement){
+      root.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }catch(e){}
+}
+function syncFullscreenButton(){
   const btn = $('fullscreenBtn');
-  if(btn) btn.textContent = document.body.classList.contains('app-fullscreen') ? '↙' : '⛶';
+  if(btn) btn.textContent = document.fullscreenElement ? '↙' : '⛶';
 }
 function syncHeaderScores(){
   // Score pills now live directly in the integrated header.
@@ -716,7 +725,7 @@ function closeMenu(){
 }
 function armMenuAutoClose(){
   if(menuCloseTimer) clearTimeout(menuCloseTimer);
-  menuCloseTimer = setTimeout(closeMenu, 20000);
+  menuCloseTimer = setTimeout(closeMenu, 10000);
 }
 function toggleMenu(){
   const panel = $('menuPanel');
@@ -779,6 +788,7 @@ function init(){
   applyZoom();
 
   if($('closeModal')) $('closeModal').onclick=()=>$('modal').close();
+  document.addEventListener('fullscreenchange', syncFullscreenButton);
   document.addEventListener('keydown', e => {
     if(e.key === 'Escape' && $('modal')?.open) $('modal').close();
   });
