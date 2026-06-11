@@ -460,3 +460,146 @@
 .single-player-menu{grid-template-columns:repeat(3,minmax(150px,1fr)) !important;max-width:min(860px,92vw)}
 .developer-card,.home-credit{display:none !important}
 @media(max-width:720px){.app-header{flex-wrap:wrap;padding:8px 10px}.header-score-badges{font-size:.82rem}.single-player-menu{grid-template-columns:1fr !important}.menu-panel{left:10px;top:54px}}
+
+
+/* v3.6.0 stabilization fixes */
+.app-header{
+  position:relative !important;
+  z-index:60;
+  min-height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:10px 18px;
+  background:linear-gradient(180deg,rgba(0,34,19,.9),rgba(0,19,11,.58));
+  border-bottom:1px solid rgba(255,223,116,.22);
+}
+.app-header-left,
+.app-header-center,
+.app-header-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.app-header-center{
+  flex:1;
+  justify-content:center;
+}
+.app-header-right{
+  justify-content:flex-end;
+}
+.app-wordmark{
+  color:var(--cream,#fff7e6);
+  text-decoration:none;
+  display:flex;
+  align-items:baseline;
+  gap:4px;
+  letter-spacing:.02em;
+  white-space:nowrap;
+  text-shadow:0 2px 2px rgba(0,0,0,.65);
+}
+.app-wordmark i{
+  font-family:'Playfair Display',serif;
+  color:var(--gold2,#ffdf74);
+  font-weight:900;
+}
+.game-top{
+  display:none !important;
+}
+.home-view,
+.game-view,
+.panel-view{
+  inset:64px 0 0 0;
+}
+.hamburger,
+.fullscreen-btn{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  border:2px solid rgba(255,223,116,.65);
+  background:rgba(0,0,0,.35);
+  color:var(--gold2,#ffdf74);
+  font-size:1.3rem;
+  font-weight:900;
+  box-shadow:none;
+}
+.menu-panel{
+  position:absolute;
+  top:58px;
+  left:18px;
+  min-width:245px;
+  display:grid;
+  gap:8px;
+  padding:12px;
+  border-radius:18px;
+  border:1px solid rgba(255,223,116,.58);
+  background:linear-gradient(150deg,rgba(5,64,38,.98),rgba(2,20,12,.99));
+  box-shadow:0 18px 45px rgba(0,0,0,.5);
+}
+.menu-panel button,
+.menu-panel a{
+  display:block;
+  width:100%;
+  text-align:left;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,223,116,.28);
+  background:rgba(0,0,0,.20);
+  color:var(--cream,#fff7e6);
+  text-decoration:none;
+  font-weight:800;
+}
+.header-score-badges{
+  display:flex;
+  gap:8px;
+}
+.app-fullscreen #app{
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100vh;
+  background:#052b1b url('assets/felt-bg.png') center/cover no-repeat fixed;
+  z-index:9999;
+}
+.card{
+  overflow:hidden !important;
+}
+.card .bottom{
+  line-height:1;
+  max-height:1.2em;
+}
+.card .suit{
+  line-height:1;
+}
+.single-player-menu{
+  grid-template-columns:repeat(3,minmax(150px,1fr)) !important;
+  max-width:min(860px,92vw);
+}
+.developer-card,
+.home-credit{
+  display:none !important;
+}
+@media(max-width:900px){
+  .app-header{
+    flex-wrap:wrap;
+    padding:8px 10px;
+  }
+  .app-header-center{
+    order:3;
+    width:100%;
+    justify-content:center;
+  }
+  .header-score-badges{
+    font-size:.82rem;
+  }
+  .menu-panel{
+    left:10px;
+    top:54px;
+  }
+}
+@media(max-width:720px){
+  .single-player-menu{
+    grid-template-columns:1fr !important;
+  }
+}

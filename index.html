@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:ital,wght@1,800&family=Bree+Serif&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3.5.0" />
+  <link rel="stylesheet" href="styles.css?v=3.6.0" />
 </head>
 <body>
   <div id="app">
@@ -18,16 +18,26 @@
         <button id="menuToggle" class="hamburger" type="button" aria-label="Open menu">☰</button>
         <a class="app-wordmark" href="https://davidfliesen.github.io/handoverfoot/"><b>HAND</b><i>over</i><b>FOOT</b></a>
         <nav id="menuPanel" class="menu-panel hidden" aria-label="Main menu">
-          <button id="menuHow to Play" type="button">How to Play</button>
+          <button id="menuRules" type="button">How to Play</button>
           <button id="menuSettings" type="button">Settings</button>
           <button id="menuScores" type="button">Scores</button>
           <a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">Open Source Code</a>
           <button id="menuAbout" type="button">About Developer</button>
         </nav>
       </div>
+
+      <div class="app-header-center">
+        <div id="roundBadge" class="round-badge">Hand 1 · Meld 50</div>
+        <div class="zoom-controls" aria-label="Card zoom controls">
+          <button id="zoomOutBtn" type="button" title="Zoom cards out">−</button>
+          <span id="zoomLevel">100%</span>
+          <button id="zoomInBtn" type="button" title="Zoom cards in">+</button>
+        </div>
+      </div>
+
       <div class="app-header-right">
-        <div id="headerScoreBadges" class="score-badges header-score-badges"></div>
-        <button id="fullscreenBtn" class="fullscreen-btn" type="button" aria-label="Toggle fullscreen">⛶</button>
+        <div id="scoreBadges" class="score-badges header-score-badges"></div>
+        <button id="fullscreenBtn" class="fullscreen-btn" type="button" aria-label="Toggle full screen">⛶</button>
       </div>
     </header>
 <section id="home" class="view home-view">
@@ -59,18 +69,7 @@
     </section>
 
     <section id="game" class="view game-view hidden">
-      <header class="game-top">
-        <button class="mini-logo" data-nav="home"><b>HAND</b><i>over</i><b>FOOT</b></button>
-        <div id="roundBadge" class="round-badge">Hand 1 · Meld 50</div>
-        <div class="zoom-controls" aria-label="Card zoom controls">
-          <button id="zoomOutBtn" type="button" title="Zoom cards out">−</button>
-          <span id="zoomLevel">100%</span>
-          <button id="zoomInBtn" type="button" title="Zoom cards in">+</button>
-        </div>
-        <div id="scoreBadges" class="score-badges"></div>
-      </header>
-
-      <main class="table">
+<main class="table">
         <section class="opponents" id="opponentStrip"></section>
 
         <section class="team-board">
@@ -126,6 +125,6 @@
     <div id="modalBody"></div>
   </dialog>
 
-  <script src="game.js?v=3.5.0"></script>
+  <script src="game.js?v=3.6.0"></script>
 </body>
 </html>

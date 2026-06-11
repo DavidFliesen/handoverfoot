@@ -461,14 +461,12 @@ function showModal(html){
 
 function toggleFullscreen(){
   sound('click');
-  try{
-    if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.(); }
-    else { document.exitFullscreen?.(); }
-  }catch(e){}
+  document.body.classList.toggle('app-fullscreen');
+  const btn = $('fullscreenBtn');
+  if(btn) btn.textContent = document.body.classList.contains('app-fullscreen') ? '↙' : '⛶';
 }
 function syncHeaderScores(){
-  const header=$('headerScoreBadges'), scores=$('scoreBadges');
-  if(header && scores) header.innerHTML=scores.innerHTML;
+  // Score pills now live directly in the integrated header.
 }
 function showRules(){
   sound('click');
@@ -526,6 +524,63 @@ function showRules(){
       <div class="rules-tip"><b>Plain-English tip:</b> Think of it as matching cards into piles. Match cards, make books, then get rid of everything.</div>
     </section>`);
 }
+
+function showSettings(){
+  sound('click');
+  showModal(`
+    <section class="settings-grid">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">⚙️</div>
+        <div>
+          <h2>Settings</h2>
+          <p>Adjust sound and display preferences.</p>
+        </div>
+      </div>
+
+      <article class="setting-card">
+        <h3>🔊 Audio</h3>
+        <label class="toggle-pill">
+          <input type="checkbox" id="audioToggle" ${state.audioOn ? 'checked' : ''}>
+          Sound effects
+        </label>
+        <div class="audio-row">
+          <span>Volume</span>
+          <input type="range" id="audioVolume" min="0" max="1" step="0.05" value="${state.audioVolume ?? .55}">
+        </div>
+      </article>
+    </section>
+  `);
+
+  setTimeout(()=>{
+    const t = $('audioToggle');
+    const v = $('audioVolume');
+    if(t) t.onchange = () => { setAudio(t.checked); sound('click'); };
+    if(v) v.oninput = () => setVolume(v.value);
+  },0);
+}
+
+function showAboutDeveloper(){
+  sound('click');
+  showModal(`
+    <section class="rules-panel">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">👤</div>
+        <div>
+          <h2>About Developer</h2>
+          <p><b>David Fliesen</b></p>
+          <p>Veteran multimedia creator, AI developer, animator, and builder of browser-based creative tools.</p>
+        </div>
+      </div>
+      <article class="rule-card full">
+        <h3>Links</h3>
+        <p><a href="https://github.com/DavidFliesen" target="_blank" rel="noopener">GitHub Profile</a></p>
+        <p><a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">Open Source Code</a></p>
+        <p><a href="https://davidfliesen.github.io/" target="_blank" rel="noopener">Portfolio</a></p>
+      </article>
+    </section>
+  `);
+}
+
 function showScores(){
   openModal(`<h2>Scores</h2><p><b>${state.teams[0]?.name || 'Your Team'}:</b> ${state.teams[0]?.score || 0}</p><p><b>${state.teams[1]?.name || 'Opponents'}:</b> ${state.teams[1]?.score || 0}</p><p>Scores appear after each completed hand.</p>`);
 }
@@ -649,6 +704,28 @@ function zoomBy(delta){
   applyZoom();
 }
 
+
+let menuCloseTimer = null;
+function closeMenu(){
+  const panel = $('menuPanel');
+  if(panel) panel.classList.add('hidden');
+  if(menuCloseTimer){
+    clearTimeout(menuCloseTimer);
+    menuCloseTimer = null;
+  }
+}
+function armMenuAutoClose(){
+  if(menuCloseTimer) clearTimeout(menuCloseTimer);
+  menuCloseTimer = setTimeout(closeMenu, 20000);
+}
+function toggleMenu(){
+  const panel = $('menuPanel');
+  if(!panel) return;
+  sound('click');
+  panel.classList.toggle('hidden');
+  if(!panel.classList.contains('hidden')) armMenuAutoClose();
+}
+
 function init(){
   loadAudioPrefs();
 
@@ -672,13 +749,17 @@ function init(){
   if(settingsBtn) settingsBtn.onclick = showSettings;
   if(rulesBtn) rulesBtn.onclick = showRules;
   if(scoresBtn) scoresBtn.onclick = showScores;
-  if(menuToggle && menuPanel) menuToggle.onclick = () => { sound('click'); menuPanel.classList.toggle('hidden'); };
-  if(menuPlayAi) menuPlayAi.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); startSetup('ai'); };
-  if(menuRules) menuRules.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showRules(); };
-  if(menuScores) menuScores.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showScores(); };
-  if(menuSettings) menuSettings.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showSettings(); };
-  if(menuAbout) menuAbout.onclick = () => { if(menuPanel) menuPanel.classList.add('hidden'); showAboutDeveloper(); };
+  if(menuToggle) menuToggle.onclick = toggleMenu;
+  if(menuPanel){
+    menuPanel.addEventListener('pointerdown', armMenuAutoClose);
+    menuPanel.addEventListener('keydown', armMenuAutoClose);
+  }
+  if(menuRules) menuRules.onclick = () => { closeMenu(); showRules(); };
+  if(menuScores) menuScores.onclick = () => { closeMenu(); showScores(); };
+  if(menuSettings) menuSettings.onclick = () => { closeMenu(); showSettings(); };
+  if(menuAbout) menuAbout.onclick = () => { closeMenu(); showAboutDeveloper(); };
   if(fullscreenBtn) fullscreenBtn.onclick = toggleFullscreen;
+
   if(dealBtn) dealBtn.onclick = startGame;
 
   document.querySelectorAll('[data-nav="home"]').forEach(b=>b.onclick=()=>show('home'));
