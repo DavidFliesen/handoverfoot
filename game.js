@@ -48,7 +48,13 @@ function manualSortHand(){
 }
 
 function sortCards(cards){ cards.sort((a,b)=> rankOrder.indexOf(a.rank)-rankOrder.indexOf(b.rank) || suits.indexOf(a.suit)-suits.indexOf(b.suit)); }
-function show(view){ ['home','setup','game'].forEach(v=>$(v).classList.toggle('hidden', v!==view)); state.view=view; }
+function show(view){
+  ['home','setup','game'].forEach(v=>{
+    const el = $(v);
+    if(el) el.classList.toggle('hidden', v!==view);
+  });
+  state.view=view;
+}
 function message(txt){ $('message').textContent = txt; }
 function selectedCards(){ const p=state.players[0]; return liveCards(p).filter(c=>state.selected.has(c.id)); }
 function startSetup(mode='ai'){
@@ -61,15 +67,29 @@ function startSetup(mode='ai'){
 
   show('setup');
 }
-function startGame(){
-  state.difficulty = document.querySelector('input[name="ai"]:checked')?.value || 'club';
-  state.askPartner = $('askPartner') ? $('askPartner').checked : false;
-  state.requireBooks = $('requireBooks') ? $('requireBooks').checked : false;
-  state.handNo=1; state.current=0; state.gameEnded=false;
-  state.players = [makePlayer('You',false), makePlayer('AI Opponent')];
-  state.teams = [makeTeam('Your Team'), makeTeam('Opponents')];
-  dealHand(); show('game');
+function startGame(event){
+  if(event) event.preventDefault();
+  sound('click');
+  try{
+    state.difficulty = document.querySelector('input[name="ai"]:checked')?.value || 'club';
+    state.askPartner = false;
+    state.requireBooks = $('requireBooks') ? $('requireBooks').checked : false;
+    state.handNo=1;
+    state.current=0;
+    state.gameEnded=false;
+    state.handEnded=false;
+    state.players = [makePlayer('You',false), makePlayer('AI Opponent')];
+    state.teams = [makeTeam('Your Team'), makeTeam('Opponents')];
+    dealHand();
+    show('game');
+  }catch(err){
+    console.error('Deal Cards failed:', err);
+    const msg = $('message');
+    if(msg) msg.textContent = 'Deal Cards hit an error. Try reloading the page.';
+    alert('Deal Cards hit an error. Try reloading the page.');
+  }
 }
+
 function dealHand(){
   UID=0; state.stock=makeDeck(5); state.discard=[]; state.selected.clear(); state.selectedMeld=null; state.phase='draw'; state.handEnded=false; state.pileIntent=false;
   state.teams.forEach(t=>{ t.melds=[]; t.opened=false; t.handScore=0; t.wentOut=false; });
@@ -148,7 +168,7 @@ function analyzeSelectedSets(cards, team){
   let remainingWilds = [...wilds];
 
   for(const rank of ranks){
-    if(team.melds.some(m=>m.rank===rank)) return {ok:false, reason:`Your team already has a set or book of ${rank}s.`};
+    if(team.melds.some(m=>m.rank===rank)) return {ok:false, reason:`Your team already has a set or book of ${rankLabel(rank)}.`};
     const naturals = naturalGroups.get(rank);
     let setWilds = [];
     const needed = Math.max(0, 3 - naturals.length);
@@ -157,11 +177,11 @@ function analyzeSelectedSets(cards, team){
       const maxWilds = naturals.length;
       if(needed > maxWilds) return {ok:false, reason:`${rankLabel(rank)} need more natural cards before wilds can be used.`};
       setWilds = remainingWilds.splice(0, needed);
-      if(setWilds.length < needed) return {ok:false, reason:`${rank}s need at least 3 cards to make a set.`};
+      if(setWilds.length < needed) return {ok:false, reason:`${rankLabel(rank)} need at least 3 cards to make a set.`};
     }
 
     const setCards = [...naturals, ...setWilds];
-    if(setCards.length < 3) return {ok:false, reason:`${rank}s need at least 3 cards to make a set.`};
+    if(setCards.length < 3) return {ok:false, reason:`${rankLabel(rank)} need at least 3 cards to make a set.`};
     if(setWilds.length > naturals.length) return {ok:false, reason:'A black set must have at least as many natural cards as wild cards.'};
     sets.push({rank, cards:setCards, wilds:setWilds.length});
   }
@@ -658,7 +678,7 @@ function showAboutDeveloper(){
   showModal(`
     <section class="rules-panel about-developer-panel">
       <div class="rules-hero about-hero">
-        <img class="developer-avatar" src="assets/developer.png" alt="David Fliesen illustration">
+        <img class="developer-avatar" src="assets/developer.png?v=3.6.6" alt="David Fliesen illustration">
         <div>
           <h2>About Developer</h2>
           <p><b>David Fliesen</b></p>
@@ -674,7 +694,6 @@ function showAboutDeveloper(){
     </section>
   `);
 }
-
 function showScores(){
   openModal(`<h2>Scores</h2><p><b>${state.teams[0]?.name || 'Your Team'}:</b> ${state.teams[0]?.score || 0}</p><p><b>${state.teams[1]?.name || 'Opponents'}:</b> ${state.teams[1]?.score || 0}</p><p>Scores appear after each completed hand.</p>`);
 }
@@ -940,8 +959,7 @@ function init(){
   if(menuAbout) menuAbout.onclick = () => { closeMenu(); showAboutDeveloper(); };
   if(fullscreenBtn) fullscreenBtn.onclick = toggleFullscreen;
   if(homeWordmark) homeWordmark.onclick = returnHomeWithWarning;
-
-  if(dealBtn) dealBtn.onclick = startGame;
+  if(dealBtn){ dealBtn.onclick = startGame; dealBtn.addEventListener('click', startGame, {capture:true}); }
 
   document.querySelectorAll('[data-nav="home"]').forEach(b=>b.onclick=returnHomeWithWarning);
   document.querySelectorAll('input[name="ai"]').forEach(i=>i.onchange=()=>document.querySelectorAll('.choice').forEach(l=>l.classList.toggle('checked', l.querySelector('input').checked)));
@@ -966,5 +984,13 @@ function init(){
     if(e.key === 'Escape' && $('modal')?.open) $('modal').close();
   });
 }
-document.addEventListener('DOMContentLoaded', init);
+function wireCriticalButtons(){
+  const deal = $('dealBtn');
+  if(deal){
+    deal.onclick = startGame;
+    deal.addEventListener('click', startGame, {capture:true});
+  }
+}
+document.addEventListener('DOMContentLoaded', ()=>{ init(); wireCriticalButtons(); });
+window.addEventListener('load', wireCriticalButtons);
 })();

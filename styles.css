@@ -742,3 +742,42 @@ body:not(:has(#game:not(.hidden))) .app-header{
     max-height:150px !important;
   }
 }
+
+
+/* v3.6.6 live fixes */
+.about-developer-panel .about-hero{
+  align-items:center !important;
+  gap:18px !important;
+  overflow:hidden !important;
+}
+.about-developer-panel .developer-avatar{
+  display:block !important;
+  width:160px !important;
+  height:160px !important;
+  max-width:160px !important;
+  max-height:160px !important;
+  object-fit:contain !important;
+  flex:0 0 160px !important;
+  filter:drop-shadow(0 12px 18px rgba(0,0,0,.45));
+}
+.about-developer-panel .rules-hero-icon{
+  display:none !important;
+}
+#dealBtn{
+  pointer-events:auto !important;
+  position:relative;
+  z-index:5;
+}
+@media(max-width:640px){
+  .about-developer-panel .about-hero{
+    flex-direction:column;
+    text-align:center;
+  }
+  .about-developer-panel .developer-avatar{
+    width:130px !important;
+    height:130px !important;
+    max-width:130px !important;
+    max-height:130px !important;
+    flex-basis:130px !important;
+  }
+}
