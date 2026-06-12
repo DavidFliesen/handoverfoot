@@ -70,6 +70,7 @@ function startSetup(mode='ai'){
 function startGame(event){
   if(event) event.preventDefault();
   sound('click');
+
   try{
     state.difficulty = document.querySelector('input[name="ai"]:checked')?.value || 'club';
     state.askPartner = false;
@@ -84,9 +85,8 @@ function startGame(event){
     show('game');
   }catch(err){
     console.error('Deal Cards failed:', err);
-    const msg = $('message');
-    if(msg) msg.textContent = 'Deal Cards hit an error. Try reloading the page.';
-    alert('Deal Cards hit an error. Try reloading the page.');
+    const detail = err && err.message ? err.message : 'Unknown error';
+    alert(`Deal Cards hit an error: ${detail}`);
   }
 }
 
@@ -440,6 +440,11 @@ function maybeRobotTurn(){
     setTimeout(robotTurn, typeof aiDelayByDifficulty === 'function' ? aiDelayByDifficulty() : aiDelay());
   }
 }
+function cardHtml(c, selected=false){
+  if(!c) return `<div class="card back"></div>`;
+  return `<button class="card ${colorClass(c)}${selected?' selected':''}" data-card="${c.id}" title="${c.rank}${c.suit}"><span>${c.rank}</span><span class="suit">${c.suit}</span><span class="bottom">${c.rank}</span></button>`;
+}
+
 function renderMeld(m, i, teamIndex){
   const tag = m.booked ? (m.black?'BLACK BOOK':'RED BOOK') : (m.black?'BLACK SET':'RED SET');
   const cls = m.booked ? (m.black?'black-book':'red-book') : (m.black?'dirty':'');
@@ -678,7 +683,7 @@ function showAboutDeveloper(){
   showModal(`
     <section class="rules-panel about-developer-panel">
       <div class="rules-hero about-hero">
-        <img class="developer-avatar" src="assets/developer.png?v=3.6.6" alt="David Fliesen illustration">
+        <img class="developer-avatar" src="assets/developer.png?v=3.6.7" alt="David Fliesen illustration">
         <div>
           <h2>About Developer</h2>
           <p><b>David Fliesen</b></p>
@@ -959,6 +964,7 @@ function init(){
   if(menuAbout) menuAbout.onclick = () => { closeMenu(); showAboutDeveloper(); };
   if(fullscreenBtn) fullscreenBtn.onclick = toggleFullscreen;
   if(homeWordmark) homeWordmark.onclick = returnHomeWithWarning;
+  if(dealBtn) dealBtn.onclick = startGame;
   if(dealBtn){ dealBtn.onclick = startGame; dealBtn.addEventListener('click', startGame, {capture:true}); }
 
   document.querySelectorAll('[data-nav="home"]').forEach(b=>b.onclick=returnHomeWithWarning);
@@ -984,13 +990,5 @@ function init(){
     if(e.key === 'Escape' && $('modal')?.open) $('modal').close();
   });
 }
-function wireCriticalButtons(){
-  const deal = $('dealBtn');
-  if(deal){
-    deal.onclick = startGame;
-    deal.addEventListener('click', startGame, {capture:true});
-  }
-}
-document.addEventListener('DOMContentLoaded', ()=>{ init(); wireCriticalButtons(); });
-window.addEventListener('load', wireCriticalButtons);
+document.addEventListener('DOMContentLoaded', init);
 })();

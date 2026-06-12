@@ -781,3 +781,19 @@ body:not(:has(#game:not(.hidden))) .app-header{
     flex-basis:130px !important;
   }
 }
+
+
+/* v3.6.7 final Deal Cards fix */
+#dealBtn{
+  pointer-events:auto !important;
+  position:relative;
+  z-index:10;
+}
+.about-developer-panel .developer-avatar{
+  width:150px !important;
+  height:150px !important;
+  max-width:150px !important;
+  max-height:150px !important;
+  object-fit:contain !important;
+  flex:0 0 150px !important;
+}

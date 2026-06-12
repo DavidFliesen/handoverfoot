@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.6.6**
+Current Version: **3.6.7**
 
 
 ## Learning Tips
