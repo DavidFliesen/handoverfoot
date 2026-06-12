@@ -9,19 +9,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:ital,wght@1,800&family=Bree+Serif&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3.6.1" />
+  <link rel="stylesheet" href="styles.css?v=3.6.4" />
 </head>
 <body>
   <div id="app">
     <header class="app-header">
       <div class="app-header-left">
         <button id="menuToggle" class="hamburger" type="button" aria-label="Open menu">☰</button>
-        <a class="app-wordmark" href="https://davidfliesen.github.io/handoverfoot/"><b>HAND</b><i>over</i><b>FOOT</b></a>
+        <a class="app-wordmark" id="homeWordmark" href="#"><b>HAND</b><i>over</i><b>FOOT</b></a>
         <nav id="menuPanel" class="menu-panel hidden" aria-label="Main menu">
           <button id="menuRules" type="button">How to Play</button>
           <button id="menuSettings" type="button">Settings</button>
           <button id="menuScores" type="button">Scores</button>
-          <a href="https://github.com/DavidFliesen/handoverfoot" target="_blank" rel="noopener">Open Source Code</a>
+          <a href="https://www.linkedin.com/in/fliesen" target="_blank" rel="noopener">LinkedIn</a>
           <button id="menuAbout" type="button">About Developer</button>
         </nav>
       </div>
@@ -115,6 +115,7 @@
         <button id="goOutBtn" class="gold">Go Out</button>
         <button id="sortBtn">Sort</button>
         <button id="clearBtn">Clear</button>
+        <button id="helpBtn" class="blue">Help</button>
         <button id="nextHandBtn" class="hidden">Next Hand</button>
       </footer>
     </section>
@@ -125,6 +126,6 @@
     <div id="modalBody"></div>
   </dialog>
 
-  <script src="game.js?v=3.6.1"></script>
+  <script src="game.js?v=3.6.4"></script>
 </body>
 </html>

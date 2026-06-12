@@ -1,209 +1,71 @@
-# Hand Over Foot 🃏
+# Hand Over Foot
 
-<p align="center">
-  <img src="assets/splash-reference.png" alt="Hand Over Foot opening screen" width="100%">
-</p>
+![Hand Over Foot](assets/splash-reference.png)
 
-<p align="center">
-  <b>A free browser-based Hand and Foot Canasta-style card game from the Rummy family.</b>
-</p>
+A modern browser-based single-player adaptation of the classic Hand and Foot Canasta card game.
 
-<p align="center">
-  👉 <a href="https://davidfliesen.github.io/handoverfoot/" target="_blank">Play Online</a>
-</p>
-
----
+Play online: https://davidfliesen.github.io/handoverfoot/
 
 ## Features
 
-- Player vs AI gameplay
-- Three AI difficulty levels:
-  - Easy
-  - Club
-  - Shark
-- Tablet, desktop, and smartphone support
-- Responsive green-felt card table interface
-- Full screen mode
-- Hamburger game menu
-- Audio controls and sound effects
-- Animated card movement effects
-- Clean and dirty meld tracking
-- Hand / Foot state indicators
-- Scoreboard and splash screens
-- MIT open-source license
+- Single Player vs AI
+- Easy, Club, and Shark AI difficulty levels
+- AI thinking pauses between actions
+- Four-hand game structure
+- Opening meld requirements
+- Red and black books
+- Fullscreen support
+- Zoom controls
+- Touch-friendly layout
+- Subtle sound effects with controls
+- Hamburger navigation menu
+- Scores, Settings, How to Play, LinkedIn, and About Developer sections
+- Optional Learning Tips mode for new players
+- Help button with plain-English guidance and strategy tips
 
----
+## How to Play
 
-## About the Game
+Hand Over Foot is a card-matching game. Build groups of matching cards, turn those groups into books, and empty your Hand and then your Foot before the AI opponent does.
 
-Hand Over Foot is inspired by Hand and Foot Canasta, a popular game from the Rummy family of card games. The interface uses approachable “Rummy-style” terminology while the gameplay follows classic Hand and Foot style rules.
+Each hand has an opening meld requirement:
 
-The game works best on tablets and desktop computers, but it also supports iPhones and Android phones with a simplified mobile layout.
-
-Players compete against a built-in AI opponent that uses rule-based gameplay logic and three selectable skill levels.
-
----
-
-## Gameplay Overview
-
-### Objective
-
-Create melds and books while working through both your Hand and your Foot. The highest score after four hands wins.
-
----
-
-## Turn Flow
-
-1. Draw 2 cards or Take 7 from the discard pile
-2. Create melds or add cards to existing melds
-3. Discard 1 card to end your turn
-
----
-
-## Opening Meld Requirements
-
-| Hand | Minimum Points |
+| Hand | Opening Meld |
 |---|---:|
 | 1 | 50 |
 | 2 | 90 |
 | 3 | 120 |
 | 4 | 150 |
 
----
+A set needs at least three matching cards. When a set reaches seven cards, it becomes a book.
 
-## Card Values
+- Clean/red books have no wild cards and score a 500-point bonus.
+- Black books use wild cards and score a 300-point bonus.
+- 2s and Jokers are wild.
+- 3s cannot be used in sets.
 
-| Cards | Points |
-|---|---:|
-| 3 through 9 | 5 |
-| 10, Jack, Queen, King | 10 |
-| Ace | 20 |
-| 2 (wild) | 20 |
-| Joker | 50 |
+## Safe Navigation
 
----
+To prevent accidental loss of progress, clicking the **HAND over FOOT** title during a game displays a confirmation dialog before returning to the home screen.
 
-## Meld Types
+## Developer
 
-### Clean Meld / Book
-A meld with no wild cards.
+<img src="assets/developer.png" width="220" alt="David Fliesen">
 
-### Dirty Meld / Book
-A meld containing wild cards.
+**David Fliesen**
 
-The game visually distinguishes clean and dirty melds so players can avoid accidentally dirtying a clean meld.
+Veteran multimedia creator, AI developer, animator, educator, and browser-tool builder.
 
----
+- Portfolio: https://davidfliesen.github.io/
+- GitHub: https://github.com/DavidFliesen
+- LinkedIn: https://www.linkedin.com/in/fliesen
 
-## Mobile Support
+## Version
 
-Hand Over Foot includes a mobile-friendly interface for iPhone and Android devices.
+Current Version: **3.6.4**
 
-### Mobile Features
 
-- Swipeable hand area
-- Peek Melds mode
-- Simplified controls
-- Responsive card sizing
-- Touch-friendly gameplay buttons
-- Full screen support where available
+## Learning Tips
 
-Tablets and desktops still provide the best overall gameplay experience.
+Learning Tips are off by default. They can be turned on from Settings to show small coaching prompts during play.
 
----
-
-## Navigation & Menus
-
-The in-game navigation includes:
-
-- Full screen toggle
-- Hamburger menu
-- Scoreboard
-- Game Rules
-- About Hand Over Foot
-- GitHub repository link
-- Audio Settings
-
----
-
-## Audio & Animation
-
-The game includes subtle sound effects for:
-
-- Drawing cards
-- Discarding
-- Meld creation
-- Card movement
-- Turn changes
-- Winning rounds
-
-Lightweight animation effects are used for card movement and gameplay polish while keeping the game fast and browser-friendly.
-
----
-
-## Open Source
-
-Hand Over Foot is open source under the MIT “as is” license.
-
-You may freely:
-
-- Study the code
-- Modify the project
-- Fork the repository
-- Remix gameplay systems
-- Build your own variations
-- Use it for learning and experimentation
-
-GitHub Repository:
-
-https://github.com/DavidFliesen/handoverfoot
-
----
-
-## About the Developer
-
-Hand Over Foot was created by **David Fliesen**, a Hybrid AI / Multimedia Developer focused on artificial intelligence, interactive storytelling, comics, multimedia production, web applications, and creative AI workflows.
-
-This browser-based game was rapidly prototyped and refined using both ChatGPT and Claude for coding assistance, gameplay logic, responsive layouts, debugging, UI refinement, audio systems, and feature development.
-
-The project was largely built in essentially a single day as an experiment in collaborative AI-assisted software development.
-
-### Developer Links
-
-🌐 Portfolio  
-https://davidfliesen.github.io/
-
-💼 LinkedIn  
-https://www.linkedin.com/in/fliesen/
-
-🎨 Sisters of Summerville Comic Series  
-https://sisters-of-summerville.github.io/
-
-🐙 GitHub  
-https://github.com/DavidFliesen
-
----
-
-## License
-
-MIT License
-
-Copyright (c) 2026 David Fliesen
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+The Help button gives plain-English guidance for new players, including what to do next and simple strategy reminders such as when to think about keeping matching cards, when wild cards can be used, and why 3s are usually bad cards to keep.
