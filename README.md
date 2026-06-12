@@ -1,6 +1,6 @@
 # Hand Over Foot
 
-![Hand Over Foot](assets/splash-reference.png)
+![Hand Over Foot](assets/splash-reference.jpg)
 
 A modern browser-based single-player adaptation of the classic Hand and Foot Canasta card game.
 
