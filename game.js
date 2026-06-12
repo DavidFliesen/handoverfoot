@@ -64,7 +64,7 @@ function startSetup(mode='ai'){
 function startGame(){
   state.difficulty = document.querySelector('input[name="ai"]:checked')?.value || 'club';
   state.askPartner = $('askPartner') ? $('askPartner').checked : false;
-  state.requireBooks = $('requireBooks').checked;
+  state.requireBooks = $('requireBooks') ? $('requireBooks').checked : false;
   state.handNo=1; state.current=0; state.gameEnded=false;
   state.players = [makePlayer('You',false), makePlayer('AI Opponent')];
   state.teams = [makeTeam('Your Team'), makeTeam('Opponents')];
