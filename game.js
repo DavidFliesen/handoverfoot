@@ -222,6 +222,7 @@ function makeSet(){
     });
   }
 
+  sortTeamMelds(team);
   team.opened=true;
   state.selected.clear();
   checkFoot(currentPlayer());
@@ -430,6 +431,7 @@ function robotPlay(idx){
           booked:item.set.length>=7
         });
       }
+      sortTeamMelds(team);
       team.opened=true;
       checkFoot(p);
       sortCards(liveCards(p));
@@ -466,6 +468,7 @@ function robotPlay(idx){
       if(v.ok){
         removeCards(p,candidate);
         team.melds.push({rank:v.rank,cards:[...candidate],black:v.wilds>0,booked:candidate.length>=7});
+        sortTeamMelds(team);
         team.opened=true;
         played=true;
       }
@@ -514,6 +517,19 @@ function cardHtml(c, selected=false){
   return `<button class="card ${colorClass(c)}${selected?' selected':''}" data-card="${c.id}" title="${c.rank}${c.suit}"><span>${c.rank}</span><span class="suit">${c.suit}</span><span class="bottom">${c.rank}</span></button>`;
 }
 
+function meldSortValue(meld){
+  return rankOrder.indexOf(meld.rank);
+}
+function sortTeamMelds(team){
+  if(!team || !Array.isArray(team.melds)) return;
+  team.melds.sort((a,b)=>{
+    const av = meldSortValue(a);
+    const bv = meldSortValue(b);
+    if(av !== bv) return av - bv;
+    return (a.black === b.black) ? 0 : a.black ? 1 : -1;
+  });
+}
+
 function renderMeld(m, i, teamIndex){
   const tag = m.booked ? (m.black?'BLACK BOOK':'RED BOOK') : (m.black?'BLACK SET':'RED SET');
   const cls = m.booked ? (m.black?'black-book':'red-book') : (m.black?'dirty':'');
@@ -545,6 +561,7 @@ function ensureLearningCoach(){
 
 
 function render(){
+  state.teams.forEach(sortTeamMelds);
   ensureLearningCoach();
   setTimeout(updateHumanStatsDisplay,0);
   $('roundBadge').textContent = `Hand ${state.handNo} · Meld ${openMinimums[state.handNo-1]}`;

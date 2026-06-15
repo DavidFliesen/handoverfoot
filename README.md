@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.7.0**
+Current Version: **3.7.1**
 
 
 ## Learning Tips
@@ -76,3 +76,8 @@ The Help button gives plain-English guidance for new players, including what to 
 AI turns now take one total thinking pause between 2 and 6 seconds, depending on difficulty, instead of stacking several pauses during the same turn.
 
 The AI opening meld logic was also improved so the opponent can combine multiple legal sets to reach the required opening meld, just like the player can.
+
+
+## Meld Sorting
+
+Melds are now displayed in card value order, making it easier to see which ranks have already been played.
