@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.7.1**
+Current Version: **3.7.2**
 
 
 ## Learning Tips
@@ -81,3 +81,8 @@ The AI opening meld logic was also improved so the opponent can combine multiple
 ## Meld Sorting
 
 Melds are now displayed in card value order, making it easier to see which ranks have already been played.
+
+
+## AI Delay Restore
+
+AI turns now use one guarded thinking timer per full turn. The opponent waits 2–6 seconds depending on difficulty, while preserving the v3.7.0 fix that prevents stacked delays and allows multi-set opening melds.

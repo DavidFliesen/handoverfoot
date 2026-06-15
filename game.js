@@ -10,6 +10,8 @@ const cardPoints = { '3':5, '4':5, '5':5, '6':5, '7':5, '8':10, '9':10, '10':10,
 const bookBonus = { red:500, black:300 };
 const penalty3 = { red:-500, black:-300 };
 let UID=0;
+let aiTurnTimer = null;
+let aiReadyAt = 0;
 const state = {
   view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.55, difficulty:'club', askPartner:true, requireBooks:false, learningMode:false,
   handNo:1, current:0, phase:'draw', selected:new Set(), selectedMeld:null,
@@ -67,8 +69,16 @@ function startSetup(mode='ai'){
 
   show('setup');
 }
+function clearAiTimer(){
+  if(aiTurnTimer){
+    clearTimeout(aiTurnTimer);
+    aiTurnTimer = null;
+  }
+  aiReadyAt = 0;
+}
 function startGame(event){
   if(event) event.preventDefault();
+  clearAiTimer();
   sound('click');
 
   try{
@@ -91,6 +101,7 @@ function startGame(event){
 }
 
 function dealHand(){
+  clearAiTimer();
   UID=0; state.stock=makeDeck(5); state.discard=[]; state.selected.clear(); state.selectedMeld=null; state.phase='draw'; state.handEnded=false; state.pileIntent=false;
   state.teams.forEach(t=>{ t.melds=[]; t.opened=false; t.handScore=0; t.wentOut=false; });
   state.players.forEach(p=>{ p.hand=[]; p.foot=[]; p.inFoot=false; p.out=false; });
@@ -348,6 +359,18 @@ function scoreHand(){
 function nextHand(){ if(state.handNo>=4) return; state.handNo++; dealHand(); }
 function robotTurn(){
   if(state.current===0 || state.handEnded) return;
+
+  const remaining = aiReadyAt ? aiReadyAt - Date.now() : 0;
+  if(remaining > 25){
+    if(aiTurnTimer) clearTimeout(aiTurnTimer);
+    aiTurnTimer = window.setTimeout(()=>{
+      aiTurnTimer = null;
+      robotTurn();
+    }, remaining);
+    return;
+  }
+
+  aiReadyAt = 0;
   const idx=state.current, p=currentPlayer();
 
   const take = robotShouldTake(idx);
@@ -507,11 +530,23 @@ function robotDiscard(idx){
   nextTurn();
 }
 function maybeRobotTurn(){
-  if(state.current!==0 && !state.handEnded){
-    message(`${state.players[state.current].name} is thinking...`);
-    setTimeout(robotTurn, typeof aiDelayByDifficulty === 'function' ? aiDelayByDifficulty() : aiDelay());
+  if(state.current===0 || state.handEnded) return;
+
+  if(aiTurnTimer){
+    clearTimeout(aiTurnTimer);
+    aiTurnTimer = null;
   }
+
+  const delay = typeof aiDelayByDifficulty === 'function' ? aiDelayByDifficulty() : aiDelay();
+  aiReadyAt = Date.now() + delay;
+  message(`${state.players[state.current].name} is thinking...`);
+
+  aiTurnTimer = window.setTimeout(()=>{
+    aiTurnTimer = null;
+    robotTurn();
+  }, delay);
 }
+
 function cardHtml(c, selected=false){
   if(!c) return `<div class="card back"></div>`;
   return `<button class="card ${colorClass(c)}${selected?' selected':''}" data-card="${c.id}" title="${c.rank}${c.suit}"><span>${c.rank}</span><span class="suit">${c.suit}</span><span class="bottom">${c.rank}</span></button>`;
