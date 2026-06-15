@@ -289,8 +289,8 @@ function aiDelay(min=2000,max=6000){
 }
 function aiDelayByDifficulty(){
   const d = state.difficulty || 'club';
-  if(d === 'easy') return aiDelay(4500,6000);
-  if(d === 'shark') return aiDelay(2000,3500);
+  if(d === 'easy') return aiDelay(4000,6000);
+  if(d === 'shark') return aiDelay(2000,4000);
   return aiDelay(3000,5000);
 }
 
@@ -349,29 +349,19 @@ function robotTurn(){
   if(state.current===0 || state.handEnded) return;
   const idx=state.current, p=currentPlayer();
 
-  setTimeout(()=>{
-    const take = robotShouldTake(idx);
-    if(take){
-      const cards=state.discard.splice(Math.max(0,state.discard.length-7));
-      liveCards(p).push(...cards);
-      cardMoveSound(cards.length);
-    } else {
-      drawFor(p,2);
-    }
-    state.phase='play';
-    render();
+  const take = robotShouldTake(idx);
+  if(take){
+    const cards=state.discard.splice(Math.max(0,state.discard.length-7));
+    liveCards(p).push(...cards);
+    cardMoveSound(cards.length);
+  } else {
+    drawFor(p,2);
+  }
 
-    setTimeout(()=>{
-      robotPlay(idx);
-      render();
-
-      setTimeout(()=>{
-        robotDiscard(idx);
-      }, typeof aiDelayByDifficulty === 'function' ? aiDelayByDifficulty() : aiDelay());
-
-    }, typeof aiDelayByDifficulty === 'function' ? aiDelayByDifficulty() : aiDelay());
-
-  }, typeof aiDelayByDifficulty === 'function' ? aiDelayByDifficulty() : aiDelay());
+  state.phase='play';
+  robotPlay(idx);
+  render();
+  robotDiscard(idx);
 }
 function robotShouldTake(idx){
   const chk=canTakePile(idx); if(!chk.ok) return false;
@@ -379,13 +369,77 @@ function robotShouldTake(idx){
   if(state.difficulty==='club') return Math.random()<.55;
   return true;
 }
+function robotOpeningCandidates(cards, team){
+  const byRank = {};
+  cards.forEach(c => {
+    if(!isWild(c) && isMeldRank(c)){
+      (byRank[c.rank] ||= []).push(c);
+    }
+  });
+
+  const wilds = cards.filter(isWild);
+  const sets = [];
+
+  for(const rank of meldRanks){
+    if(team.melds.some(m => m.rank === rank)) continue;
+
+    const naturals = byRank[rank] || [];
+    if(naturals.length >= 3){
+      // Natural set first. This keeps AI from wasting wilds too early.
+      sets.push(naturals.slice(0, Math.min(naturals.length, 7)));
+    } else if(naturals.length >= 2 && wilds.length){
+      // Allow one wild with two naturals.
+      sets.push([...naturals.slice(0,2), wilds[0]]);
+    }
+  }
+
+  sets.sort((a,b)=>b.reduce((s,c)=>s+points(c),0)-a.reduce((s,c)=>s+points(c),0));
+
+  const need = openMinimums[state.handNo-1];
+  const chosen = [];
+  const used = new Set();
+  let total = 0;
+
+  for(const set of sets){
+    if(set.some(c => used.has(c.id))) continue;
+    const v = validateSet(set, team);
+    if(!v.ok) continue;
+    chosen.push({set, validation:v});
+    set.forEach(c => used.add(c.id));
+    total += set.reduce((s,c)=>s+points(c),0);
+    if(total >= need) return chosen;
+  }
+
+  return [];
+}
+
 function robotPlay(idx){
   cardMoveSound(1);
   const p=state.players[idx], team=state.teams[teamOf(idx)];
   sortCards(liveCards(p));
+
+  if(!team.opened){
+    const opening = robotOpeningCandidates(liveCards(p), team);
+    if(opening.length){
+      for(const item of opening){
+        removeCards(p,item.set);
+        team.melds.push({
+          rank:item.validation.rank,
+          cards:[...item.set],
+          black:item.validation.wilds>0,
+          booked:item.set.length>=7
+        });
+      }
+      team.opened=true;
+      checkFoot(p);
+      sortCards(liveCards(p));
+    }
+  }
+
   let played=true, safety=0;
   while(played && safety++<20){
     played=false;
+
     for(const m of team.melds){
       const cardsNow=[...liveCards(p)];
       const add=[];
@@ -396,17 +450,32 @@ function robotPlay(idx){
       if(add.length){
         const use=add.slice(0, state.difficulty==='shark'?3:1);
         const v=canAddToMeld(use,m);
-        if(v.ok){ removeCards(p,use); m.cards.push(...use); if(use.some(isWild)) m.black=true; if(m.cards.length>=7) m.booked=true; played=true; }
+        if(v.ok){
+          removeCards(p,use);
+          m.cards.push(...use);
+          if(use.some(isWild)) m.black=true;
+          if(m.cards.length>=7) m.booked=true;
+          played=true;
+        }
       }
     }
+
     const candidate=bestRobotSet(liveCards(p),team);
     if(candidate){
       const v=validateSet(candidate,team);
-      if(v.ok){ removeCards(p,candidate); team.melds.push({rank:v.rank,cards:[...candidate],black:v.wilds>0,booked:candidate.length>=7}); team.opened=true; played=true; }
+      if(v.ok){
+        removeCards(p,candidate);
+        team.melds.push({rank:v.rank,cards:[...candidate],black:v.wilds>0,booked:candidate.length>=7});
+        team.opened=true;
+        played=true;
+      }
     }
-    checkFoot(p); sortCards(liveCards(p));
+
+    checkFoot(p);
+    sortCards(liveCards(p));
   }
 }
+
 function bestRobotSet(cards,team){
   const by={}; for(const c of cards){ if(!isWild(c) && !isThree(c) && meldRanks.includes(c.rank)){ (by[c.rank] ||= []).push(c); } }
   const wilds=cards.filter(isWild);
@@ -465,12 +534,15 @@ function updateHumanStatsDisplay(){
 
 function ensureLearningCoach(){
   if($('learningCoach')) return;
-  const box = document.createElement('div');
+  const turnBox = document.querySelector('.turn-box');
+  if(!turnBox) return;
+  const box = document.createElement('p');
   box.id = 'learningCoach';
-  box.className = 'learning-coach hidden';
+  box.className = 'turn-hint hidden';
   box.setAttribute('aria-live','polite');
-  document.body.appendChild(box);
+  turnBox.appendChild(box);
 }
+
 
 function render(){
   ensureLearningCoach();
@@ -661,7 +733,7 @@ function showSettings(){
         <h3>💡 Learning Tips</h3>
         <label class="toggle-pill">
           <input type="checkbox" id="learningToggle" ${state.learningMode ? 'checked' : ''}>
-          Show on-table coaching prompts
+          Show coaching prompts in the Your Turn panel
         </label>
         <p>Off by default. Turn this on when someone is learning the flow of the game.</p>
       </article>
@@ -736,7 +808,7 @@ function showHelp(){
         </article>
         <article class="rule-card full">
           <h3>Learning Tips</h3>
-          <p>Turn on Learning Tips in Settings to show small on-table prompts that point to the next part of the turn.</p>
+          <p>Turn on Learning Tips in Settings to show small prompts in the Your Turn panel that point to the next part of the turn.</p>
         </article>
       </div>
     </section>
@@ -768,17 +840,19 @@ function strategyTip(){
 function learningTipText(){
   if(!state.learningMode || state.view !== 'game' || state.handEnded) return '';
   if(state.current !== 0) return 'AI opponent is thinking. Watch which melds it builds.';
-  if(state.phase === 'draw') return 'Step 1: Draw 2, or Take 7 if the discard pile is legal and helpful.';
-  if(state.selected.size) return 'Step 2: Use Set, Add, or Discard based on the selected cards.';
-  return 'Step 2: Select cards in your hand, then choose Set, Add, or Discard.';
+  if(state.phase === 'draw') return 'Draw 2, or Take 7 if the discard pile is legal and helpful.';
+  if(state.selected.size) return 'Use Set, Add, or Discard based on the selected cards.';
+  return 'Select cards in your hand, then choose Set, Add, or Discard.';
 }
+
 function updateLearningCoach(){
   const coach = $('learningCoach');
   if(!coach) return;
   const tip = learningTipText();
-  coach.textContent = tip;
+  coach.innerHTML = tip ? `<b>💡 Hint:</b> ${tip}` : '';
   coach.classList.toggle('hidden', !tip);
 }
+
 
 function hint(){
   if(state.current!==0){ message('Wait for the AI opponent to finish.'); return; }

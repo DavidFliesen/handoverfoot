@@ -19,7 +19,7 @@ Play online: https://davidfliesen.github.io/handoverfoot/
 - Touch-friendly layout
 - Subtle sound effects with controls
 - Hamburger navigation menu
-- Scores, Settings, How to Play, LinkedIn, and About Developer sections
+- Scores, Settings, How to Play, Source Code, and About Developer sections
 - Optional Learning Tips mode for new players
 - Help button with plain-English guidance and strategy tips
 
@@ -61,11 +61,18 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.6.7**
+Current Version: **3.7.0**
 
 
 ## Learning Tips
 
-Learning Tips are off by default. They can be turned on from Settings to show small coaching prompts during play.
+Learning Tips are off by default. They can be turned on from Settings to show small coaching prompts inside the Your Turn panel during play.
 
 The Help button gives plain-English guidance for new players, including what to do next and simple strategy reminders such as when to think about keeping matching cards, when wild cards can be used, and why 3s are usually bad cards to keep.
+
+
+## AI Timing Fix
+
+AI turns now take one total thinking pause between 2 and 6 seconds, depending on difficulty, instead of stacking several pauses during the same turn.
+
+The AI opening meld logic was also improved so the opponent can combine multiple legal sets to reach the required opening meld, just like the player can.
