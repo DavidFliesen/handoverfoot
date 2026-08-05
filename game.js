@@ -13,7 +13,7 @@ let UID=0;
 let aiTurnTimer = null;
 let aiReadyAt = 0;
 const state = {
-  view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.55, difficulty:'club', askPartner:true, requireBooks:false, learningMode:false,
+  view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.55, difficulty:'club', gameStyle:'classic', allowBookAdds:true, confirmGoOut:true, requireBooks:true, learningMode:false,
   handNo:1, current:0, phase:'draw', selected:new Set(), selectedMeld:null,
   stock:[], discard:[], players:[], teams:[], gameEnded:false, handEnded:false, pileIntent:false
 };
@@ -83,8 +83,11 @@ function startGame(event){
 
   try{
     state.difficulty = document.querySelector('input[name="ai"]:checked')?.value || 'club';
-    state.askPartner = false;
-    state.requireBooks = $('requireBooks') ? $('requireBooks').checked : false;
+    state.gameStyle = document.querySelector('input[name="gameStyle"]:checked')?.value || 'classic';
+    state.allowBookAdds = $('allowBookAdds') ? $('allowBookAdds').checked : true;
+    state.confirmGoOut = $('confirmGoOut') ? $('confirmGoOut').checked : true;
+    state.learningMode = $('setupLearning') ? $('setupLearning').checked : false;
+    state.requireBooks = state.gameStyle === 'classic';
     state.handNo=1;
     state.current=0;
     state.gameEnded=false;
@@ -252,6 +255,7 @@ function canAddToMeld(cards, meld){
   const currentNat = meld.cards.length-currentWild;
   const addWild = cards.filter(isWild).length;
   const addNat = cards.length-addWild;
+  if(meld.booked && !state.allowBookAdds) return {ok:false, reason:'This game does not allow cards to be added to completed books.'};
   if(!meld.black && addWild>0 && meld.booked) return {ok:false, reason:'A red book can only receive natural cards.'};
   if(!meld.booked && currentWild+addWild > currentNat+addNat) return {ok:false, reason:'Before booking, natural cards must be at least wild cards.'};
   return {ok:true};
@@ -290,11 +294,36 @@ function canGoOut(playerIndex){
   return {ok:true};
 }
 function goOutClick(){
-  const chk=canGoOut(0); if(!chk.ok){ message(chk.reason); return; }
-  if(state.askPartner && $('askPartner') && !partnerApproves()){ message('Robot Partner says: wait if you can. Build one more book first.'); return; }
-  finishHand(0);
+  const chk=canGoOut(0);
+  if(!chk.ok){ message(chk.reason); return; }
+
+  if(!state.confirmGoOut){
+    finishHand(0);
+    return;
+  }
+
+  showModal(`
+    <section class="winner-card">
+      <div class="winner-badge">🏁</div>
+      <h2>Go Out?</h2>
+      <p>This will end the current hand.</p>
+      <div class="modal-actions">
+        <button id="cancelGoOut" type="button">Keep Playing</button>
+        <button id="confirmGoOutNow" class="gold" type="button">Go Out</button>
+      </div>
+    </section>
+  `);
+
+  setTimeout(()=>{
+    const cancel = $('cancelGoOut');
+    const confirm = $('confirmGoOutNow');
+    if(cancel) cancel.onclick = () => $('modal')?.close();
+    if(confirm) confirm.onclick = () => {
+      $('modal')?.close();
+      finishHand(0);
+    };
+  },0);
 }
-function partnerApproves(){ const team=state.teams[0]; return team.melds.filter(m=>m.booked).length>=2 || liveCards(state.players[2]).length<8; }
 
 function aiDelay(min=2000,max=6000){
   return Math.floor(Math.random() * (max-min+1)) + min;
@@ -388,11 +417,30 @@ function robotTurn(){
   robotDiscard(idx);
 }
 function robotShouldTake(idx){
-  const chk=canTakePile(idx); if(!chk.ok) return false;
+  const chk=canTakePile(idx);
+  if(!chk.ok) return false;
   if(state.difficulty==='easy') return false;
   if(state.difficulty==='club') return Math.random()<.55;
-  return true;
+
+  const top = topDiscard();
+  const p = state.players[idx];
+  const team = state.teams[teamOf(idx)];
+  const cards = liveCards(p);
+  const matching = cards.filter(c=>c.rank===top.rank && !isWild(c)).length;
+  const pickup = state.discard.slice(Math.max(0,state.discard.length-7));
+  const useful = pickup.filter(c =>
+    !isThree(c) && (
+      c.rank===top.rank ||
+      team.melds.some(m=>m.rank===c.rank) ||
+      cards.filter(h=>h.rank===c.rank && !isWild(h)).length>=2
+    )
+  ).length;
+  const penalty = pickup.filter(isThree).length;
+
+  // Shark takes the pile when it clearly improves a set, opening, or book.
+  return matching>=3 || useful>=3 || (useful>=2 && penalty===0) || (!team.opened && pickup.reduce((s,c)=>s+Math.max(0,points(c)),0)>=40);
 }
+
 function robotOpeningCandidates(cards, team){
   const byRank = {};
   cards.forEach(c => {
@@ -473,7 +521,20 @@ function robotPlay(idx){
         if(c.rank===m.rank || (isWild(c) && (m.black || (!m.booked && wildRoom)))) add.push(c);
       }
       if(add.length){
-        const use=add.slice(0, state.difficulty==='shark'?3:1);
+        let use;
+        if(state.difficulty==='shark'){
+          const naturals = add.filter(c=>!isWild(c));
+          const wilds = add.filter(isWild);
+          const neededForBook = Math.max(0, 7 - m.cards.length);
+          use = naturals.slice(0, Math.max(1, neededForBook));
+          if(m.cards.length + use.length < 7 && wilds.length){
+            const currentNatural = m.cards.filter(c=>!isWild(c)).length + use.length;
+            const currentWild = m.cards.filter(isWild).length;
+            if(currentNatural > currentWild) use.push(wilds[0]);
+          }
+        } else {
+          use=add.slice(0,1);
+        }
         const v=canAddToMeld(use,m);
         if(v.ok){
           removeCards(p,use);
@@ -515,20 +576,56 @@ function bestRobotSet(cards,team){
   }
   return null;
 }
+function robotDiscardKeepValue(card, cards, idx){
+  if(isThree(card)) return -1000;
+  if(isWild(card)) return 1000;
+
+  const sameRank = cards.filter(c=>c.id!==card.id && c.rank===card.rank && !isWild(c)).length;
+  const ownTeam = state.teams[teamOf(idx)];
+  const opponent = state.teams[1-teamOf(idx)];
+  let keep = sameRank * 90 + points(card);
+
+  if(ownTeam.melds.some(m=>m.rank===card.rank)){
+    const meld = ownTeam.melds.find(m=>m.rank===card.rank);
+    keep += meld && meld.cards.length < 7 ? 180 : 70;
+  }
+
+  // Shark remembers exposed opponent melds and avoids feeding them.
+  if(opponent.melds.some(m=>m.rank===card.rank)) keep += state.difficulty==='shark' ? 500 : 180;
+
+  // Aces and other high cards are useful for opening, especially early.
+  if(!ownTeam.opened) keep += points(card) * (state.difficulty==='shark' ? 3 : 1);
+
+  return keep;
+}
+
 function robotDiscard(idx){
   cardMoveSound(1);
-  const p=state.players[idx], cards=liveCards(p); if(!cards.length){ finishHand(idx); return; }
-  let choice = cards.find(isThree);
-  if(!choice){
-    const team=state.teams[teamOf(idx)], opp=state.teams[1-teamOf(idx)];
-    const danger=new Set(opp.melds.map(m=>m.rank));
-    choice=[...cards].reverse().find(c=>!isWild(c) && !danger.has(c.rank)) || cards.find(c=>!isWild(c)) || cards[0];
+  const p=state.players[idx], cards=liveCards(p);
+  if(!cards.length){ finishHand(idx); return; }
+
+  let choice;
+  if(state.difficulty==='shark'){
+    choice = [...cards]
+      .filter(c=>!isWild(c))
+      .sort((a,b)=>robotDiscardKeepValue(a,cards,idx)-robotDiscardKeepValue(b,cards,idx))[0]
+      || cards[0];
+  } else {
+    choice = cards.find(isThree);
+    if(!choice){
+      const team=state.teams[teamOf(idx)], opp=state.teams[1-teamOf(idx)];
+      const danger=new Set(opp.melds.map(m=>m.rank));
+      choice=[...cards].reverse().find(c=>!isWild(c) && !danger.has(c.rank)) || cards.find(c=>!isWild(c)) || cards[0];
+    }
   }
-  removeCards(p,[choice]); state.discard.push(choice);
+
+  removeCards(p,[choice]);
+  state.discard.push(choice);
   if(!p.inFoot && p.hand.length===0) p.inFoot=true;
   if(p.inFoot && p.foot.length===0){ finishHand(idx); return; }
   nextTurn();
 }
+
 function maybeRobotTurn(){
   if(state.current===0 || state.handEnded) return;
 
@@ -563,6 +660,62 @@ function sortTeamMelds(team){
     if(av !== bv) return av - bv;
     return (a.black === b.black) ? 0 : a.black ? 1 : -1;
   });
+}
+
+function activeRulesName(){
+  return state.gameStyle === 'kentucky' ? 'Kentucky Rules' : 'Classic Rules';
+}
+function pileJourneyHtml(p, owner='player'){
+  const handDone = p.inFoot || p.hand.length===0;
+  const handCount = p.hand.length;
+  const footCount = p.foot.length;
+  return `
+    <span class="journey-step ${handDone?'complete':'active'}">
+      <span class="journey-icon">🂠</span>
+      <b>HAND</b>
+      <small>${handDone?'✓':handCount}</small>
+    </span>
+    <span class="journey-arrow">→</span>
+    <span class="journey-step ${p.inFoot?'active':'waiting'}">
+      <span class="journey-icon">🂠</span>
+      <b>FOOT</b>
+      <small>${p.inFoot?footCount:footCount}</small>
+    </span>`;
+}
+function updateOpeningProgress(){
+  const box = $('openingProgress');
+  if(!box || !state.teams.length) return;
+  const team = state.teams[0];
+  if(team.opened){
+    box.innerHTML = '<b>Opening Meld:</b> Complete ✓';
+    box.classList.add('complete');
+    return;
+  }
+  box.classList.remove('complete');
+  const selected = selectedCards().reduce((sum,c)=>sum+points(c),0);
+  const need = openMinimums[state.handNo-1];
+  const remaining = Math.max(0,need-selected);
+  box.innerHTML = `<b>Opening Meld:</b> ${selected} / ${need}<small>${remaining} point${remaining===1?'':'s'} remaining</small>`;
+}
+function showActiveRules(){
+  sound('click');
+  showModal(`
+    <section class="rules-panel compact-rules">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">🃏</div>
+        <div><h2>${activeRulesName()}</h2><p>The active rules are locked for this game.</p></div>
+      </div>
+      <article class="rule-card full">
+        <ul>
+          <li>Draw two cards, or legally take up to seven from the discard pile.</li>
+          <li>Seven cards complete a book.</li>
+          <li>One clean book and one dirty book are required to go out.</li>
+          <li>${state.allowBookAdds?'Cards may':'Cards may not'} be added to completed books.</li>
+          <li>${state.confirmGoOut?'Confirmation is required':'No confirmation is required'} before going out.</li>
+        </ul>
+      </article>
+    </section>
+  `);
 }
 
 function renderMeld(m, i, teamIndex){
@@ -608,23 +761,62 @@ function render(){
   }).join('');
   $('team0Melds').innerHTML = state.teams[0].melds.map((m,i)=>renderMeld(m,i,0)).join('') || '<p class="muted">No melds yet.</p>';
   $('team1Melds').innerHTML = state.teams[1].melds.map((m,i)=>renderMeld(m,i,1)).join('') || '<p class="muted">No melds yet.</p>';
-  const p=state.players[0]; $('handMode').textContent = `${state.players[0].inFoot ? 'Foot' : 'Hand'} · ${liveCards(state.players[0]).length} cards · ${playerMeldCount(0)} melds`; $('cardsLeft').textContent = '';
+  const p=state.players[0];
+  $('handMode').textContent = state.players[0].inFoot ? 'Foot' : 'Hand';
+  $('playerJourney').innerHTML = pileJourneyHtml(p,'player');
+  $('cardsLeft').textContent = `${playerMeldCount(0)} meld${playerMeldCount(0)===1?'':'s'}`;
   $('humanCards').innerHTML = liveCards(p).map(c=>cardHtml(c,state.selected.has(c.id))).join('');
   $('stockCount').textContent=state.stock.length;
   const top=topDiscard(); $('discardPileBtn').innerHTML = top ? `<div class="card ${colorClass(top)}"><span>${top.rank}</span><span class="suit">${top.suit}</span><span class="bottom">${top.rank}</span></div><small>${state.discard.length}</small>` : '';
   $('turnName').textContent = state.handEnded ? 'Hand Complete' : state.current===0 ? 'Your Turn' : `${currentPlayer().name}'s Turn`;
+  $('rulesIndicator').textContent = activeRulesName();
+  updateOpeningProgress();
   bindClicks(); updateActions();
 }
 function updateActions(){
   const humanTurn=state.current===0 && !state.handEnded;
-  $('drawBtn').disabled=!(humanTurn && state.phase==='draw'); $('discardPileBtn').disabled=!(humanTurn && state.phase==='draw');
-  $('setBtn').disabled=!(humanTurn && state.phase==='play'); $('addBtn').disabled=!(humanTurn && state.phase==='play'); $('discardBtn').disabled=!(humanTurn && state.phase==='play');
-  $('goOutBtn').disabled=!(humanTurn && canGoOut(0).ok);
+  const drawing=humanTurn && state.phase==='draw';
+  const playing=humanTurn && state.phase==='play';
+  const takeCheck = humanTurn ? canTakePile(0) : {ok:false,reason:'Wait for your turn.'};
+
+  $('drawBtn').disabled=!drawing;
+  $('discardPileBtn').disabled=!drawing;
+  $('drawActionBtn').disabled=!drawing;
+  $('takeActionBtn').disabled=!(drawing && takeCheck.ok);
+  $('takeActionBtn').title = takeCheck.ok ? 'Take up to 7 cards from the discard pile' : takeCheck.reason;
+
+  $('setBtn').disabled=!playing;
+  $('addBtn').disabled=!playing;
+  $('discardBtn').disabled=!playing;
+  $('goOutBtn').disabled=!(playing && canGoOut(0).ok);
+  $('sortBtn').disabled=!humanTurn;
+  $('clearBtn').disabled=!playing;
+
+  const hand = $('humanCards');
+  if(hand) hand.classList.toggle('selection-locked', !playing);
 }
+
 function bindClicks(){
-  document.querySelectorAll('[data-card]').forEach(btn=>btn.onclick=()=>{ if(state.current!==0 || state.handEnded) return; const id=btn.dataset.card; state.selected.has(id)?state.selected.delete(id):state.selected.add(id); render(); });
-  document.querySelectorAll('[data-meld]').forEach(btn=>btn.onclick=()=>{ state.selectedMeld=Number(btn.dataset.meld); message('Meld selected. Choose cards, then press Add.'); render(); });
+  document.querySelectorAll('[data-card]').forEach(btn=>{
+    btn.disabled = !(state.current===0 && state.phase==='play' && !state.handEnded);
+    btn.onclick=()=>{
+      if(state.current!==0 || state.phase!=='play' || state.handEnded){
+        message('Draw 2 or Take 7 before selecting cards.');
+        return;
+      }
+      const id=btn.dataset.card;
+      state.selected.has(id)?state.selected.delete(id):state.selected.add(id);
+      render();
+    };
+  });
+  document.querySelectorAll('[data-meld]').forEach(btn=>btn.onclick=()=>{
+    if(state.phase!=='play'){ message('Draw 2 or Take 7 first.'); return; }
+    state.selectedMeld=Number(btn.dataset.meld);
+    message('Meld selected. Choose cards, then press Add.');
+    render();
+  });
 }
+
 function sortHuman(){ sortCards(liveCards(state.players[0])); render(); }
 function clearSelection(){ state.selected.clear(); state.selectedMeld=null; render(); }
 function showModal(html){
@@ -707,8 +899,8 @@ function showRules(){
       <div class="rules-hero">
         <div class="rules-hero-icon">📘</div>
         <div>
-          <h2>How to Play</h2>
-          <p>Hand Over Foot is a card-matching game. Build groups of matching cards, turn them into books, and empty your Hand and then your Foot before the AI opponent does.</p>
+          <h2>${activeRulesName()}</h2>
+          <p>These instructions match the active game style. Hand Over Foot is a card-matching game. Build groups of matching cards, turn them into books, and empty your Hand and then your Foot before the AI opponent does.</p>
         </div>
       </div>
       <div class="rules-grid">
@@ -892,9 +1084,9 @@ function strategyTip(){
 function learningTipText(){
   if(!state.learningMode || state.view !== 'game' || state.handEnded) return '';
   if(state.current !== 0) return 'AI opponent is thinking. Watch which melds it builds.';
-  if(state.phase === 'draw') return 'Draw 2, or Take 7 if the discard pile is legal and helpful.';
+  if(state.phase === 'draw') return 'Choose Draw 2 or Take 7 below. Your cards unlock after you draw.';
   if(state.selected.size) return 'Use Set, Add, or Discard based on the selected cards.';
-  return 'Select cards in your hand, then choose Set, Add, or Discard.';
+  return state.requireBooks ? 'Select cards to play. You need one clean and one dirty book before going out.' : 'Select cards in your hand, then choose Set, Add, or Discard.';
 }
 
 function updateLearningCoach(){
@@ -1073,6 +1265,9 @@ function init(){
   const fullscreenBtn = $('fullscreenBtn');
   const homeWordmark = $('homeWordmark');
   const dealBtn = $('dealBtn');
+  const rulesIndicator = $('rulesIndicator');
+  const drawActionBtn = $('drawActionBtn');
+  const takeActionBtn = $('takeActionBtn');
   
   if(playAiBtn) playAiBtn.onclick = () => { sound('click'); startSetup('ai'); };
   if(playBtn) playBtn.onclick = () => { sound('click'); startSetup('ai'); };
@@ -1089,14 +1284,18 @@ function init(){
   if(menuSettings) menuSettings.onclick = () => { closeMenu(); showSettings(); };
   if(menuAbout) menuAbout.onclick = () => { closeMenu(); showAboutDeveloper(); };
   if(fullscreenBtn) fullscreenBtn.onclick = toggleFullscreen;
+  if(rulesIndicator) rulesIndicator.onclick = showActiveRules;
   if(homeWordmark) homeWordmark.onclick = returnHomeWithWarning;
   if(dealBtn) dealBtn.onclick = startGame;
   if(dealBtn){ dealBtn.onclick = startGame; dealBtn.addEventListener('click', startGame, {capture:true}); }
 
   document.querySelectorAll('[data-nav="home"]').forEach(b=>b.onclick=returnHomeWithWarning);
   document.querySelectorAll('input[name="ai"]').forEach(i=>i.onchange=()=>document.querySelectorAll('.choice').forEach(l=>l.classList.toggle('checked', l.querySelector('input').checked)));
+  document.querySelectorAll('input[name="gameStyle"]').forEach(i=>i.onchange=()=>document.querySelectorAll('.style-choice').forEach(l=>l.classList.toggle('checked', !!l.querySelector('input')?.checked)));
 
   if($('drawBtn')) $('drawBtn').onclick=drawTwo;
+  if(drawActionBtn) drawActionBtn.onclick=drawTwo;
+  if(takeActionBtn) takeActionBtn.onclick=takePile;
   if($('discardPileBtn')) $('discardPileBtn').onclick=takePile;
   if($('setBtn')) $('setBtn').onclick=makeSet;
   if($('addBtn')) $('addBtn').onclick=addToMeld;

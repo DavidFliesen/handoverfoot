@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:ital,wght@1,800&family=Bree+Serif&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3.7.2" />
+  <link rel="stylesheet" href="styles.css?v=3.8.0" />
 </head>
 <body>
   <div id="app">
@@ -28,6 +28,7 @@
 
       <div class="app-header-center">
         <div id="roundBadge" class="round-badge">Hand 1 · Meld 50</div>
+        <button id="rulesIndicator" class="rules-indicator" type="button" title="View active rules">Classic Rules</button>
         <div class="zoom-controls" aria-label="Card zoom controls">
           <button id="zoomOutBtn" type="button" title="Zoom cards out">−</button>
           <span id="zoomLevel">100%</span>
@@ -58,13 +59,33 @@
         <button class="back-btn" data-nav="home">← Home</button>
         <h1 id="setupTitle">Play</h1>
         <p id="setupIntro">Choose a robot difficulty level, then deal the cards.</p>
+        <h2 class="setup-section-title">Difficulty</h2>
         <div class="choice-grid">
-          <label class="choice"><input type="radio" name="ai" value="easy"><span>😊</span><b>Easy</b><small>Casual robots</small></label>
-          <label class="choice checked"><input type="radio" name="ai" value="club" checked><span>🃏</span><b>Club</b><small>Balanced robots</small></label>
-          <label class="choice"><input type="radio" name="ai" value="shark"><span>🦈</span><b>Shark</b><small>Aggressive robots</small></label>
+          <label class="choice"><input type="radio" name="ai" value="easy"><span>😊</span><b>Easy</b><small>Relaxed play</small></label>
+          <label class="choice checked"><input type="radio" name="ai" value="club" checked><span>🃏</span><b>Club</b><small>Balanced play</small></label>
+          <label class="choice"><input type="radio" name="ai" value="shark"><span>🦈</span><b>Shark</b><small>Strategic play</small></label>
         </div>
-<label class="option-line"><input type="checkbox" id="requireBooks"> Require one red and one black book to go out</label>
-<button class="primary" id="dealBtn" type="button">Deal Cards</button>
+
+        <h2 class="setup-section-title">Game Style</h2>
+        <div class="style-choice-grid">
+          <label class="style-choice checked">
+            <input type="radio" name="gameStyle" value="classic" checked>
+            <span><b>Classic</b><small>Recommended · Standard app rules</small></span>
+          </label>
+          <label class="style-choice coming-soon" aria-disabled="true">
+            <input type="radio" name="gameStyle" value="kentucky" disabled>
+            <span><b>Kentucky</b><small>Coming later after the rules are verified</small></span>
+          </label>
+        </div>
+
+        <details class="house-options">
+          <summary>Simple Options</summary>
+          <label class="option-line"><input type="checkbox" id="allowBookAdds" checked> Allow cards to be added to completed books</label>
+          <label class="option-line"><input type="checkbox" id="confirmGoOut" checked> Confirm before going out</label>
+          <label class="option-line"><input type="checkbox" id="setupLearning"> Learning Help</label>
+        </details>
+
+        <button class="primary" id="dealBtn" type="button">Deal Cards</button>
       </div>
     </section>
 
@@ -90,6 +111,7 @@
             <div class="turn-box">
               <strong id="turnName">Your Turn</strong>
               <p id="message">Draw two cards or take the discard pile.</p>
+              <div id="openingProgress" class="opening-progress"></div>
               <p id="learningCoach" class="turn-hint hidden"></p>
             </div>
           </section>
@@ -102,7 +124,11 @@
 
         <section class="player-area">
           <div class="player-head">
-            <div><strong id="playerLabel">You</strong><span id="handMode">Hand</span></div>
+            <div>
+              <strong id="playerLabel">You</strong>
+              <span id="handMode" class="sr-only">Hand</span>
+              <div id="playerJourney" class="pile-journey" aria-label="Your Hand and Foot status"></div>
+            </div>
             <div class="cards-left" id="cardsLeft">0 cards</div>
           </div>
           <div id="humanCards" class="hand-row"></div>
@@ -110,6 +136,8 @@
       </main>
 
       <footer class="game-actions">
+        <button id="drawActionBtn" class="draw-action">Draw 2</button>
+        <button id="takeActionBtn" class="take-action">Take 7</button>
         <button id="setBtn">Set</button>
         <button id="addBtn">Add</button>
         <button id="discardBtn" class="danger">Discard</button>
@@ -127,6 +155,6 @@
     <div id="modalBody"></div>
   </dialog>
 
-  <script src="game.js?v=3.7.2"></script>
+  <script src="game.js?v=3.8.0"></script>
 </body>
 </html>

@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.7.2**
+Current Version: **3.8.0**
 
 
 ## Learning Tips
@@ -86,3 +86,15 @@ Melds are now displayed in card value order, making it easier to see which ranks
 ## AI Delay Restore
 
 AI turns now use one guarded thinking timer per full turn. The opponent waits 2–6 seconds depending on difficulty, while preserving the v3.7.0 fix that prevents stacked delays and allows multi-set opening melds.
+
+
+## v3.8.0 Gameplay Upgrade
+
+- Added clear **Draw 2** and **Take 7** buttons to the bottom action bar while keeping both piles clickable.
+- Locked card selection until the player completes the draw step.
+- Added visual **Hand → Foot** progress for the player and AI opponent.
+- Added a compact **Classic Rules** indicator and active-rules summary.
+- Added a simple Game Style selector with Classic enabled and Kentucky marked for later verification.
+- Added three simple options: adding to completed books, confirmation before going out, and Learning Help.
+- Improved Shark AI discard safety, discard-pile judgment, wild-card use, and book-building priorities.
+- Preserved the v3.7.0 single 2–6 second AI turn delay and multi-set opening logic.
