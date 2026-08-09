@@ -1008,3 +1008,31 @@ body:not(:has(#game:not(.hidden))) .app-header{
   .journey-step{min-width:92px}
   .rules-indicator{font-size:.78rem}
 }
+
+
+/* v3.9.0 Kentucky Rules */
+.style-choice:not(.coming-soon){
+  cursor:pointer;
+}
+.option-line.fixed-option{
+  opacity:.62;
+}
+.option-line.fixed-option input{
+  accent-color:var(--gold2);
+}
+.rules-adaptation{
+  margin:12px 0 0;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,223,116,.36);
+  background:rgba(255,223,116,.08);
+  color:rgba(255,247,230,.84);
+}
+.pile-choice-card p{
+  max-width:520px;
+  margin-left:auto;
+  margin-right:auto;
+}
+.journey-step small{
+  min-width:30px;
+}

@@ -6,20 +6,21 @@ const redSuits = new Set(['♥','♦']);
 const meldRanks = ['4','5','6','7','8','9','10','J','Q','K','A'];
 const rankOrder = ['3','4','5','6','7','8','9','10','J','Q','K','A','2','JK'];
 const openMinimums = [50,90,120,150];
-const cardPoints = { '3':5, '4':5, '5':5, '6':5, '7':5, '8':10, '9':10, '10':10, 'J':10, 'Q':10, 'K':10, 'A':20, '2':20, 'JK':50 };
+const standardCardPoints = { '3':5, '4':5, '5':5, '6':5, '7':5, '8':10, '9':10, '10':10, 'J':10, 'Q':10, 'K':10, 'A':20, '2':20, 'JK':50 };
+const kentuckyCardPoints = { '3':5, '4':5, '5':5, '6':5, '7':5, '8':5, '9':5, '10':10, 'J':10, 'Q':10, 'K':10, 'A':20, '2':20, 'JK':50 };
 const bookBonus = { red:500, black:300 };
 const penalty3 = { red:-500, black:-300 };
 let UID=0;
 let aiTurnTimer = null;
 let aiReadyAt = 0;
 const state = {
-  view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.55, difficulty:'club', gameStyle:'classic', allowBookAdds:true, confirmGoOut:true, requireBooks:true, learningMode:false,
+  view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.55, difficulty:'club', gameStyle:'standard', allowBookAdds:true, confirmGoOut:true, requireBooks:true, learningMode:false,
   handNo:1, current:0, phase:'draw', selected:new Set(), selectedMeld:null,
-  stock:[], discard:[], players:[], teams:[], gameEnded:false, handEnded:false, pileIntent:false
+  stock:[], discard:[], players:[], teams:[], gameEnded:false, handEnded:false, pileIntent:false, pickupObligation:null
 };
 function id(){ return `c${++UID}`; }
 function teamOf(i){ return i%2; }
-function makePlayer(name, ai=true){ return { name, ai, hand:[], foot:[], inFoot:false, out:false }; }
+function makePlayer(name, ai=true){ return { name, ai, hand:[], foot:[], inFoot:false, out:false, floating:false }; }
 function makeTeam(name){ return { name, score:0, handScore:0, melds:[], opened:false, wentOut:false }; }
 function makeDeck(decks=5){
   const cards=[];
@@ -38,7 +39,17 @@ function rankLabel(rank){
   const names = { J:'Jacks', Q:'Queens', K:'Kings', A:'Aces', JK:'Jokers' };
   return names[rank] || `${rank}s`;
 }
-function points(c){ return cardPoints[c.rank]||0; }
+function isKentucky(){ return state.gameStyle === 'kentucky'; }
+function points(c){
+  const table = isKentucky() ? kentuckyCardPoints : standardCardPoints;
+  return table[c.rank] || 0;
+}
+function requiredOpening(){ return openMinimums[state.handNo-1]; }
+function hasRequiredBooks(team){
+  const hasClean = team.melds.some(m=>m.booked && !m.black);
+  const hasDirty = team.melds.some(m=>m.booked && m.black);
+  return hasClean && hasDirty;
+}
 function colorClass(c){ return isWild(c)?'wild':isRed(c)?'red':'black'; }
 function liveCards(p){ return p.inFoot ? p.foot : p.hand; }
 function currentPlayer(){ return state.players[state.current]; }
@@ -83,17 +94,18 @@ function startGame(event){
 
   try{
     state.difficulty = document.querySelector('input[name="ai"]:checked')?.value || 'club';
-    state.gameStyle = document.querySelector('input[name="gameStyle"]:checked')?.value || 'classic';
-    state.allowBookAdds = $('allowBookAdds') ? $('allowBookAdds').checked : true;
-    state.confirmGoOut = $('confirmGoOut') ? $('confirmGoOut').checked : true;
+    state.gameStyle = document.querySelector('input[name="gameStyle"]:checked')?.value || 'standard';
+    state.allowBookAdds = isKentucky() ? true : ($('allowBookAdds') ? $('allowBookAdds').checked : true);
+    state.confirmGoOut = isKentucky() ? false : ($('confirmGoOut') ? $('confirmGoOut').checked : true);
     state.learningMode = $('setupLearning') ? $('setupLearning').checked : false;
-    state.requireBooks = state.gameStyle === 'classic';
+    state.requireBooks = true;
+    state.pickupObligation = null;
     state.handNo=1;
     state.current=0;
     state.gameEnded=false;
     state.handEnded=false;
     state.players = [makePlayer('You',false), makePlayer('AI Opponent')];
-    state.teams = [makeTeam('Your Team'), makeTeam('Opponents')];
+    state.teams = [makeTeam('Your Team'), makeTeam('AI Opponent')];
     dealHand();
     show('game');
   }catch(err){
@@ -105,45 +117,189 @@ function startGame(event){
 
 function dealHand(){
   clearAiTimer();
-  UID=0; state.stock=makeDeck(5); state.discard=[]; state.selected.clear(); state.selectedMeld=null; state.phase='draw'; state.handEnded=false; state.pileIntent=false;
+  UID=0;
+  const deckCount = isKentucky() ? state.players.length : 5;
+  const packetSize = isKentucky() ? 13 : 11;
+
+  state.stock=makeDeck(deckCount);
+  state.discard=[];
+  state.selected.clear();
+  state.selectedMeld=null;
+  state.phase='draw';
+  state.handEnded=false;
+  state.pileIntent=false;
+  state.pickupObligation=null;
+
   state.teams.forEach(t=>{ t.melds=[]; t.opened=false; t.handScore=0; t.wentOut=false; });
-  state.players.forEach(p=>{ p.hand=[]; p.foot=[]; p.inFoot=false; p.out=false; });
-  for(let i=0;i<11;i++) state.players.forEach(p=>p.hand.push(state.stock.pop()));
-  for(let i=0;i<11;i++) state.players.forEach(p=>p.foot.push(state.stock.pop()));
+  state.players.forEach(p=>{ p.hand=[]; p.foot=[]; p.inFoot=false; p.out=false; p.floating=false; });
+
+  for(let i=0;i<packetSize;i++) state.players.forEach(p=>p.hand.push(state.stock.pop()));
+  for(let i=0;i<packetSize;i++) state.players.forEach(p=>p.foot.push(state.stock.pop()));
   state.players.forEach(p=>sortCards(p.hand));
-  let up;
-  do { up = state.stock.pop(); if(!up) break; } while(isWild(up));
-  if(up) state.discard.push(up);
+
+  // Kentucky play begins with drawing from the stock; the discard pile grows from actual discards.
+  if(!isKentucky()){
+    let up;
+    do { up = state.stock.pop(); if(!up) break; } while(isWild(up));
+    if(up) state.discard.push(up);
+  }
+
   state.current = (state.handNo-1) % state.players.length;
-  render(); message(state.current===0 ? `You start Hand ${state.handNo}. Draw 2 or take the discard pile.` : `${state.players[state.current].name} starts Hand ${state.handNo}. Draw 2 or take the discard pile.`); maybeRobotTurn();
+  render();
+  message(state.current===0
+    ? `You start Hand ${state.handNo}. Draw 2${isKentucky() ? '.' : ' or take the discard pile.'}`
+    : `${state.players[state.current].name} starts Hand ${state.handNo}. Draw 2${isKentucky() ? '.' : ' or take the discard pile.'}`);
+  maybeRobotTurn();
 }
+
 function drawTwo(){
   if(state.phase!=='draw' || state.current!==0) return;
   sound('draw');
-  drawFor(currentPlayer(),2); state.phase='play'; state.pileIntent=false; render(); message('You drew 2. Make sets, add to books, then discard.');
+  drawFor(currentPlayer(),2);
+  state.phase='play';
+  state.pileIntent=false;
+  state.pickupObligation=null;
+  render();
+  message(isKentucky() && currentPlayer().floating
+    ? 'You are floating. Play what you can, but you must finish the hand by discarding a card that cannot be played.'
+    : 'You drew 2. Make sets, add to books, then discard.');
 }
+
 function drawFor(p,n){ for(let i=0;i<n;i++){ if(!state.stock.length) recycleDiscard(); if(state.stock.length) liveCards(p).push(state.stock.pop()); } cardMoveSound(n); }
 function recycleDiscard(){ if(state.discard.length<=1) return; const top=state.discard.pop(); state.stock=shuffle(state.discard.splice(0)); state.discard=[top]; }
 function topDiscard(){ return state.discard[state.discard.length-1]; }
+function kentuckyPickupPlan(playerIndex, top){
+  if(!top || isThree(top)) return null;
+  const p = state.players[playerIndex];
+  const team = state.teams[teamOf(playerIndex)];
+  const cards = liveCards(p);
+
+  // If the top card can be played directly onto an existing book/meld, that is legal.
+  for(const m of team.melds){
+    if(isWild(top)){
+      if(canAddToMeld([top],m).ok) return {type:'add', meldRank:m.rank, cardIds:[top.id]};
+    }else if(m.rank===top.rank && canAddToMeld([top],m).ok){
+      return {type:'add', meldRank:m.rank, cardIds:[top.id]};
+    }
+  }
+
+  // A new pickup meld requires either a natural pair, or one natural plus one wild.
+  if(isWild(top)) return null;
+  const naturals = cards.filter(c=>!isWild(c) && c.rank===top.rank);
+  const wilds = cards.filter(isWild);
+  let pickupSet = null;
+  if(naturals.length>=2){
+    pickupSet = [top,naturals[0],naturals[1]];
+  }else if(naturals.length>=1 && wilds.length>=1){
+    pickupSet = [top,naturals[0],wilds[0]];
+  }
+  if(!pickupSet) return null;
+
+  if(team.opened){
+    return {type:'set', rank:top.rank, cardIds:pickupSet.map(c=>c.id)};
+  }
+
+  // Before opening, the pickup card must participate in a legal opening that reaches the hand minimum.
+  const opening = robotOpeningCandidates([...cards,top],team,top.id);
+  if(!opening.length) return null;
+  return {
+    type:'opening',
+    rank:top.rank,
+    groups:opening.map(item=>item.set.map(c=>c.id))
+  };
+}
+
 function canTakePile(playerIndex){
   if(state.phase!=='draw') return {ok:false, reason:'You must draw or take the pile first.'};
-  const top=topDiscard(); if(!top) return {ok:false, reason:'Discard pile is empty.'};
-  if(isThree(top) || isWild(top)) return {ok:false, reason:'The pile is frozen because the top card is a 3 or wild card.'};
-  const team=state.teams[teamOf(playerIndex)];
-  if(team.melds.some(m=>m.rank===top.rank)) return {ok:false, reason:'Your team already has a set or book of that face.'};
-  const cards=liveCards(state.players[playerIndex]);
-  const matches=cards.filter(c=>c.rank===top.rank && !isWild(c));
-  if(matches.length<2) return {ok:false, reason:'You need two natural cards matching the top discard.'};
-  return {ok:true, matches};
+  const top=topDiscard();
+  if(!top) return {ok:false, reason:'Discard pile is empty.'};
+
+  if(!isKentucky()){
+    if(isThree(top) || isWild(top)) return {ok:false, reason:'The pile is frozen because the top card is a 3 or wild card.'};
+    const team=state.teams[teamOf(playerIndex)];
+    if(team.melds.some(m=>m.rank===top.rank)) return {ok:false, reason:'Your team already has a set or book of that face.'};
+    const cards=liveCards(state.players[playerIndex]);
+    const matches=cards.filter(c=>c.rank===top.rank && !isWild(c));
+    if(matches.length<2) return {ok:false, reason:'You need two natural cards matching the top discard.'};
+    return {ok:true, matches};
+  }
+
+  if(isThree(top)) return {ok:false, reason:'A discarded 3 freezes the pile in Kentucky Rules.'};
+  const plan = kentuckyPickupPlan(playerIndex,top);
+  if(!plan){
+    return {ok:false, reason:'To take the pile, the top card must be playable now with a natural pair, a natural + wild, or an existing meld/book.'};
+  }
+  return {ok:true, plan, top};
 }
+
+function takeCardsFromDiscard(playerIndex,count,plan=null){
+  const top = topDiscard();
+  if(!top) return [];
+  const amount = Math.max(1,Math.min(count,state.discard.length));
+  const take = state.discard.splice(Math.max(0,state.discard.length-amount));
+  liveCards(state.players[playerIndex]).push(...take);
+  cardMoveSound(take.length);
+
+  if(isKentucky()){
+    state.pickupObligation = {
+      playerIndex,
+      cardId:top.id,
+      rank:top.rank,
+      plan
+    };
+  }
+  return take;
+}
+
+function finishHumanPileTake(count,plan){
+  const take = takeCardsFromDiscard(0,count,plan);
+  state.phase='play';
+  render();
+  message(`You took ${take.length} card${take.length===1?'':'s'} from the discard pile. Play the top pickup card immediately.`);
+}
+
 function takePile(){
   if(state.current!==0) return;
   sound('draw');
-  const chk=canTakePile(0); if(!chk.ok){ message(chk.reason); return; }
-  const take = state.discard.splice(Math.max(0,state.discard.length-7));
-  liveCards(currentPlayer()).push(...take); cardMoveSound(take.length);
-  state.phase='play'; render(); message(`You took ${take.length} cards from the discard pile. Use the top card in a new set.`);
+  const chk=canTakePile(0);
+  if(!chk.ok){ message(chk.reason); return; }
+
+  if(!isKentucky()){
+    const take = state.discard.splice(Math.max(0,state.discard.length-7));
+    liveCards(currentPlayer()).push(...take);
+    cardMoveSound(take.length);
+    state.phase='play';
+    render();
+    message(`You took ${take.length} cards from the discard pile. Use the top card in a new set.`);
+    return;
+  }
+
+  const maxTake = Math.min(8,state.discard.length);
+  if(maxTake<=1){
+    finishHumanPileTake(1,chk.plan);
+    return;
+  }
+
+  showModal(`
+    <section class="winner-card pile-choice-card">
+      <div class="winner-badge">🂠</div>
+      <h2>Take the Discard Pile</h2>
+      <p>Kentucky Rules require the top card to be played immediately.</p>
+      <div class="modal-actions">
+        <button id="takeTopOnly" type="button">Top Card Only</button>
+        <button id="takeTopPlus" class="gold" type="button">Top + ${maxTake-1} (${maxTake} cards)</button>
+      </div>
+    </section>
+  `);
+
+  setTimeout(()=>{
+    const one = $('takeTopOnly');
+    const many = $('takeTopPlus');
+    if(one) one.onclick = ()=>{ $('modal')?.close(); finishHumanPileTake(1,chk.plan); };
+    if(many) many.onclick = ()=>{ $('modal')?.close(); finishHumanPileTake(maxTake,chk.plan); };
+  },0);
 }
+
 function validateSet(cards, team){
   if(cards.length<3) return {ok:false, reason:'A set needs at least 3 cards.'};
   if(cards.some(isThree)) return {ok:false, reason:'3s cannot be melded.'};
@@ -223,6 +379,9 @@ function makeSet(){
   const cards=selectedCards();
   const team=currentTeam();
 
+  if(isKentucky() && state.pickupObligation?.playerIndex===0 && !cards.some(c=>c.id===state.pickupObligation.cardId)){
+    sound('error'); message('Play the top card you picked up before making another meld.'); return;
+  }
   const v=analyzeSelectedSets(cards, team);
   if(!v.ok){ sound('error'); message(v.reason); return; }
 
@@ -238,6 +397,7 @@ function makeSet(){
 
   sortTeamMelds(team);
   team.opened=true;
+  if(isKentucky() && state.pickupObligation?.playerIndex===0 && cards.some(c=>c.id===state.pickupObligation.cardId)) state.pickupObligation=null;
   state.selected.clear();
   checkFoot(currentPlayer());
   render();
@@ -257,42 +417,151 @@ function canAddToMeld(cards, meld){
   const addNat = cards.length-addWild;
   if(meld.booked && !state.allowBookAdds) return {ok:false, reason:'This game does not allow cards to be added to completed books.'};
   if(!meld.black && addWild>0 && meld.booked) return {ok:false, reason:'A red book can only receive natural cards.'};
-  if(!meld.booked && currentWild+addWild > currentNat+addNat) return {ok:false, reason:'Before booking, natural cards must be at least wild cards.'};
+  if(isKentucky() && currentWild+addWild > currentNat+addNat) return {ok:false, reason:'Kentucky dirty books may never have more wild cards than natural cards.'};
+  if(!isKentucky() && !meld.booked && currentWild+addWild > currentNat+addNat) return {ok:false, reason:'Before booking, natural cards must be at least wild cards.'};
   return {ok:true};
 }
 function addToMeld(){
   if(state.current!==0 || state.phase!=='play') return;
   const team=currentTeam(); if(!team.opened){ message('Your team must open before adding cards.'); return; }
   const cards=selectedCards();
+  if(isKentucky() && state.pickupObligation?.playerIndex===0 && !cards.some(c=>c.id===state.pickupObligation.cardId)){
+    message('Play the top card you picked up before adding anything else.'); return;
+  }
   let meld = state.selectedMeld!==null ? team.melds[state.selectedMeld] : null;
   if(!meld && cards.length){ const natural=cards.find(c=>!isWild(c)); if(natural) meld=team.melds.find(m=>m.rank===natural.rank); }
   if(!meld){ message('Tap one of your team melds, then press Add.'); return; }
   const v=canAddToMeld(cards,meld); if(!v.ok){ message(v.reason); return; }
   removeCards(currentPlayer(),cards); meld.cards.push(...cards); if(cards.some(isWild)) meld.black=true; if(meld.cards.length>=7) meld.booked=true;
+  if(isKentucky() && state.pickupObligation?.playerIndex===0 && cards.some(c=>c.id===state.pickupObligation.cardId)) state.pickupObligation=null;
   state.selected.clear(); state.selectedMeld=null; checkFoot(currentPlayer()); render(); cardMoveSound(cards.length); message(`Added ${cards.length} card${cards.length===1?'':'s'} to ${meld.rank}s.`); checkHumanEmpty();
 }
-function discardSelected(){
-  if(state.current!==0 || state.phase!=='play') return;
-  sound('discard'); cardMoveSound(1);
-  const cards=selectedCards(); if(cards.length!==1){ message('Select exactly one card to discard.'); return; }
-  const c=cards[0]; removeCards(currentPlayer(),[c]); state.discard.push(c); state.selected.clear(); state.selectedMeld=null;
-  const p=currentPlayer();
-  if(!p.inFoot && p.hand.length===0){ p.inFoot=true; message('You discarded your last hand card. Your foot starts next turn.'); }
-  if(p.inFoot && p.foot.length===0){ finishHand(0); return; }
+function kentuckyNewSetIncluding(card,playerIndex){
+  if(isThree(card)) return null;
+  const p=state.players[playerIndex];
+  const team=state.teams[teamOf(playerIndex)];
+  const cards=liveCards(p);
+
+  if(isWild(card)){
+    for(const rank of meldRanks){
+      if(team.melds.some(m=>m.rank===rank)) continue;
+      const naturals=cards.filter(c=>c.id!==card.id && !isWild(c) && c.rank===rank);
+      if(naturals.length>=2) return [card,naturals[0],naturals[1]];
+    }
+    return null;
+  }
+
+  if(team.melds.some(m=>m.rank===card.rank)) return null;
+  const naturals=cards.filter(c=>c.id!==card.id && !isWild(c) && c.rank===card.rank);
+  const wilds=cards.filter(c=>c.id!==card.id && isWild(c));
+  if(naturals.length>=2) return [card,naturals[0],naturals[1]];
+  if(naturals.length>=1 && wilds.length>=1) return [card,naturals[0],wilds[0]];
+  return null;
+}
+
+function kentuckyCardCanBePlayed(card,playerIndex){
+  if(!isKentucky() || isThree(card)) return false;
+  const p=state.players[playerIndex];
+  const team=state.teams[teamOf(playerIndex)];
+
+  for(const m of team.melds){
+    if((isWild(card) || m.rank===card.rank) && canAddToMeld([card],m).ok) return true;
+  }
+
+  if(team.opened) return !!kentuckyNewSetIncluding(card,playerIndex);
+
+  const opening = robotOpeningCandidates(liveCards(p),team,card.id);
+  return opening.length>0;
+}
+
+function markFloatingAndPass(playerIndex){
+  const p=state.players[playerIndex];
+  p.floating=true;
+  state.pickupObligation=null;
+  state.selected.clear();
+  state.selectedMeld=null;
   nextTurn();
 }
-function checkFoot(p){ if(!p.inFoot && p.hand.length===0){ p.inFoot=true; message('You picked up your foot and may keep playing.'); } }
-function checkHumanEmpty(){ const p=state.players[0]; if(p.inFoot && p.foot.length===0) finishHand(0); else render(); }
+
+function discardSelected(){
+  if(state.current!==0 || state.phase!=='play') return;
+  const cards=selectedCards();
+  if(cards.length!==1){ message('Select exactly one card to discard.'); return; }
+
+  const c=cards[0];
+  if(isKentucky()){
+    if(state.pickupObligation?.playerIndex===0){
+      message('You must play the top card you picked up before you can discard.'); return;
+    }
+    if(kentuckyCardCanBePlayed(c,0)){
+      message(`${rankLabel(c.rank)} can still be played. Kentucky Rules do not allow you to discard a playable card.`);
+      return;
+    }
+  }
+
+  sound('discard');
+  cardMoveSound(1);
+  removeCards(currentPlayer(),[c]);
+  state.discard.push(c);
+  state.selected.clear();
+  state.selectedMeld=null;
+
+  const p=currentPlayer();
+  if(!p.inFoot && p.hand.length===0){
+    p.inFoot=true;
+    message('You discarded your last Hand card. Your Foot starts next turn.');
+  }
+
+  if(p.inFoot && p.foot.length===0){
+    if(isKentucky()){
+      if(hasRequiredBooks(currentTeam())){
+        finishHand(0);
+      }else{
+        p.floating=true;
+        nextTurn();
+      }
+      return;
+    }
+    finishHand(0);
+    return;
+  }
+  nextTurn();
+}
+
+function checkFoot(p){
+  if(!p.inFoot && p.hand.length===0){
+    p.inFoot=true;
+    message('You picked up your Foot and may keep playing.');
+  }
+}
+
+function checkHumanEmpty(){
+  const p=state.players[0];
+  if(p.inFoot && p.foot.length===0){
+    if(isKentucky()){
+      p.floating=true;
+      markFloatingAndPass(0);
+      return;
+    }
+    finishHand(0);
+    return;
+  }
+  render();
+}
+
 function canGoOut(playerIndex){
   const p=state.players[playerIndex], team=state.teams[teamOf(playerIndex)];
+  if(isKentucky()){
+    return {ok:false, reason:'Kentucky Rules end the hand by discarding your final non-playable Foot card.'};
+  }
   if(!p.inFoot) return {ok:false, reason:'You must be in your foot before going out.'};
   if(liveCards(p).length>0) return {ok:false, reason:'Play or discard all foot cards to go out.'};
-  if(state.requireBooks){
-    const hasRed=team.melds.some(m=>m.booked && !m.black), hasBlack=team.melds.some(m=>m.booked && m.black);
-    if(!hasRed || !hasBlack) return {ok:false, reason:'This table requires one red and one black book to go out.'};
+  if(state.requireBooks && !hasRequiredBooks(team)){
+    return {ok:false, reason:'This table requires one clean and one dirty book to go out.'};
   }
   return {ok:true};
 }
+
 function goOutClick(){
   const chk=canGoOut(0);
   if(!chk.ok){ message(chk.reason); return; }
@@ -379,12 +648,38 @@ function finishHand(playerIndex){
 function scoreHand(){
   state.teams.forEach((t,ti)=>{
     let score=0;
-    for(const m of t.melds){ score += m.cards.reduce((s,c)=>s+points(c),0); if(m.booked) score += m.black ? bookBonus.black : bookBonus.red; }
-    state.players.forEach((p,pi)=>{ if(teamOf(pi)!==ti) return; for(const c of [...p.hand,...p.foot]) score += isThree(c) ? (isRed(c)?penalty3.red:penalty3.black) : -points(c); });
-    if(t.wentOut) score += 100;
-    t.handScore=score; t.score+=score;
+
+    for(const m of t.melds){
+      if(isKentucky()){
+        if(m.booked){
+          score += m.black ? 300 : 500;
+        }else{
+          score += m.cards.reduce((s,c)=>s+points(c),0);
+        }
+      }else{
+        score += m.cards.reduce((s,c)=>s+points(c),0);
+        if(m.booked) score += m.black ? bookBonus.black : bookBonus.red;
+      }
+    }
+
+    state.players.forEach((p,pi)=>{
+      if(teamOf(pi)!==ti) return;
+      for(const c of [...p.hand,...p.foot]){
+        if(isKentucky()){
+          if(isThree(c)) score += isRed(c) ? -500 : -5;
+          else score -= points(c);
+        }else{
+          score += isThree(c) ? (isRed(c)?penalty3.red:penalty3.black) : -points(c);
+        }
+      }
+    });
+
+    if(t.wentOut) score += isKentucky() ? 500 : 100;
+    t.handScore=score;
+    t.score+=score;
   });
 }
+
 function nextHand(){ if(state.handNo>=4) return; state.handNo++; dealHand(); }
 function robotTurn(){
   if(state.current===0 || state.handEnded) return;
@@ -404,11 +699,18 @@ function robotTurn(){
 
   const take = robotShouldTake(idx);
   if(take){
-    const cards=state.discard.splice(Math.max(0,state.discard.length-7));
-    liveCards(p).push(...cards);
-    cardMoveSound(cards.length);
+    const chk=canTakePile(idx);
+    if(isKentucky()){
+      const pickupCount = robotKentuckyPickupCount(idx);
+      takeCardsFromDiscard(idx,pickupCount,chk.plan);
+    }else{
+      const cards=state.discard.splice(Math.max(0,state.discard.length-7));
+      liveCards(p).push(...cards);
+      cardMoveSound(cards.length);
+    }
   } else {
     drawFor(p,2);
+    state.pickupObligation=null;
   }
 
   state.phase='play';
@@ -416,10 +718,42 @@ function robotTurn(){
   render();
   robotDiscard(idx);
 }
+
+function robotKentuckyPickupCount(idx){
+  const maxTake=Math.min(8,state.discard.length);
+  if(maxTake<=1) return 1;
+  const pickup=state.discard.slice(Math.max(0,state.discard.length-maxTake));
+  const redThrees=pickup.filter(c=>isThree(c) && isRed(c)).length;
+  if(redThrees>=2) return 1;
+  if(state.difficulty==='easy') return 1;
+  return maxTake;
+}
+
 function robotShouldTake(idx){
   const chk=canTakePile(idx);
   if(!chk.ok) return false;
   if(state.difficulty==='easy') return false;
+
+  if(isKentucky()){
+    const top=topDiscard();
+    const p=state.players[idx];
+    const team=state.teams[teamOf(idx)];
+    const pickup=state.discard.slice(Math.max(0,state.discard.length-Math.min(8,state.discard.length)));
+    const useful=pickup.filter(c =>
+      !isThree(c) && (
+        (!isWild(c) && team.melds.some(m=>m.rank===c.rank)) ||
+        (!isWild(c) && liveCards(p).filter(h=>!isWild(h)&&h.rank===c.rank).length>=2) ||
+        isWild(c)
+      )
+    ).length;
+    const redPenalty=pickup.filter(c=>isThree(c)&&isRed(c)).length;
+
+    if(state.difficulty==='shark'){
+      return chk.plan?.type==='add' || useful>=3 || (useful>=2 && redPenalty===0);
+    }
+    return Math.random() < (redPenalty ? .25 : .55);
+  }
+
   if(state.difficulty==='club') return Math.random()<.55;
 
   const top = topDiscard();
@@ -436,12 +770,10 @@ function robotShouldTake(idx){
     )
   ).length;
   const penalty = pickup.filter(isThree).length;
-
-  // Shark takes the pile when it clearly improves a set, opening, or book.
   return matching>=3 || useful>=3 || (useful>=2 && penalty===0) || (!team.opened && pickup.reduce((s,c)=>s+Math.max(0,points(c)),0)>=40);
 }
 
-function robotOpeningCandidates(cards, team){
+function robotOpeningCandidates(cards, team, requiredCardId=null){
   const byRank = {};
   cards.forEach(c => {
     if(!isWild(c) && isMeldRank(c)){
@@ -449,46 +781,114 @@ function robotOpeningCandidates(cards, team){
     }
   });
 
-  const wilds = cards.filter(isWild);
+  const unusedWilds = [...cards.filter(isWild)];
   const sets = [];
 
   for(const rank of meldRanks){
-    if(team.melds.some(m => m.rank === rank)) continue;
-
-    const naturals = byRank[rank] || [];
-    if(naturals.length >= 3){
-      // Natural set first. This keeps AI from wasting wilds too early.
-      sets.push(naturals.slice(0, Math.min(naturals.length, 7)));
-    } else if(naturals.length >= 2 && wilds.length){
-      // Allow one wild with two naturals.
-      sets.push([...naturals.slice(0,2), wilds[0]]);
+    if(team.melds.some(m=>m.rank===rank)) continue;
+    const naturals=[...(byRank[rank]||[])];
+    if(naturals.length>=3){
+      let set=naturals.slice(0,Math.min(naturals.length,7));
+      if(requiredCardId && naturals.some(c=>c.id===requiredCardId) && !set.some(c=>c.id===requiredCardId)){
+        set[set.length-1]=naturals.find(c=>c.id===requiredCardId);
+      }
+      sets.push(set);
+    }else if(naturals.length>=2 && unusedWilds.length){
+      sets.push([naturals[0],naturals[1],unusedWilds.shift()]);
     }
   }
 
-  sets.sort((a,b)=>b.reduce((s,c)=>s+points(c),0)-a.reduce((s,c)=>s+points(c),0));
+  sets.sort((a,b)=>{
+    if(requiredCardId){
+      const ar=a.some(c=>c.id===requiredCardId), br=b.some(c=>c.id===requiredCardId);
+      if(ar!==br) return ar ? -1 : 1;
+    }
+    return b.reduce((s,c)=>s+points(c),0)-a.reduce((s,c)=>s+points(c),0);
+  });
 
-  const need = openMinimums[state.handNo-1];
-  const chosen = [];
-  const used = new Set();
-  let total = 0;
-
+  const chosen=[];
+  let total=0;
   for(const set of sets){
-    if(set.some(c => used.has(c.id))) continue;
-    const v = validateSet(set, team);
-    if(!v.ok) continue;
-    chosen.push({set, validation:v});
-    set.forEach(c => used.add(c.id));
+    const naturals=set.filter(c=>!isWild(c));
+    const wilds=set.filter(isWild);
+    if(set.length<3 || !naturals.length || wilds.length>naturals.length) continue;
+    chosen.push({
+      set,
+      validation:{ok:true,rank:naturals[0].rank,wilds:wilds.length,meldPoints:set.reduce((s,c)=>s+points(c),0)}
+    });
     total += set.reduce((s,c)=>s+points(c),0);
-    if(total >= need) return chosen;
+    const hasRequired = !requiredCardId || chosen.some(item=>item.set.some(c=>c.id===requiredCardId));
+    if(total>=requiredOpening() && hasRequired) return chosen;
+  }
+  return [];
+}
+
+function robotUseKentuckyPickup(idx){
+  const obligation=state.pickupObligation;
+  if(!isKentucky() || !obligation || obligation.playerIndex!==idx) return true;
+
+  const p=state.players[idx];
+  const team=state.teams[teamOf(idx)];
+  const top=liveCards(p).find(c=>c.id===obligation.cardId);
+  if(!top){ state.pickupObligation=null; return true; }
+
+  const plan=obligation.plan || {};
+  if(plan.type==='add'){
+    const meld=team.melds.find(m=>m.rank===plan.meldRank && canAddToMeld([top],m).ok);
+    if(meld){
+      removeCards(p,[top]);
+      meld.cards.push(top);
+      if(isWild(top)) meld.black=true;
+      if(meld.cards.length>=7) meld.booked=true;
+      state.pickupObligation=null;
+      return true;
+    }
   }
 
-  return [];
+  if(plan.type==='set'){
+    const use=plan.cardIds.map(id=>liveCards(p).find(c=>c.id===id)).filter(Boolean);
+    const v=validateSet(use,team);
+    if(v.ok){
+      removeCards(p,use);
+      team.melds.push({rank:v.rank,cards:[...use],black:v.wilds>0,booked:use.length>=7});
+      team.opened=true;
+      sortTeamMelds(team);
+      state.pickupObligation=null;
+      return true;
+    }
+  }
+
+  if(plan.type==='opening'){
+    const opening=robotOpeningCandidates(liveCards(p),team,obligation.cardId);
+    if(opening.length){
+      for(const item of opening){
+        removeCards(p,item.set);
+        team.melds.push({
+          rank:item.validation.rank,
+          cards:[...item.set],
+          black:item.validation.wilds>0,
+          booked:item.set.length>=7
+        });
+      }
+      team.opened=true;
+      sortTeamMelds(team);
+      state.pickupObligation=null;
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function robotPlay(idx){
   cardMoveSound(1);
   const p=state.players[idx], team=state.teams[teamOf(idx)];
   sortCards(liveCards(p));
+
+  if(isKentucky() && state.pickupObligation?.playerIndex===idx){
+    robotUseKentuckyPickup(idx);
+    sortCards(liveCards(p));
+  }
 
   if(!team.opened){
     const opening = robotOpeningCandidates(liveCards(p), team);
@@ -601,17 +1001,47 @@ function robotDiscardKeepValue(card, cards, idx){
 
 function robotDiscard(idx){
   cardMoveSound(1);
-  const p=state.players[idx], cards=liveCards(p);
-  if(!cards.length){ finishHand(idx); return; }
+  const p=state.players[idx];
+  let cards=liveCards(p);
+
+  if(!cards.length){
+    if(isKentucky() && p.inFoot){
+      markFloatingAndPass(idx);
+      return;
+    }
+    finishHand(idx);
+    return;
+  }
 
   let choice;
-  if(state.difficulty==='shark'){
+  if(isKentucky()){
+    const legalDiscards=cards.filter(c=>!kentuckyCardCanBePlayed(c,idx));
+    if(!legalDiscards.length){
+      robotPlay(idx);
+      cards=liveCards(p);
+      const retry=cards.filter(c=>!kentuckyCardCanBePlayed(c,idx));
+      if(!cards.length){
+        if(p.inFoot){ markFloatingAndPass(idx); return; }
+      }
+      choice=retry[0] || null;
+      if(!choice){
+        // No legal Kentucky discard this turn. Pass and try again after the next draw.
+        p.floating = p.inFoot;
+        nextTurn();
+        return;
+      }
+    }else if(state.difficulty==='shark'){
+      choice=[...legalDiscards].sort((a,b)=>robotDiscardKeepValue(a,cards,idx)-robotDiscardKeepValue(b,cards,idx))[0];
+    }else{
+      choice=legalDiscards.find(isThree) || legalDiscards.find(c=>!isWild(c)) || legalDiscards[0];
+    }
+  }else if(state.difficulty==='shark'){
     choice = [...cards]
       .filter(c=>!isWild(c))
       .sort((a,b)=>robotDiscardKeepValue(a,cards,idx)-robotDiscardKeepValue(b,cards,idx))[0]
       || cards[0];
-  } else {
-    choice = cards.find(isThree);
+  }else{
+    choice=cards.find(isThree);
     if(!choice){
       const team=state.teams[teamOf(idx)], opp=state.teams[1-teamOf(idx)];
       const danger=new Set(opp.melds.map(m=>m.rank));
@@ -622,7 +1052,20 @@ function robotDiscard(idx){
   removeCards(p,[choice]);
   state.discard.push(choice);
   if(!p.inFoot && p.hand.length===0) p.inFoot=true;
-  if(p.inFoot && p.foot.length===0){ finishHand(idx); return; }
+
+  if(p.inFoot && p.foot.length===0){
+    if(isKentucky()){
+      if(hasRequiredBooks(state.teams[teamOf(idx)])){
+        finishHand(idx);
+      }else{
+        p.floating=true;
+        nextTurn();
+      }
+      return;
+    }
+    finishHand(idx);
+    return;
+  }
   nextTurn();
 }
 
@@ -663,7 +1106,7 @@ function sortTeamMelds(team){
 }
 
 function activeRulesName(){
-  return state.gameStyle === 'kentucky' ? 'Kentucky Rules' : 'Classic Rules';
+  return isKentucky() ? 'Kentucky Rules' : 'Standard Rules';
 }
 function pileJourneyHtml(p, owner='player'){
   const handDone = p.inFoot || p.hand.length===0;
@@ -679,7 +1122,7 @@ function pileJourneyHtml(p, owner='player'){
     <span class="journey-step ${p.inFoot?'active':'waiting'}">
       <span class="journey-icon">🂠</span>
       <b>FOOT</b>
-      <small>${p.inFoot?footCount:footCount}</small>
+      <small>${p.floating?'FLOAT':footCount}</small>
     </span>`;
 }
 function updateOpeningProgress(){
@@ -699,27 +1142,38 @@ function updateOpeningProgress(){
 }
 function showActiveRules(){
   sound('click');
+  const items = isKentucky()
+    ? `
+      <li>13 cards in the Hand and 13 in the Foot.</li>
+      <li>Draw 2, or take the top discard when it can be played immediately; you may take the top card only or the top + next 7.</li>
+      <li>A red or black 3 freezes the discard pile.</li>
+      <li>You may not discard a card that can legally be played.</li>
+      <li>Seven cards complete a book; one clean and one dirty book are required.</li>
+      <li>Dirty books may never contain more wild cards than natural cards.</li>
+      <li>To finish, discard your final non-playable Foot card. If you play everything and cannot discard, you are floating.</li>`
+    : `
+      <li>Draw two cards, or legally take up to seven from the discard pile.</li>
+      <li>Seven cards complete a book.</li>
+      <li>One clean and one dirty book are required to go out.</li>
+      <li>${state.allowBookAdds?'Cards may':'Cards may not'} be added to completed books.</li>
+      <li>${state.confirmGoOut?'Confirmation is required':'No confirmation is required'} before going out.</li>`;
+
   showModal(`
     <section class="rules-panel compact-rules">
       <div class="rules-hero">
         <div class="rules-hero-icon">🃏</div>
         <div><h2>${activeRulesName()}</h2><p>The active rules are locked for this game.</p></div>
       </div>
-      <article class="rule-card full">
-        <ul>
-          <li>Draw two cards, or legally take up to seven from the discard pile.</li>
-          <li>Seven cards complete a book.</li>
-          <li>One clean book and one dirty book are required to go out.</li>
-          <li>${state.allowBookAdds?'Cards may':'Cards may not'} be added to completed books.</li>
-          <li>${state.confirmGoOut?'Confirmation is required':'No confirmation is required'} before going out.</li>
-        </ul>
-      </article>
+      <article class="rule-card full"><ul>${items}</ul></article>
+      ${isKentucky()?'<p class="rules-adaptation"><b>Single-player adaptation:</b> the app uses two decks (one per player), omits the physical-dealing bonus, and does not require partner permission before going out.</p>':''}
     </section>
   `);
 }
 
 function renderMeld(m, i, teamIndex){
-  const tag = m.booked ? (m.black?'BLACK BOOK':'RED BOOK') : (m.black?'BLACK SET':'RED SET');
+  const cleanWord = isKentucky() ? 'CLEAN' : 'RED';
+  const dirtyWord = isKentucky() ? 'DIRTY' : 'BLACK';
+  const tag = m.booked ? (m.black?`${dirtyWord} BOOK`:`${cleanWord} BOOK`) : (m.black?`${dirtyWord} SET`:`${cleanWord} SET`);
   const cls = m.booked ? (m.black?'black-book':'red-book') : (m.black?'dirty':'');
   const suit = m.black ? '♣' : '♥';
   const selectable = teamIndex===0 && state.current===0 && state.phase==='play';
@@ -756,8 +1210,12 @@ function render(){
   $('scoreBadges').innerHTML = state.teams.map((t,i)=>`<span class="score-chip ${teamOf(state.current)===i?'active':''}">${t.name}: ${t.score}</span>`).join('');
   syncHeaderScores();
   $('opponentStrip').innerHTML = state.players.slice(1).map((p,offset)=>{
-    const idx=offset+1, count=liveCards(p).length;
-    return `<div class="mini-player ${idx===state.current?'active':''}"><strong>${p.name}</strong><span>${p.inFoot?'Foot':'Hand'} · ${count} cards · ${playerMeldCount(idx)} melds</span><div class="mini-card-stack">${Array.from({length:Math.min(6,count)},()=>'<i class="mini-card"></i>').join('')}</div></div>`;
+    const idx=offset+1;
+    return `<div class="mini-player ${idx===state.current?'active':''}">
+      <strong>${p.name}</strong>
+      <div class="opponent-journey">${pileJourneyHtml(p,'ai')}</div>
+      <span class="meld-count">${playerMeldCount(idx)} meld${playerMeldCount(idx)===1?'':'s'}</span>
+    </div>`;
   }).join('');
   $('team0Melds').innerHTML = state.teams[0].melds.map((m,i)=>renderMeld(m,i,0)).join('') || '<p class="muted">No melds yet.</p>';
   $('team1Melds').innerHTML = state.teams[1].melds.map((m,i)=>renderMeld(m,i,1)).join('') || '<p class="muted">No melds yet.</p>';
@@ -768,6 +1226,9 @@ function render(){
   $('humanCards').innerHTML = liveCards(p).map(c=>cardHtml(c,state.selected.has(c.id))).join('');
   $('stockCount').textContent=state.stock.length;
   const top=topDiscard(); $('discardPileBtn').innerHTML = top ? `<div class="card ${colorClass(top)}"><span>${top.rank}</span><span class="suit">${top.suit}</span><span class="bottom">${top.rank}</span></div><small>${state.discard.length}</small>` : '';
+  const takeText = isKentucky() ? 'Take Pile' : 'Take 7';
+  if($('takeActionBtn')) $('takeActionBtn').textContent=takeText;
+  if($('takePileLabel')) $('takePileLabel').textContent=takeText;
   $('turnName').textContent = state.handEnded ? 'Hand Complete' : state.current===0 ? 'Your Turn' : `${currentPlayer().name}'s Turn`;
   $('rulesIndicator').textContent = activeRulesName();
   updateOpeningProgress();
@@ -778,17 +1239,28 @@ function updateActions(){
   const drawing=humanTurn && state.phase==='draw';
   const playing=humanTurn && state.phase==='play';
   const takeCheck = humanTurn ? canTakePile(0) : {ok:false,reason:'Wait for your turn.'};
+  const pickupPending = isKentucky() && state.pickupObligation?.playerIndex===0;
 
   $('drawBtn').disabled=!drawing;
-  $('discardPileBtn').disabled=!drawing;
+  $('discardPileBtn').disabled=!(drawing && takeCheck.ok);
   $('drawActionBtn').disabled=!drawing;
   $('takeActionBtn').disabled=!(drawing && takeCheck.ok);
-  $('takeActionBtn').title = takeCheck.ok ? 'Take up to 7 cards from the discard pile' : takeCheck.reason;
+  $('takeActionBtn').title = takeCheck.ok
+    ? (isKentucky() ? 'Take the playable top discard, with an option to take the next 7 too' : 'Take up to 7 cards from the discard pile')
+    : takeCheck.reason;
 
   $('setBtn').disabled=!playing;
   $('addBtn').disabled=!playing;
-  $('discardBtn').disabled=!playing;
-  $('goOutBtn').disabled=!(playing && canGoOut(0).ok);
+  $('discardBtn').disabled=!playing || pickupPending;
+
+  if(isKentucky()){
+    $('goOutBtn').classList.add('hidden');
+    $('goOutBtn').disabled=true;
+  }else{
+    $('goOutBtn').classList.remove('hidden');
+    $('goOutBtn').disabled=!(playing && canGoOut(0).ok);
+  }
+
   $('sortBtn').disabled=!humanTurn;
   $('clearBtn').disabled=!playing;
 
@@ -894,59 +1366,132 @@ function syncHeaderScores(){
 }
 function showRules(){
   sound('click');
+
+  if(isKentucky()){
+    showModal(`
+      <section class="rules-panel">
+        <div class="rules-hero">
+          <div class="rules-hero-icon">📘</div>
+          <div>
+            <h2>Kentucky Rules</h2>
+            <p>This digital ruleset is adapted from the supplied four-player Kentucky Hand & Foot rule sheet for one player versus the AI.</p>
+          </div>
+        </div>
+        <div class="rules-grid">
+          <article class="rule-card full">
+            <h3>1. Hand, Foot & Decks</h3>
+            <p>You and the AI each receive <b>13 cards in the Hand</b> and <b>13 cards in the Foot</b>. The single-player version uses <b>two decks</b>—one deck per player, including Jokers.</p>
+          </article>
+          <article class="rule-card">
+            <h3>2. Start a Turn</h3>
+            <ul>
+              <li>Draw <b>2 cards</b> from the stock, or legally take from the discard pile.</li>
+              <li>A red or black <b>3 freezes the discard pile</b>.</li>
+              <li>The top pickup card must be playable immediately.</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>3. Picking Up</h3>
+            <ul>
+              <li>Use a natural pair matching the top discard, or one matching natural + one wild.</li>
+              <li>You may also play the top card directly on an existing meld/book.</li>
+              <li>After qualifying, choose the <b>top card only</b> or the <b>top + next 7</b> (up to 8 cards total).</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>4. Opening Meld</h3>
+            <p>Use at least three of a kind, or two matching natural cards plus a wild. Multiple legal sets may combine to reach the opening requirement.</p>
+            <table class="opening-table">
+              <tr><th>Hand</th><th>Needed</th></tr>
+              <tr><td>1</td><td>50</td></tr><tr><td>2</td><td>90</td></tr>
+              <tr><td>3</td><td>120</td></tr><tr><td>4</td><td>150</td></tr>
+            </table>
+          </article>
+          <article class="rule-card">
+            <h3>5. Books</h3>
+            <ul>
+              <li>Seven cards complete a book.</li>
+              <li><b>Clean book:</b> no wild cards.</li>
+              <li><b>Dirty book:</b> natural + wild cards, with wilds never exceeding naturals.</li>
+              <li>You need at least <b>one clean and one dirty book</b> to finish.</li>
+              <li>Cards may be added to completed books.</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>6. Discarding & Floating</h3>
+            <ul>
+              <li>You may not discard a card that can legally be played.</li>
+              <li>To finish, you must discard your final non-playable Foot card.</li>
+              <li>If you play all Foot cards and have nothing legal to discard, you are <b>floating</b> and keep drawing 2 on later turns until you can discard.</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>7. Card Values</h3>
+            <ul>
+              <li>4–9: 5 points</li><li>10–King: 10 points</li>
+              <li>Aces and 2s: 20 points</li><li>Jokers: 50 points</li>
+              <li>Black 3 left over: −5</li><li>Red 3 left over: −500</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>8. Hand Scoring</h3>
+            <ul>
+              <li>Clean book: <b>500</b></li><li>Dirty book: <b>300</b></li>
+              <li>Going out: <b>500</b></li>
+              <li>Completed books are scored by their book value rather than also counting every card inside them.</li>
+              <li>Cards left in Hand/Foot count against the player.</li>
+            </ul>
+          </article>
+          <article class="rule-card full">
+            <h3>Single-Player Adaptation</h3>
+            <p>The paper rules describe four players in two teams. Against the AI, partner permission is omitted. The physical bonus for estimating and dealing exactly 52 cards is also omitted because the computer deals automatically.</p>
+          </article>
+        </div>
+      </section>
+    `);
+    return;
+  }
+
   showModal(`
     <section class="rules-panel">
       <div class="rules-hero">
         <div class="rules-hero-icon">📘</div>
         <div>
-          <h2>${activeRulesName()}</h2>
-          <p>These instructions match the active game style. Hand Over Foot is a card-matching game. Build groups of matching cards, turn them into books, and empty your Hand and then your Foot before the AI opponent does.</p>
+          <h2>Standard Rules</h2>
+          <p>The familiar Hand Over Foot rules used by the app.</p>
         </div>
       </div>
       <div class="rules-grid">
         <article class="rule-card full">
           <h3>1. The Basic Idea</h3>
-          <p>You start with cards in your <b>Hand</b>. You also have a second pile called your <b>Foot</b>, which stays hidden until your Hand is empty.</p>
-          <p>You score by placing matching cards on the table. A group of matching cards is called a <b>set</b>. When a set reaches seven cards, it becomes a <b>book</b>.</p>
+          <p>You start with cards in your <b>Hand</b> and a second pile called your <b>Foot</b>. Match cards into sets, complete books, and empty both piles.</p>
         </article>
         <article class="rule-card">
           <h3>2. Start Each Turn</h3>
-          <ul>
-            <li>Choose <b>Draw 2</b> to take two cards from the face-down pile.</li>
-            <li>Or choose <b>Take 7</b> to take cards from the discard pile, if allowed.</li>
-            <li>New cards appear on the far right so you can see what you just got.</li>
-          </ul>
+          <ul><li>Choose <b>Draw 2</b>.</li><li>Or choose <b>Take 7</b> when the discard pile is legal.</li></ul>
         </article>
         <article class="rule-card">
           <h3>3. Make Sets</h3>
-          <ul>
-            <li>A set needs at least three cards of the same rank, such as three Kings.</li>
-            <li>You can make sets from 4s through Aces.</li>
-            <li>3s cannot be used in sets. They are penalty cards if left over.</li>
-            <li>2s and Jokers are wild cards and can help complete a set.</li>
-          </ul>
+          <ul><li>Sets need at least three matching cards.</li><li>2s and Jokers are wild.</li><li>3s cannot be melded.</li></ul>
         </article>
         <article class="rule-card">
-          <h3>4. Your First Play</h3>
-          <p>Your first cards on the table must be worth enough points to “open.” You may combine multiple legal sets to reach the total.</p>
+          <h3>4. Opening</h3>
           <table class="opening-table">
-            <tr><th>Hand</th><th>Needed</th></tr><tr><td>1</td><td>50</td></tr><tr><td>2</td><td>90</td></tr><tr><td>3</td><td>120</td></tr><tr><td>4</td><td>150</td></tr>
+            <tr><th>Hand</th><th>Needed</th></tr><tr><td>1</td><td>50</td></tr>
+            <tr><td>2</td><td>90</td></tr><tr><td>3</td><td>120</td></tr><tr><td>4</td><td>150</td></tr>
           </table>
         </article>
         <article class="rule-card">
           <h3>5. Books</h3>
-          <ul>
-            <li>A clean/red book has no wild cards and scores a 500-point bonus.</li>
-            <li>A black book has at least one wild card and scores a 300-point bonus.</li>
-          </ul>
+          <ul><li>Seven cards complete a book.</li><li>A clean/red book has no wilds.</li><li>A dirty/black book contains wild cards.</li></ul>
         </article>
-        <article class="rule-card full">
+        <article class="rule-card">
           <h3>6. Winning</h3>
-          <p>Empty your Hand to pick up your Foot. Empty your Foot to end the hand. After four hands, the highest total score wins.</p>
+          <p>Empty your Hand, play your Foot, meet the book requirement, and go out. Highest total after four hands wins.</p>
         </article>
       </div>
-      <div class="rules-tip"><b>Plain-English tip:</b> Think of it as matching cards into piles. Match cards, make books, then get rid of everything.</div>
-    </section>`);
+    </section>
+  `);
 }
 
 function showSettings(){
@@ -1062,8 +1607,8 @@ function currentHelpText(){
   if(state.current !== 0) return 'Wait for the AI opponent to finish thinking and playing.';
   if(state.phase === 'draw'){
     const chk = canTakePile(0);
-    if(chk.ok) return 'You may draw 2 cards, or take the discard pile if those cards help your next set.';
-    return 'Take 7 is not available right now, so draw 2 cards from the stock pile.';
+    if(chk.ok) return isKentucky() ? 'You may Draw 2 or take the discard pile because its top card can be played immediately.' : 'You may draw 2 cards, or take the discard pile if those cards help your next set.';
+    return `${isKentucky()?'Take Pile':'Take 7'} is not available right now, so draw 2 cards from the stock pile. ${chk.reason}`;
   }
   const chosen = selectedCards();
   if(chosen.length){
@@ -1084,7 +1629,7 @@ function strategyTip(){
 function learningTipText(){
   if(!state.learningMode || state.view !== 'game' || state.handEnded) return '';
   if(state.current !== 0) return 'AI opponent is thinking. Watch which melds it builds.';
-  if(state.phase === 'draw') return 'Choose Draw 2 or Take 7 below. Your cards unlock after you draw.';
+  if(state.phase === 'draw') return `Choose Draw 2 or ${isKentucky()?'Take Pile':'Take 7'} below. Your cards unlock after you draw.`;
   if(state.selected.size) return 'Use Set, Add, or Discard based on the selected cards.';
   return state.requireBooks ? 'Select cards to play. You need one clean and one dirty book before going out.' : 'Select cards in your hand, then choose Set, Add, or Discard.';
 }
@@ -1247,6 +1792,31 @@ function toggleMenu(){
   if(!panel.classList.contains('hidden')) armMenuAutoClose();
 }
 
+function syncGameStyleSetup(){
+  const selected = document.querySelector('input[name="gameStyle"]:checked')?.value || 'standard';
+  const kentucky = selected === 'kentucky';
+  const add = $('allowBookAdds');
+  const confirm = $('confirmGoOut');
+  const addRow = $('allowBookAddsRow');
+  const confirmRow = $('confirmGoOutRow');
+
+  if(kentucky){
+    if(add){ add.checked=true; add.disabled=true; }
+    if(confirm){ confirm.checked=false; confirm.disabled=true; }
+    addRow?.classList.add('fixed-option');
+    confirmRow?.classList.add('fixed-option');
+    if(addRow) addRow.title='Kentucky Rules always allow adding cards to completed books.';
+    if(confirmRow) confirmRow.title='Kentucky single-player mode ends through the required final discard.';
+  }else{
+    if(add) add.disabled=false;
+    if(confirm){ confirm.disabled=false; if(!confirm.checked) confirm.checked=true; }
+    addRow?.classList.remove('fixed-option');
+    confirmRow?.classList.remove('fixed-option');
+    if(addRow) addRow.title='';
+    if(confirmRow) confirmRow.title='';
+  }
+}
+
 function init(){
   loadAudioPrefs();
 
@@ -1287,11 +1857,14 @@ function init(){
   if(rulesIndicator) rulesIndicator.onclick = showActiveRules;
   if(homeWordmark) homeWordmark.onclick = returnHomeWithWarning;
   if(dealBtn) dealBtn.onclick = startGame;
-  if(dealBtn){ dealBtn.onclick = startGame; dealBtn.addEventListener('click', startGame, {capture:true}); }
 
   document.querySelectorAll('[data-nav="home"]').forEach(b=>b.onclick=returnHomeWithWarning);
   document.querySelectorAll('input[name="ai"]').forEach(i=>i.onchange=()=>document.querySelectorAll('.choice').forEach(l=>l.classList.toggle('checked', l.querySelector('input').checked)));
-  document.querySelectorAll('input[name="gameStyle"]').forEach(i=>i.onchange=()=>document.querySelectorAll('.style-choice').forEach(l=>l.classList.toggle('checked', !!l.querySelector('input')?.checked)));
+  document.querySelectorAll('input[name="gameStyle"]').forEach(i=>i.onchange=()=>{
+    document.querySelectorAll('.style-choice').forEach(l=>l.classList.toggle('checked', !!l.querySelector('input')?.checked));
+    syncGameStyleSetup();
+  });
+  syncGameStyleSetup();
 
   if($('drawBtn')) $('drawBtn').onclick=drawTwo;
   if(drawActionBtn) drawActionBtn.onclick=drawTwo;

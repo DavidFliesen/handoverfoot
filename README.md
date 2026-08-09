@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.8.0**
+Current Version: **3.9.0**
 
 
 ## Learning Tips
@@ -98,3 +98,26 @@ AI turns now use one guarded thinking timer per full turn. The opponent waits 2�
 - Added three simple options: adding to completed books, confirmation before going out, and Learning Help.
 - Improved Shark AI discard safety, discard-pile judgment, wild-card use, and book-building priorities.
 - Preserved the v3.7.0 single 2–6 second AI turn delay and multi-set opening logic.
+
+
+## v3.9.0 Kentucky Rules
+
+**Standard Rules remain the default.** New Game now also offers **Kentucky Rules**, adapted from the supplied four-player rule sheet for the current one-player-vs-AI game.
+
+Kentucky mode includes:
+- 13-card Hand and 13-card Foot.
+- Two decks for the two-player digital adaptation (one deck per player, including Jokers).
+- Draw 2 each turn.
+- Red or black 3 freezes the discard pile.
+- Discard-pile pickup requires the top card to be immediately playable with a natural pair, natural + wild, or an existing meld/book.
+- Player can take the top card only or the top + next 7 (up to 8 total).
+- One clean and one dirty book required to finish.
+- Dirty books may never contain more wild cards than natural cards.
+- Cards may be added to completed books.
+- A playable card may not be discarded.
+- Playing the whole Foot without a legal final discard puts the player into **Floating** status.
+- Kentucky scoring: clean book 500, dirty book 300, going out 500; 4–9 = 5, 10–K = 10, A/2 = 20, Joker = 50, leftover black 3 = −5, leftover red 3 = −500.
+- Completed books use their book value rather than also adding every card value inside the closed book.
+- Four opening levels remain 50 / 90 / 120 / 150.
+
+The physical four-player dealer-estimation bonus and partner permission are intentionally omitted from the single-player adaptation.
