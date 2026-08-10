@@ -1544,22 +1544,31 @@ function showAboutDeveloper(){
   showModal(`
     <section class="rules-panel about-developer-panel">
       <div class="rules-hero about-hero">
-        <img class="developer-avatar" src="assets/developer.png?v=3.6.7" alt="David Fliesen illustration">
+        <img class="arteziq-about-logo" src="assets/arteziq-logo.png?v=3.9.2" alt="ARTEZIQ logo">
         <div>
-          <h2>About Developer</h2>
-          <p><b>David Fliesen</b></p>
-          <p>Veteran multimedia creator, AI developer, animator, and builder of browser-based creative tools.</p>
+          <h2>About ARTEZIQ</h2>
+          <p><b>ARTEZIQ</b> is where <b>ART</b> and <b>IQ</b> meet to make things <b>EZ</b> with AI-powered apps and creative technology that simplify everyday things.</p>
         </div>
       </div>
-      <article class="rule-card full">
-        <h3>Links</h3>
-        <p><a href="https://github.com/DavidFliesen" target="_blank" rel="noopener">GitHub Profile</a></p>
-        <p><a href="https://www.linkedin.com/in/fliesen" target="_blank" rel="noopener">LinkedIn</a></p>
-        <p><a href="https://davidfliesen.github.io/" target="_blank" rel="noopener">Portfolio</a></p>
+
+      <article class="rule-card full arteziq-about-card">
+        <p><b>Hand Over Foot</b> is one of the interactive apps being developed under ARTEZIQ.</p>
+        <p>Explore more ARTEZIQ projects, apps, and creative technology at:</p>
+        <p class="arteziq-site"><a href="https://arteziq.com" target="_blank" rel="noopener">https://arteziq.com</a></p>
+      </article>
+
+      <article class="rule-card full developer-links-card">
+        <h3>Developer</h3>
+        <p>Created by David Fliesen.</p>
+        <div class="developer-links">
+          <a href="https://www.linkedin.com/in/fliesen/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://davidfliesen.github.io" target="_blank" rel="noopener">Portfolio</a>
+        </div>
       </article>
     </section>
   `);
 }
+
 function showScores(){
   openModal(`<h2>Scores</h2><p><b>${state.teams[0]?.name || 'Your Team'}:</b> ${state.teams[0]?.score || 0}</p><p><b>${state.teams[1]?.name || 'Opponents'}:</b> ${state.teams[1]?.score || 0}</p><p>Scores appear after each completed hand.</p>`);
 }

@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.9.1**
+Current Version: **3.9.2**
 
 
 ## Learning Tips
@@ -130,3 +130,12 @@ The physical four-player dealer-estimation bonus and partner permission are inte
 - Applied the same compact treatment to the AI opponent status.
 - Freed vertical space in the center of the board so Learning Help hints remain readable.
 - Prevented center hints from being clipped on tablet layouts.
+
+
+## v3.9.2 ARTEZIQ Branding
+
+- Removed **Source Code** from the hamburger menu.
+- Removed open-source wording.
+- Refocused the About area on **ARTEZIQ**.
+- Added the ARTEZIQ logo and website: https://arteziq.com
+- Added the ARTEZIQ description: “where ART and IQ meet to make things EZ with AI-powered apps and creative technology that simplify everyday things.”

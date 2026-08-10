@@ -1143,3 +1143,53 @@ body:not(:has(#game:not(.hidden))) .app-header{
     padding:4px 7px !important;
   }
 }
+
+
+/* v3.9.2 ARTEZIQ branding */
+.arteziq-about-logo{
+  width:min(520px,72vw);
+  max-height:110px;
+  object-fit:contain;
+  display:block;
+}
+.about-hero{
+  align-items:center;
+  gap:18px;
+}
+.arteziq-about-card{
+  text-align:left;
+}
+.arteziq-site{
+  margin-top:10px;
+  font-size:1.08rem;
+  font-weight:900;
+}
+.arteziq-site a{
+  color:var(--gold2);
+  text-decoration:none;
+}
+.arteziq-site a:hover{
+  text-decoration:underline;
+}
+.developer-links{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.developer-links a{
+  display:inline-block;
+  padding:9px 12px;
+  border-radius:10px;
+  border:1px solid rgba(213,169,54,.48);
+  color:var(--gold2);
+  text-decoration:none;
+  font-weight:800;
+}
+@media(max-width:700px){
+  .about-hero{
+    grid-template-columns:1fr !important;
+  }
+  .arteziq-about-logo{
+    width:min(420px,88vw);
+  }
+}
