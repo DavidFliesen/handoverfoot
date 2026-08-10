@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.9.0**
+Current Version: **3.9.1**
 
 
 ## Learning Tips
@@ -121,3 +121,12 @@ Kentucky mode includes:
 - Four opening levels remain 50 / 90 / 120 / 150.
 
 The physical four-player dealer-estimation bonus and partner permission are intentionally omitted from the single-player adaptation.
+
+
+## v3.9.1 Layout Refinement
+
+- Reduced the vertical height of the Hand/Foot status areas.
+- Hand and Foot now sit side-by-side instead of stacking vertically.
+- Applied the same compact treatment to the AI opponent status.
+- Freed vertical space in the center of the board so Learning Help hints remain readable.
+- Prevented center hints from being clipped on tablet layouts.
