@@ -1306,3 +1306,90 @@ body:not(:has(#game:not(.hidden))) .app-header{
     padding-bottom:32px !important;
   }
 }
+
+
+/* v3.9.5 navigation cleanup + compact AI status */
+.app-header-left{
+  min-width:max-content;
+}
+.app-header-left .app-wordmark{
+  margin-left:0;
+}
+
+/* AI Opponent now mirrors the compact You status row: name | Hand -> Foot | meld count */
+.opponents{
+  padding:6px 10px !important;
+}
+.mini-player.ai-status-row{
+  display:grid !important;
+  grid-template-columns:max-content minmax(190px,1fr) max-content !important;
+  align-items:center !important;
+  gap:9px !important;
+  min-height:44px !important;
+  padding:5px 8px !important;
+}
+.ai-player-name{
+  white-space:nowrap;
+}
+.ai-pile-journey{
+  display:grid !important;
+  grid-template-columns:minmax(74px,1fr) auto minmax(74px,1fr) !important;
+  align-items:center !important;
+  gap:5px !important;
+  min-width:0;
+}
+.ai-pile-journey .journey-step{
+  min-width:0 !important;
+  min-height:31px !important;
+  padding:4px 6px !important;
+}
+.ai-pile-journey .journey-arrow{
+  margin:0 !important;
+}
+.ai-pile-journey .journey-icon{
+  font-size:.85rem !important;
+}
+.ai-pile-journey .journey-step b{
+  font-size:.68rem !important;
+}
+.ai-pile-journey .journey-step small{
+  min-width:22px !important;
+  height:19px !important;
+  font-size:.68rem !important;
+}
+
+/* More bottom controls: keep one clean row on wide screens and wrap gracefully on tablets. */
+.game-actions{
+  grid-template-columns:repeat(11,minmax(68px,1fr)) !important;
+}
+#settingsGameBtn,
+#scoresGameBtn{
+  background:linear-gradient(#155e46,#0b3f30);
+  border-color:rgba(213,169,54,.58);
+}
+#scoresGameBtn{
+  background:linear-gradient(#6a5416,#443508);
+}
+
+@media(max-width:1250px){
+  .game-actions{
+    grid-template-columns:repeat(6,minmax(72px,1fr)) !important;
+  }
+  .mini-player.ai-status-row{
+    grid-template-columns:max-content minmax(175px,1fr) max-content !important;
+  }
+}
+@media(max-width:760px){
+  .game-actions{
+    grid-template-columns:repeat(3,minmax(76px,1fr)) !important;
+  }
+  .mini-player.ai-status-row{
+    grid-template-columns:max-content 1fr !important;
+  }
+  .mini-player.ai-status-row .meld-count{
+    grid-column:2;
+  }
+  .ai-pile-journey{
+    grid-template-columns:minmax(70px,1fr) auto minmax(70px,1fr) !important;
+  }
+}

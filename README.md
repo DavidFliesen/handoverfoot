@@ -1,4 +1,4 @@
-# Hand Over Foot
+# Hand Over Foot v3.9.5
 
 ![Hand Over Foot](assets/splash-reference.jpg)
 
@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.9.4**
+Current Version: **3.9.5**
 
 
 ## Learning Tips
@@ -156,3 +156,14 @@ Added a bottom-center footer to every app view:
 **ARTEZIQ • Hand Over Foot • v3.9.4**
 
 The footer version should be updated with every future release.
+
+## v3.9.5 Board Controls & Layout
+
+- README title now includes the release version and will be updated with every release.
+- Removed the hamburger menu.
+- The top **Standard Rules / Kentucky Rules** button now opens the complete How to Play instructions for the active ruleset.
+- Added **Settings** to the bottom action bar after Clear.
+- Added **Scores** to the bottom action bar before Help.
+- Removed the About Developer screen.
+- Reformatted the AI Opponent status to mirror the player status with **Hand on the left and Foot on the right**, reducing its vertical height.
+- Footer updated to **ARTEZIQ • Hand Over Foot • v3.9.5**.

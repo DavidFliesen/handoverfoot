@@ -1211,9 +1211,9 @@ function render(){
   syncHeaderScores();
   $('opponentStrip').innerHTML = state.players.slice(1).map((p,offset)=>{
     const idx=offset+1;
-    return `<div class="mini-player ${idx===state.current?'active':''}">
-      <strong>${p.name}</strong>
-      <div class="opponent-journey">${pileJourneyHtml(p,'ai')}</div>
+    return `<div class="mini-player ai-status-row ${idx===state.current?'active':''}">
+      <strong class="ai-player-name">${p.name}</strong>
+      <div class="pile-journey ai-pile-journey" aria-label="${p.name} Hand and Foot status">${pileJourneyHtml(p,'ai')}</div>
       <span class="meld-count">${playerMeldCount(idx)} meld${playerMeldCount(idx)===1?'':'s'}</span>
     </div>`;
   }).join('');
@@ -1539,36 +1539,6 @@ function showSettings(){
   },0);
 }
 
-function showAboutDeveloper(){
-  sound('click');
-  showModal(`
-    <section class="rules-panel about-developer-panel">
-      <div class="rules-hero about-hero">
-        <img class="arteziq-about-logo" src="assets/arteziq-logo.png?v=3.9.2" alt="ARTEZIQ logo">
-        <div>
-          <h2>About ARTEZIQ</h2>
-          <p><b>ARTEZIQ</b> is where <b>ART</b> and <b>IQ</b> meet to make things <b>EZ</b> with AI-powered apps and creative technology that simplify everyday things.</p>
-        </div>
-      </div>
-
-      <article class="rule-card full arteziq-about-card">
-        <p><b>Hand Over Foot</b> is one of the interactive apps being developed under ARTEZIQ.</p>
-        <p>Explore more ARTEZIQ projects, apps, and creative technology at:</p>
-        <p class="arteziq-site"><a href="https://arteziq.com" target="_blank" rel="noopener">https://arteziq.com</a></p>
-      </article>
-
-      <article class="rule-card full developer-links-card">
-        <h3>Developer</h3>
-        <p>Created by David Fliesen.</p>
-        <div class="developer-links">
-          <a href="https://www.linkedin.com/in/fliesen/" target="_blank" rel="noopener">LinkedIn</a>
-          <a href="https://davidfliesen.github.io" target="_blank" rel="noopener">Portfolio</a>
-        </div>
-      </article>
-    </section>
-  `);
-}
-
 function showScores(){
   openModal(`<h2>Scores</h2><p><b>${state.teams[0]?.name || 'Your Team'}:</b> ${state.teams[0]?.score || 0}</p><p><b>${state.teams[1]?.name || 'Opponents'}:</b> ${state.teams[1]?.score || 0}</p><p>Scores appear after each completed hand.</p>`);
 }
@@ -1781,18 +1751,6 @@ function zoomBy(delta){
 
 
 let menuCloseTimer = null;
-function closeMenu(){
-  const panel = $('menuPanel');
-  if(panel) panel.classList.add('hidden');
-  if(menuCloseTimer){
-    clearTimeout(menuCloseTimer);
-    menuCloseTimer = null;
-  }
-}
-function armMenuAutoClose(){
-  if(menuCloseTimer) clearTimeout(menuCloseTimer);
-  menuCloseTimer = setTimeout(closeMenu, 10000);
-}
 function toggleMenu(){
   const panel = $('menuPanel');
   if(!panel) return;
@@ -1834,36 +1792,22 @@ function init(){
   const settingsBtn = $('settingsBtn');
   const rulesBtn = $('rulesBtn');
   const scoresBtn = $('scoresBtn');
-  const menuToggle = $('menuToggle');
-  const menuPanel = $('menuPanel');
-  const menuPlayAi = $('menuPlayAi');
-  const menuRules = $('menuRules');
-  const menuScores = $('menuScores');
-  const menuSettings = $('menuSettings');
-  const menuAbout = $('menuAbout');
   const fullscreenBtn = $('fullscreenBtn');
   const homeWordmark = $('homeWordmark');
   const dealBtn = $('dealBtn');
   const rulesIndicator = $('rulesIndicator');
   const drawActionBtn = $('drawActionBtn');
   const takeActionBtn = $('takeActionBtn');
+  const settingsGameBtn = $('settingsGameBtn');
+  const scoresGameBtn = $('scoresGameBtn');
   
   if(playAiBtn) playAiBtn.onclick = () => { sound('click'); startSetup('ai'); };
   if(playBtn) playBtn.onclick = () => { sound('click'); startSetup('ai'); };
   if(settingsBtn) settingsBtn.onclick = showSettings;
   if(rulesBtn) rulesBtn.onclick = showRules;
   if(scoresBtn) scoresBtn.onclick = showScores;
-  if(menuToggle) menuToggle.onclick = toggleMenu;
-  if(menuPanel){
-    menuPanel.addEventListener('pointerdown', armMenuAutoClose);
-    menuPanel.addEventListener('keydown', armMenuAutoClose);
-  }
-  if(menuRules) menuRules.onclick = () => { closeMenu(); showRules(); };
-  if(menuScores) menuScores.onclick = () => { closeMenu(); showScores(); };
-  if(menuSettings) menuSettings.onclick = () => { closeMenu(); showSettings(); };
-  if(menuAbout) menuAbout.onclick = () => { closeMenu(); showAboutDeveloper(); };
   if(fullscreenBtn) fullscreenBtn.onclick = toggleFullscreen;
-  if(rulesIndicator) rulesIndicator.onclick = showActiveRules;
+  if(rulesIndicator) rulesIndicator.onclick = showRules;
   if(homeWordmark) homeWordmark.onclick = returnHomeWithWarning;
   if(dealBtn) dealBtn.onclick = startGame;
 
@@ -1878,6 +1822,8 @@ function init(){
   if($('drawBtn')) $('drawBtn').onclick=drawTwo;
   if(drawActionBtn) drawActionBtn.onclick=drawTwo;
   if(takeActionBtn) takeActionBtn.onclick=takePile;
+  if(settingsGameBtn) settingsGameBtn.onclick=showSettings;
+  if(scoresGameBtn) scoresGameBtn.onclick=showScores;
   if($('discardPileBtn')) $('discardPileBtn').onclick=takePile;
   if($('setBtn')) $('setBtn').onclick=makeSet;
   if($('addBtn')) $('addBtn').onclick=addToMeld;
