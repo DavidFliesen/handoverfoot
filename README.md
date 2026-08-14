@@ -1,4 +1,4 @@
-# Hand Over Foot v3.9.5
+# Hand Over Foot v3.9.6
 
 ![Hand Over Foot](assets/splash-reference.jpg)
 
@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.9.5**
+Current Version: **3.9.6**
 
 
 ## Learning Tips
@@ -167,3 +167,11 @@ The footer version should be updated with every future release.
 - Removed the About Developer screen.
 - Reformatted the AI Opponent status to mirror the player status with **Hand on the left and Foot on the right**, reducing its vertical height.
 - Footer updated to **ARTEZIQ • Hand Over Foot • v3.9.5**.
+
+## v3.9.6 Rules Comparison & Play Options
+
+- The How to Play screen now includes **Standard Rules** and **Kentucky Rules** selector buttons so players can compare both rulesets regardless of whether they open instructions from the Play screen or the game board.
+- Viewing another ruleset in How to Play does **not** change the active game.
+- The currently active game style is identified when viewing rules during a game.
+- **Simple Options** on the Play screen are now expanded by default so players can see their choices before dealing.
+- Footer updated to **ARTEZIQ • Hand Over Foot • v3.9.6**.

@@ -1364,103 +1364,29 @@ function syncFullscreenButton(){
 function syncHeaderScores(){
   // Score pills now live directly in the integrated header.
 }
-function showRules(){
+function showRules(ruleStyle = state.gameStyle || 'standard'){
   sound('click');
+  const viewingKentucky = ruleStyle === 'kentucky';
+  const activeStyle = state.view === 'game' ? state.gameStyle : (document.querySelector('input[name="gameStyle"]:checked')?.value || 'standard');
 
-  if(isKentucky()){
-    showModal(`
-      <section class="rules-panel">
-        <div class="rules-hero">
-          <div class="rules-hero-icon">📘</div>
-          <div>
-            <h2>Kentucky Rules</h2>
-            <p>This digital ruleset is adapted from the supplied four-player Kentucky Hand & Foot rule sheet for one player versus the AI.</p>
-          </div>
-        </div>
-        <div class="rules-grid">
-          <article class="rule-card full">
-            <h3>1. Hand, Foot & Decks</h3>
-            <p>You and the AI each receive <b>13 cards in the Hand</b> and <b>13 cards in the Foot</b>. The single-player version uses <b>two decks</b>—one deck per player, including Jokers.</p>
-          </article>
-          <article class="rule-card">
-            <h3>2. Start a Turn</h3>
-            <ul>
-              <li>Draw <b>2 cards</b> from the stock, or legally take from the discard pile.</li>
-              <li>A red or black <b>3 freezes the discard pile</b>.</li>
-              <li>The top pickup card must be playable immediately.</li>
-            </ul>
-          </article>
-          <article class="rule-card">
-            <h3>3. Picking Up</h3>
-            <ul>
-              <li>Use a natural pair matching the top discard, or one matching natural + one wild.</li>
-              <li>You may also play the top card directly on an existing meld/book.</li>
-              <li>After qualifying, choose the <b>top card only</b> or the <b>top + next 7</b> (up to 8 cards total).</li>
-            </ul>
-          </article>
-          <article class="rule-card">
-            <h3>4. Opening Meld</h3>
-            <p>Use at least three of a kind, or two matching natural cards plus a wild. Multiple legal sets may combine to reach the opening requirement.</p>
-            <table class="opening-table">
-              <tr><th>Hand</th><th>Needed</th></tr>
-              <tr><td>1</td><td>50</td></tr><tr><td>2</td><td>90</td></tr>
-              <tr><td>3</td><td>120</td></tr><tr><td>4</td><td>150</td></tr>
-            </table>
-          </article>
-          <article class="rule-card">
-            <h3>5. Books</h3>
-            <ul>
-              <li>Seven cards complete a book.</li>
-              <li><b>Clean book:</b> no wild cards.</li>
-              <li><b>Dirty book:</b> natural + wild cards, with wilds never exceeding naturals.</li>
-              <li>You need at least <b>one clean and one dirty book</b> to finish.</li>
-              <li>Cards may be added to completed books.</li>
-            </ul>
-          </article>
-          <article class="rule-card">
-            <h3>6. Discarding & Floating</h3>
-            <ul>
-              <li>You may not discard a card that can legally be played.</li>
-              <li>To finish, you must discard your final non-playable Foot card.</li>
-              <li>If you play all Foot cards and have nothing legal to discard, you are <b>floating</b> and keep drawing 2 on later turns until you can discard.</li>
-            </ul>
-          </article>
-          <article class="rule-card">
-            <h3>7. Card Values</h3>
-            <ul>
-              <li>4–9: 5 points</li><li>10–King: 10 points</li>
-              <li>Aces and 2s: 20 points</li><li>Jokers: 50 points</li>
-              <li>Black 3 left over: −5</li><li>Red 3 left over: −500</li>
-            </ul>
-          </article>
-          <article class="rule-card">
-            <h3>8. Hand Scoring</h3>
-            <ul>
-              <li>Clean book: <b>500</b></li><li>Dirty book: <b>300</b></li>
-              <li>Going out: <b>500</b></li>
-              <li>Completed books are scored by their book value rather than also counting every card inside them.</li>
-              <li>Cards left in Hand/Foot count against the player.</li>
-            </ul>
-          </article>
-          <article class="rule-card full">
-            <h3>Single-Player Adaptation</h3>
-            <p>The paper rules describe four players in two teams. Against the AI, partner permission is omitted. The physical bonus for estimating and dealing exactly 52 cards is also omitted because the computer deals automatically.</p>
-          </article>
-        </div>
-      </section>
-    `);
-    return;
-  }
+  const selector = `
+    <div class="rules-compare-bar" role="group" aria-label="Choose rules to view">
+      <button type="button" id="viewStandardRules" class="rules-compare-btn ${!viewingKentucky?'active':''}">Standard Rules</button>
+      <button type="button" id="viewKentuckyRules" class="rules-compare-btn ${viewingKentucky?'active':''}">Kentucky Rules</button>
+    </div>
+    <p class="rules-view-note">Viewing rules does not change your current game. ${state.view==='game' ? `Active game: <b>${activeStyle==='kentucky'?'Kentucky Rules':'Standard Rules'}</b>.` : 'Choose your Game Style on the Play screen before dealing.'}</p>
+  `;
 
-  showModal(`
+  const standardRules = `
     <section class="rules-panel">
       <div class="rules-hero">
         <div class="rules-hero-icon">📘</div>
         <div>
-          <h2>Standard Rules</h2>
+          <h2>How to Play — Standard Rules</h2>
           <p>The familiar Hand Over Foot rules used by the app.</p>
         </div>
       </div>
+      ${selector}
       <div class="rules-grid">
         <article class="rule-card full">
           <h3>1. The Basic Idea</h3>
@@ -1490,8 +1416,98 @@ function showRules(){
           <p>Empty your Hand, play your Foot, meet the book requirement, and go out. Highest total after four hands wins.</p>
         </article>
       </div>
-    </section>
-  `);
+    </section>`;
+
+  const kentuckyRules = `
+    <section class="rules-panel">
+      <div class="rules-hero">
+        <div class="rules-hero-icon">📘</div>
+        <div>
+          <h2>How to Play — Kentucky Rules</h2>
+          <p>This digital ruleset is adapted from the supplied four-player Kentucky Hand & Foot rule sheet for one player versus the AI.</p>
+        </div>
+      </div>
+      ${selector}
+      <div class="rules-grid">
+        <article class="rule-card full">
+          <h3>1. Hand, Foot & Decks</h3>
+          <p>You and the AI each receive <b>13 cards in the Hand</b> and <b>13 cards in the Foot</b>. The single-player version uses <b>two decks</b>—one deck per player, including Jokers.</p>
+        </article>
+        <article class="rule-card">
+          <h3>2. Start a Turn</h3>
+          <ul>
+            <li>Draw <b>2 cards</b> from the stock, or legally take from the discard pile.</li>
+            <li>A red or black <b>3 freezes the discard pile</b>.</li>
+            <li>The top pickup card must be playable immediately.</li>
+          </ul>
+        </article>
+        <article class="rule-card">
+          <h3>3. Picking Up</h3>
+          <ul>
+            <li>Use a natural pair matching the top discard, or one matching natural + one wild.</li>
+            <li>You may also play the top card directly on an existing meld/book.</li>
+            <li>After qualifying, choose the <b>top card only</b> or the <b>top + next 7</b> (up to 8 cards total).</li>
+          </ul>
+        </article>
+        <article class="rule-card">
+          <h3>4. Opening Meld</h3>
+          <p>Use at least three of a kind, or two matching natural cards plus a wild. Multiple legal sets may combine to reach the opening requirement.</p>
+          <table class="opening-table">
+            <tr><th>Hand</th><th>Needed</th></tr>
+            <tr><td>1</td><td>50</td></tr><tr><td>2</td><td>90</td></tr>
+            <tr><td>3</td><td>120</td></tr><tr><td>4</td><td>150</td></tr>
+          </table>
+        </article>
+        <article class="rule-card">
+          <h3>5. Books</h3>
+          <ul>
+            <li>Seven cards complete a book.</li>
+            <li><b>Clean book:</b> no wild cards.</li>
+            <li><b>Dirty book:</b> natural + wild cards, with wilds never exceeding naturals.</li>
+            <li>You need at least <b>one clean and one dirty book</b> to finish.</li>
+            <li>Cards may be added to completed books.</li>
+          </ul>
+        </article>
+        <article class="rule-card">
+          <h3>6. Discarding & Floating</h3>
+          <ul>
+            <li>You may not discard a card that can legally be played.</li>
+            <li>To finish, you must discard your final non-playable Foot card.</li>
+            <li>If you play all Foot cards and have nothing legal to discard, you are <b>floating</b> and keep drawing 2 on later turns until you can discard.</li>
+          </ul>
+        </article>
+        <article class="rule-card">
+          <h3>7. Card Values</h3>
+          <ul>
+            <li>4–9: 5 points</li><li>10–King: 10 points</li>
+            <li>Aces and 2s: 20 points</li><li>Jokers: 50 points</li>
+            <li>Black 3 left over: −5</li><li>Red 3 left over: −500</li>
+          </ul>
+        </article>
+        <article class="rule-card">
+          <h3>8. Hand Scoring</h3>
+          <ul>
+            <li>Clean book: <b>500</b></li><li>Dirty book: <b>300</b></li>
+            <li>Going out: <b>500</b></li>
+            <li>Completed books are scored by their book value rather than also counting every card inside them.</li>
+            <li>Cards left in Hand/Foot count against the player.</li>
+          </ul>
+        </article>
+        <article class="rule-card full">
+          <h3>Single-Player Adaptation</h3>
+          <p>The paper rules describe four players in two teams. Against the AI, partner permission is omitted. The physical bonus for estimating and dealing exactly 52 cards is also omitted because the computer deals automatically.</p>
+        </article>
+      </div>
+    </section>`;
+
+  showModal(viewingKentucky ? kentuckyRules : standardRules);
+
+  setTimeout(()=>{
+    const standardBtn = $('viewStandardRules');
+    const kentuckyBtn = $('viewKentuckyRules');
+    if(standardBtn) standardBtn.onclick = ()=>showRules('standard');
+    if(kentuckyBtn) kentuckyBtn.onclick = ()=>showRules('kentucky');
+  },0);
 }
 
 function showSettings(){

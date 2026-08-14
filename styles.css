@@ -1393,3 +1393,43 @@ body:not(:has(#game:not(.hidden))) .app-header{
     grid-template-columns:minmax(70px,1fr) auto minmax(70px,1fr) !important;
   }
 }
+
+
+/* v3.9.6 How to Play rules comparison */
+.rules-compare-bar{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin:12px 0 8px;
+}
+.rules-compare-btn{
+  min-height:44px;
+  border:2px solid rgba(213,169,54,.42);
+  border-radius:12px;
+  background:rgba(0,0,0,.28);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+.rules-compare-btn.active{
+  border-color:var(--gold2);
+  color:var(--gold2);
+  background:rgba(213,169,54,.13);
+  box-shadow:0 0 0 2px rgba(213,169,54,.12);
+}
+.rules-view-note{
+  margin:0 0 12px;
+  padding:8px 10px;
+  border-radius:10px;
+  background:rgba(0,0,0,.2);
+  color:rgba(255,247,230,.78);
+  font-size:.88rem;
+}
+.rules-view-note b{
+  color:var(--gold2);
+}
+@media(max-width:560px){
+  .rules-compare-bar{
+    grid-template-columns:1fr;
+  }
+}
