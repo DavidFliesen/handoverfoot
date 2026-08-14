@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.9.2**
+Current Version: **3.9.4**
 
 
 ## Learning Tips
@@ -139,3 +139,20 @@ The physical four-player dealer-estimation bonus and partner permission are inte
 - Refocused the About area on **ARTEZIQ**.
 - Added the ARTEZIQ logo and website: https://arteziq.com
 - Added the ARTEZIQ description: “where ART and IQ meet to make things EZ with AI-powered apps and creative technology that simplify everyday things.”
+
+
+## v3.9.3 About ARTEZIQ Layout
+
+- Updated the About ARTEZIQ modal layout so the logo appears first and the description sits below it for full readability.
+- Switched the inner content cards to a black background for stronger contrast.
+- Set body text to white and links/buttons to gold.
+- Kept the developer section with LinkedIn and Portfolio links.
+
+
+## v3.9.4 Global Footer
+
+Added a bottom-center footer to every app view:
+
+**ARTEZIQ • Hand Over Foot • v3.9.4**
+
+The footer version should be updated with every future release.

@@ -1193,3 +1193,116 @@ body:not(:has(#game:not(.hidden))) .app-header{
     width:min(420px,88vw);
   }
 }
+
+
+/* v3.9.3 About ARTEZIQ layout refinement */
+.arteziq-modal-panel{
+  gap:16px;
+}
+.arteziq-modal-panel .rule-card.black-card{
+  background:#050505 !important;
+  color:#fff !important;
+  border:1px solid rgba(213,169,54,.5);
+}
+.arteziq-brand-card{
+  text-align:left;
+}
+.arteziq-about-logo{
+  width:min(540px,100%);
+  max-width:100%;
+  max-height:96px;
+  margin:0 auto 18px;
+  object-fit:contain;
+  display:block;
+}
+.arteziq-about-copy{
+  max-width:100%;
+}
+.arteziq-about-copy p,
+.developer-links-card p,
+.developer-links-card h3{
+  color:#fff !important;
+}
+.arteziq-about-copy p{
+  margin:0 0 12px;
+  line-height:1.55;
+}
+.arteziq-site{
+  margin-top:10px;
+  margin-bottom:0;
+  font-size:1.06rem;
+  font-weight:900;
+}
+.arteziq-site a,
+.developer-links a{
+  color:var(--gold2) !important;
+}
+.developer-links{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.developer-links a{
+  display:inline-block;
+  padding:9px 12px;
+  border-radius:10px;
+  border:1px solid rgba(213,169,54,.48);
+  background:rgba(255,255,255,.03);
+  text-decoration:none;
+  font-weight:800;
+}
+.developer-links a:hover,
+.arteziq-site a:hover{
+  text-decoration:underline;
+}
+
+
+/* v3.9.4 global app credit footer */
+.app-credit-footer{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:80;
+  min-height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:5px 12px calc(5px + env(safe-area-inset-bottom,0px));
+  background:rgba(0,10,18,.9);
+  border-top:1px solid rgba(213,169,54,.28);
+  color:rgba(255,255,255,.72);
+  font-size:.76rem;
+  letter-spacing:.01em;
+  text-align:center;
+  white-space:nowrap;
+  backdrop-filter:blur(8px);
+}
+.app-credit-footer .credit-brand{
+  color:#fff;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.app-credit-footer .credit-dot{
+  color:var(--gold2);
+  opacity:.9;
+}
+.view{
+  padding-bottom:34px;
+}
+.game-view{
+  padding-bottom:34px !important;
+}
+@media(max-width:560px){
+  .app-credit-footer{
+    font-size:.68rem;
+    gap:5px;
+    min-height:26px;
+  }
+  .view,
+  .game-view{
+    padding-bottom:32px !important;
+  }
+}
