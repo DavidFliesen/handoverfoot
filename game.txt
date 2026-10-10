@@ -1591,13 +1591,29 @@ function showHelp(){
           <p>${strategyTip()}</p>
         </article>
         <article class="rule-card full">
-          <h3>Learning Tips</h3>
-          <p>Turn on Learning Tips in Settings to show small prompts in the Your Turn panel that point to the next part of the turn.</p>
+          <h3>Coaching Prompts</h3>
+          <label class="toggle-pill">
+            <input type="checkbox" id="helpLearningToggle" ${state.learningMode ? 'checked' : ''}>
+            Show coaching prompts during play
+          </label>
+          <p>When enabled, short hints appear in the Your Turn panel to guide you through the next step.</p>
         </article>
       </div>
     </section>
   `);
+
+  setTimeout(()=>{
+    const coaching = $('helpLearningToggle');
+    if(coaching){
+      coaching.onchange = ()=>{
+        state.learningMode = coaching.checked;
+        updateLearningCoach();
+        sound('click');
+      };
+    }
+  },0);
 }
+
 function currentHelpText(){
   if(state.current !== 0) return 'Wait for the AI opponent to finish thinking and playing.';
   if(state.phase === 'draw'){

@@ -1,4 +1,4 @@
-# Hand Over Foot v3.9.6
+# Hand Over Foot v3.9.8
 
 ![Hand Over Foot](assets/splash-reference.jpg)
 
@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.9.6**
+Current Version: **3.9.8**
 
 
 ## Learning Tips
@@ -175,3 +175,21 @@ The footer version should be updated with every future release.
 - The currently active game style is identified when viewing rules during a game.
 - **Simple Options** on the Play screen are now expanded by default so players can see their choices before dealing.
 - Footer updated to **ARTEZIQ • Hand Over Foot • v3.9.6**.
+
+## v3.9.7 Help Coaching Toggle
+
+- Added a **Coaching Prompts** toggle directly inside the Help & Strategy screen.
+- Players can now turn the on-board coaching hints on or off without opening Settings.
+- The Help toggle uses the same Learning Help setting already used by the game.
+- Footer updated to **ARTEZIQ • Hand Over Foot • v3.9.7**.
+
+## v3.9.8 PWA Install Icon
+
+- Replaced the generic installed-app icon with the new Hand Over Foot artwork.
+- Added a web app manifest for installed PWA metadata.
+- Added 192×192 and 512×512 PWA icons.
+- Added a 180×180 Apple touch icon for iPhone/iPad Home Screen installs.
+- Added browser icon references in `index.html`.
+- Footer updated to **ARTEZIQ • Hand Over Foot • v3.9.8**.
+
+If an older Home Screen icon is already installed, remove the existing installed app/icon and add it to the Home Screen again after the new files deploy. iOS may otherwise keep the cached icon.
