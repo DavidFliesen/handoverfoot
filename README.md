@@ -1,4 +1,4 @@
-# Hand Over Foot v3.9.8
+# Hand Over Foot v3.9.9
 
 ![Hand Over Foot](assets/splash-reference.jpg)
 
@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.9.8**
+Current Version: **3.9.9**
 
 
 ## Learning Tips
@@ -193,3 +193,17 @@ The footer version should be updated with every future release.
 - Footer updated to **ARTEZIQ • Hand Over Foot • v3.9.8**.
 
 If an older Home Screen icon is already installed, remove the existing installed app/icon and add it to the Home Screen again after the new files deploy. iOS may otherwise keep the cached icon.
+
+## v3.9.9 All-Device Install Icons
+
+Expanded PWA icon support so the approved Hand Over Foot icon is explicitly referenced across iPhone, iPad, Android/PWA, and browser icon sizes.
+
+Added:
+- Apple touch icons at 120×120, 152×152, 167×167, and 180×180.
+- A root-level `apple-touch-icon.png` fallback for iOS/Safari.
+- 16×16 and 32×32 browser favicons.
+- 192×192 and 512×512 standard PWA icons.
+- A 512×512 maskable icon for Android launchers.
+- Updated manifest and icon cache-busting references to v3.9.9.
+
+If an iPhone still shows the old icon after deployment, remove the existing Home Screen app/icon, clear Safari website data for the site if needed, then add it to the Home Screen again. iOS can retain previously installed icons aggressively.
