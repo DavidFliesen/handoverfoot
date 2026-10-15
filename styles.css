@@ -1,4 +1,5 @@
 :root{
+  --tx:1;
   --felt:#073c24; --felt2:#0b5d35; --felt3:#052416; --gold:#d5a936; --gold2:#ffdf74; --cream:#fff7e6;
   --red:#c7352d; --blue:#145a96; --purple:#672f88; --ink:#07140d; --panel:rgba(2,24,13,.82);
   --zoom:1; --card-w:calc(clamp(48px,6.2vw,76px)*var(--zoom)); --card-h:calc(var(--card-w)*1.42);
@@ -1431,5 +1432,18 @@ body:not(:has(#game:not(.hidden))) .app-header{
 @media(max-width:560px){
   .rules-compare-bar{
     grid-template-columns:1fr;
+  }
+}
+
+
+/* v3.10.0 — ARTEZIQ Ladybug Feedback integration */
+html.has-ladybug .app-credit-footer{
+  padding-left:88px;
+  padding-right:88px;
+}
+@media(max-width:560px){
+  html.has-ladybug .app-credit-footer{
+    padding-left:72px;
+    padding-right:72px;
   }
 }

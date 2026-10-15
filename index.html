@@ -4,22 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#06331e" />
-  <link rel="manifest" href="manifest.webmanifest?v=3.9.9">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=3.9.9">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=3.9.9">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png?v=3.9.9">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=3.9.9">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=3.9.9">
-  <link rel="apple-touch-icon" sizes="120x120" href="assets/apple-touch-icon-120.png?v=3.9.9">
-  <link rel="apple-touch-icon" sizes="152x152" href="assets/apple-touch-icon-152.png?v=3.9.9">
-  <link rel="apple-touch-icon" sizes="167x167" href="assets/apple-touch-icon-167.png?v=3.9.9">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon-180.png?v=3.9.9">
+  <link rel="manifest" href="manifest.webmanifest?v=3.10.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=3.10.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=3.10.0">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png?v=3.10.0">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=3.10.0">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=3.10.0">
+  <link rel="apple-touch-icon" sizes="120x120" href="assets/apple-touch-icon-120.png?v=3.10.0">
+  <link rel="apple-touch-icon" sizes="152x152" href="assets/apple-touch-icon-152.png?v=3.10.0">
+  <link rel="apple-touch-icon" sizes="167x167" href="assets/apple-touch-icon-167.png?v=3.10.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon-180.png?v=3.10.0">
   <title>Hand Over Foot</title>
   <meta name="description" content="Hand Over Foot, a polished browser card game inspired by Hand and Foot Canasta." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:ital,wght@1,800&family=Bree+Serif&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3.9.9" />
+  <link rel="stylesheet" href="styles.css?v=3.10.0" />
 </head>
 <body>
   <div id="app">
@@ -159,7 +159,7 @@
     <span class="credit-dot">•</span>
     <span>Hand Over Foot</span>
     <span class="credit-dot">•</span>
-    <span>v3.9.9</span>
+    <span>v3.10.0</span>
   </footer>
 
   <dialog id="modal" class="modal">
@@ -167,6 +167,70 @@
     <div id="modalBody"></div>
   </dialog>
 
-  <script src="game.js?v=3.9.9"></script>
+  <script src="game.js?v=3.10.0"></script>
+  <!-- ARTEZIQ LADYBUG FEEDBACK — shared v0.2 connector.
+       If public configuration is blank/missing, the game continues normally without the launcher. -->
+  <script type="module">
+  const LB=document.documentElement;
+  let lbStep="ladybug/ladybug-config.js";
+  try{
+    const {LADYBUG_CONFIG:cfg,ladybugConfigured}=await import("./ladybug/ladybug-config.js");
+    if(!ladybugConfigured(cfg)){
+      LB.dataset.ladybug="unconfigured";
+      console.info("[Ladybug] Hand Over Foot feedback is wired but not configured yet.");
+    }else{
+      lbStep="ladybug/ladybug-auth.js";
+      const {createFeedbackAuth}=await import("./ladybug/ladybug-auth.js");
+      lbStep="ladybug/ladybug-feedback.js";
+      const {createLadybugFeedback}=await import("./ladybug/ladybug-feedback.js");
+      lbStep="mounting the launcher";
+
+      const auth=createFeedbackAuth({
+        supabaseUrl:cfg.supabaseUrl,
+        publishableKey:cfg.publishableKey
+      });
+
+      const ladybug=createLadybugFeedback({
+        supabaseUrl:cfg.supabaseUrl,
+        publishableKey:cfg.publishableKey,
+        appKey:cfg.appKey,
+        slug:cfg.slug,
+        appName:"Hand Over Foot",
+        sessionIdPrefix:"HOF",
+        iconUrl:cfg.iconUrl,
+        bottomOffsetPx:cfg.bottomOffsetPx,
+        bottomOffsetPhonePx:cfg.bottomOffsetPhonePx,
+        auth,
+        getAccessToken:(force)=>auth.getAccessToken(force),
+        getContext:()=>window.hofFeedbackContext(),
+        maskSelectors:["input[type=password]"],
+        mapSelectors:[]
+      });
+
+      ladybug.mount();
+      document.documentElement.classList.add("has-ladybug");
+
+      const queued=window.__hofTrackQ||[];
+      window.hofTrack=(name,details)=>{
+        try{ladybug.track(name,details);}catch(e){}
+      };
+      queued.forEach(([name,details])=>window.hofTrack(name,details));
+      window.__hofTrackQ=[];
+      window.ArteziqFeedback=ladybug;
+      LB.dataset.ladybug="ready";
+    }
+  }catch(e){
+    LB.dataset.ladybug="error:"+lbStep;
+    console.warn("[Ladybug] Hand Over Foot feedback did not load ("+lbStep+"); the game continues without it.",e&&e.message);
+
+    if(/[?&]ladybug=debug\b/.test(location.search)){
+      const c=document.createElement("div");
+      c.textContent="Ladybug failed: "+lbStep+(e&&e.message?" — "+e.message:"");
+      c.style.cssText="position:fixed;right:12px;bottom:12px;max-width:80vw;z-index:2147483000;background:#7a1212;color:#fff;font:12px/1.4 system-ui,sans-serif;padding:8px 10px;border-radius:8px;box-shadow:0 4px 14px #0008";
+      document.body.appendChild(c);
+    }
+  }
+  </script>
+
 </body>
 </html>

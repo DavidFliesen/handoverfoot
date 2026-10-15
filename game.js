@@ -1,6 +1,18 @@
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
+const APP_VERSION = '3.10.0';
+const BUILD_NUMBER = 'v3.10.0';
+
+/* ARTEZIQ Ladybug feedback hooks.
+   Events are privacy-safe and contain only workflow names, counts, booleans,
+   and short enum labels — never card IDs, typed text, credentials, or tokens. */
+window.__hofTrackQ = window.__hofTrackQ || [];
+window.hofTrack = window.hofTrack || function(name, details){
+  try{
+    if(window.__hofTrackQ.length < 50) window.__hofTrackQ.push([name, details]);
+  }catch(e){}
+};
 const suits = ['♠','♥','♦','♣'];
 const redSuits = new Set(['♥','♦']);
 const meldRanks = ['4','5','6','7','8','9','10','J','Q','K','A'];
@@ -17,6 +29,24 @@ const state = {
   view:'home', mode:'ai', zoom:1, audioOn:true, audioVolume:.55, difficulty:'club', gameStyle:'standard', allowBookAdds:true, confirmGoOut:true, requireBooks:true, learningMode:false,
   handNo:1, current:0, phase:'draw', selected:new Set(), selectedMeld:null,
   stock:[], discard:[], players:[], teams:[], gameEnded:false, handEnded:false, pileIntent:false, pickupObligation:null
+};
+
+window.hofFeedbackContext = function(){
+  let screen = state.view === 'setup' ? 'Play Setup' : state.view === 'game' ? 'Game Board' : 'Home';
+  try{
+    const modal = $('modal');
+    if(modal && modal.open){
+      const heading = $('modalBody')?.querySelector('h2')?.textContent || '';
+      if(/^How to Play/i.test(heading)) screen = 'How to Play';
+      else if(/^Settings/i.test(heading)) screen = 'Settings';
+      else if(/^Scores/i.test(heading)) screen = 'Scores';
+      else if(/^Help/i.test(heading)) screen = 'Help';
+      else if(/^Go Out/i.test(heading)) screen = 'Go Out';
+      else if(/^Take the Discard Pile/i.test(heading)) screen = 'Take Pile';
+      else screen = 'Dialog';
+    }
+  }catch(e){}
+  return {appVersion:APP_VERSION, buildNumber:BUILD_NUMBER, screen};
 };
 function id(){ return `c${++UID}`; }
 function teamOf(i){ return i%2; }
@@ -67,6 +97,7 @@ function show(view){
     if(el) el.classList.toggle('hidden', v!==view);
   });
   state.view=view;
+  window.hofTrack('screen_changed',{type:'ui',data:{screen:view}});
 }
 function message(txt){ $('message').textContent = txt; }
 function selectedCards(){ const p=state.players[0]; return liveCards(p).filter(c=>state.selected.has(c.id)); }
@@ -106,6 +137,10 @@ function startGame(event){
     state.handEnded=false;
     state.players = [makePlayer('You',false), makePlayer('AI Opponent')];
     state.teams = [makeTeam('Your Team'), makeTeam('AI Opponent')];
+    window.hofTrack('game_started',{
+      type:'workflow',
+      data:{difficulty:state.difficulty,gameStyle:state.gameStyle,learningHelp:!!state.learningMode}
+    });
     dealHand();
     show('game');
   }catch(err){
@@ -145,6 +180,10 @@ function dealHand(){
   }
 
   state.current = (state.handNo-1) % state.players.length;
+  window.hofTrack('hand_dealt',{
+    type:'workflow',
+    data:{hand:state.handNo,gameStyle:state.gameStyle,cardsPerPile:packetSize}
+  });
   render();
   message(state.current===0
     ? `You start Hand ${state.handNo}. Draw 2${isKentucky() ? '.' : ' or take the discard pile.'}`
@@ -156,6 +195,7 @@ function drawTwo(){
   if(state.phase!=='draw' || state.current!==0) return;
   sound('draw');
   drawFor(currentPlayer(),2);
+  window.hofTrack('draw_two',{type:'workflow',data:{hand:state.handNo,gameStyle:state.gameStyle}});
   state.phase='play';
   state.pileIntent=false;
   state.pickupObligation=null;
@@ -253,6 +293,7 @@ function takeCardsFromDiscard(playerIndex,count,plan=null){
 
 function finishHumanPileTake(count,plan){
   const take = takeCardsFromDiscard(0,count,plan);
+  window.hofTrack('discard_pile_taken',{type:'workflow',data:{count:take.length,gameStyle:state.gameStyle}});
   state.phase='play';
   render();
   message(`You took ${take.length} card${take.length===1?'':'s'} from the discard pile. Play the top pickup card immediately.`);
@@ -268,6 +309,7 @@ function takePile(){
     const take = state.discard.splice(Math.max(0,state.discard.length-7));
     liveCards(currentPlayer()).push(...take);
     cardMoveSound(take.length);
+    window.hofTrack('discard_pile_taken',{type:'workflow',data:{count:take.length,gameStyle:state.gameStyle}});
     state.phase='play';
     render();
     message(`You took ${take.length} cards from the discard pile. Use the top card in a new set.`);
@@ -403,6 +445,10 @@ function makeSet(){
   render();
 
   const label = v.sets.map(s => `${s.rank}s`).join(', ');
+  window.hofTrack('meld_created',{
+    type:'workflow',
+    data:{sets:v.sets.length,cards:cards.length,points:v.meldPoints,gameStyle:state.gameStyle}
+  });
   cardMoveSound(cards.length); sound('meld'); message(`Melded ${label} for ${v.meldPoints} points.`);
   checkHumanEmpty();
 }
@@ -434,7 +480,9 @@ function addToMeld(){
   const v=canAddToMeld(cards,meld); if(!v.ok){ message(v.reason); return; }
   removeCards(currentPlayer(),cards); meld.cards.push(...cards); if(cards.some(isWild)) meld.black=true; if(meld.cards.length>=7) meld.booked=true;
   if(isKentucky() && state.pickupObligation?.playerIndex===0 && cards.some(c=>c.id===state.pickupObligation.cardId)) state.pickupObligation=null;
-  state.selected.clear(); state.selectedMeld=null; checkFoot(currentPlayer()); render(); cardMoveSound(cards.length); message(`Added ${cards.length} card${cards.length===1?'':'s'} to ${meld.rank}s.`); checkHumanEmpty();
+  state.selected.clear(); state.selectedMeld=null; checkFoot(currentPlayer()); render();
+  window.hofTrack('cards_added',{type:'workflow',data:{count:cards.length,bookComplete:!!meld.booked,gameStyle:state.gameStyle}});
+  cardMoveSound(cards.length); message(`Added ${cards.length} card${cards.length===1?'':'s'} to ${meld.rank}s.`); checkHumanEmpty();
 }
 function kentuckyNewSetIncluding(card,playerIndex){
   if(isThree(card)) return null;
@@ -503,6 +551,7 @@ function discardSelected(){
   cardMoveSound(1);
   removeCards(currentPlayer(),[c]);
   state.discard.push(c);
+  window.hofTrack('card_discarded',{type:'workflow',data:{hand:state.handNo,gameStyle:state.gameStyle}});
   state.selected.clear();
   state.selectedMeld=null;
 
@@ -1366,6 +1415,7 @@ function syncHeaderScores(){
 }
 function showRules(ruleStyle = state.gameStyle || 'standard'){
   sound('click');
+  window.hofTrack('modal_opened',{type:'ui',data:{name:'rules',viewedStyle:ruleStyle}});
   const viewingKentucky = ruleStyle === 'kentucky';
   const activeStyle = state.view === 'game' ? state.gameStyle : (document.querySelector('input[name="gameStyle"]:checked')?.value || 'standard');
 
@@ -1512,6 +1562,7 @@ function showRules(ruleStyle = state.gameStyle || 'standard'){
 
 function showSettings(){
   sound('click');
+  window.hofTrack('modal_opened',{type:'ui',data:{name:'settings'}});
   showModal(`
     <section class="settings-grid">
       <div class="rules-hero">
@@ -1556,6 +1607,7 @@ function showSettings(){
 }
 
 function showScores(){
+  window.hofTrack('modal_opened',{type:'ui',data:{name:'scores'}});
   openModal(`<h2>Scores</h2><p><b>${state.teams[0]?.name || 'Your Team'}:</b> ${state.teams[0]?.score || 0}</p><p><b>${state.teams[1]?.name || 'Opponents'}:</b> ${state.teams[1]?.score || 0}</p><p>Scores appear after each completed hand.</p>`);
 }
 function showFinalScores(){ const t0=state.teams[0], t1=state.teams[1]; openModal(`<h2>Game Complete</h2><p><b>${t0.name}:</b> ${t0.score}</p><p><b>${t1.name}:</b> ${t1.score}</p><h3>${t0.score>=t1.score?'Your team wins!':'Opponents win.'}</h3>`); }
@@ -1568,6 +1620,7 @@ function selectedRanksSummary(){
 }
 function showHelp(){
   sound('click');
+  window.hofTrack('modal_opened',{type:'ui',data:{name:'help'}});
   const phaseText = state.phase === 'draw'
     ? 'Start by drawing 2 cards, or take the discard pile if the game allows it.'
     : 'Now you can make sets, add to existing melds, discard, or sort your hand.';
@@ -1874,6 +1927,8 @@ function init(){
   document.addEventListener('keydown', e => {
     if(e.key === 'Escape' && $('modal')?.open) $('modal').close();
   });
+
+  window.hofTrack('app_ready',{type:'workflow',data:{version:APP_VERSION}});
 }
 document.addEventListener('DOMContentLoaded', init);
 })();
