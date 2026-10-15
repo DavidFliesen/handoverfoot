@@ -1447,3 +1447,129 @@ html.has-ladybug .app-credit-footer{
     padding-right:72px;
   }
 }
+
+
+/* v3.10.1 — responsive viewport fit + scroll safety
+   Safari/iPad browser chrome can shorten the usable viewport. Never clip setup/game
+   content just because the device is wider than the old 900px mobile breakpoint. */
+html,
+body,
+#app{
+  min-height:100%;
+  min-height:100dvh;
+}
+body{
+  min-height:100dvh;
+}
+
+/* Setup / secondary screens must always be able to scroll vertically. */
+.panel-view{
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  align-items:start !important;
+  justify-items:center !important;
+  padding-top:clamp(14px,2.5vh,24px) !important;
+  padding-bottom:calc(54px + env(safe-area-inset-bottom,0px)) !important;
+}
+.panel-view > .glass-panel{
+  margin:auto 0;
+  max-width:calc(100vw - 24px);
+}
+
+/* The game remains compact when it fits, but becomes a normal vertical scroller
+   when Safari chrome or a short landscape viewport leaves too little height. */
+.game-view{
+  min-height:0;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+}
+
+/* Reserve room for the fixed ARTEZIQ footer without covering buttons/content. */
+.view,
+.game-view{
+  padding-bottom:calc(40px + env(safe-area-inset-bottom,0px)) !important;
+}
+
+/* iPad / tablet browser windows: slightly tighten setup spacing so the full panel
+   generally fits, while preserving scrolling when it cannot. */
+@media (min-width:761px) and (max-height:920px){
+  .panel-view{
+    padding-top:12px !important;
+  }
+  .glass-panel.narrow{
+    padding:18px 24px !important;
+  }
+  .glass-panel h1{
+    font-size:clamp(2rem,4vw,3rem) !important;
+    margin:2px 0 6px !important;
+  }
+  .glass-panel p{
+    margin:5px 0 10px !important;
+    line-height:1.4 !important;
+  }
+  .setup-section-title{
+    margin:11px 0 6px !important;
+  }
+  .choice-grid{
+    margin:10px 0 !important;
+    gap:10px !important;
+  }
+  .choice{
+    padding:10px 12px !important;
+  }
+  .choice span{
+    font-size:1.65rem !important;
+  }
+  .style-choice-grid{
+    margin:7px 0 9px !important;
+    gap:10px !important;
+  }
+  .style-choice{
+    min-height:60px !important;
+    padding:9px 12px !important;
+  }
+  .house-options{
+    margin:8px 0 !important;
+    padding:8px 12px !important;
+  }
+  .option-line{
+    margin:8px 0 !important;
+  }
+  .primary{
+    margin-top:10px !important;
+    padding:13px !important;
+  }
+}
+
+/* Short landscape game view: do not squeeze or clip the table. Let the board and
+   action bar flow vertically and scroll as a unit. */
+@media (min-width:761px) and (max-height:760px){
+  .game-view{
+    display:block !important;
+  }
+  .table{
+    display:grid !important;
+    grid-template-rows:auto auto auto !important;
+    min-height:auto !important;
+    padding:8px !important;
+  }
+  .team-board{
+    min-height:320px !important;
+  }
+  .player-area{
+    min-height:155px !important;
+  }
+  .game-actions{
+    position:relative !important;
+    bottom:auto !important;
+  }
+}
+
+/* Keep the Ladybug reachable without covering the footer or game controls. */
+html.has-ladybug .game-view{
+  padding-right:0 !important;
+}

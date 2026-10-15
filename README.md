@@ -1,4 +1,4 @@
-# Hand Over Foot v3.10.0
+# Hand Over Foot v3.10.1
 
 ![Hand Over Foot](assets/splash-reference.jpg)
 
@@ -18,10 +18,10 @@ Play online: https://davidfliesen.github.io/handoverfoot/
 - Zoom controls
 - Touch-friendly layout
 - Subtle sound effects with controls
-- Hamburger navigation menu
-- Scores, Settings, How to Play, Source Code, and About Developer sections
+- Board controls for Scores, Settings, How to Play, and Help
 - Optional Learning Tips mode for new players
 - Help button with plain-English guidance and strategy tips
+- ARTEZIQ Ladybug feedback reporting with tester sign-in, screenshot capture, and centralized reporting
 
 ## How to Play
 
@@ -61,7 +61,7 @@ Veteran multimedia creator, AI developer, animator, educator, and browser-tool b
 
 ## Version
 
-Current Version: **3.10.0**
+Current Version: **3.10.1**
 
 
 ## Learning Tips
@@ -231,14 +231,20 @@ Added the shared **ARTEZIQ Ladybug Feedback v0.2** experience used by other ARTE
 - No card IDs, typed text, passwords, tokens, email addresses, locations, or other personal data are placed in telemetry.
 - The Ladybug launcher is raised above the Hand Over Foot bottom action bar and ARTEZIQ footer.
 
-### Required one-time public configuration
-Edit `ladybug/ladybug-config.js` and replace:
-
-- `REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY` — use the same public Supabase publishable key as the other ARTEZIQ Ladybug apps.
-- `REPLACE_WITH_HAND_OVER_FOOT_PUBLIC_INGEST_KEY` — use the Public ingest key for the **Hand Over Foot** app record in the ARTEZIQ Feedback Dashboard.
-
-Until those two public values are filled in, the game works normally but the Ladybug icon intentionally stays hidden.
+### Public configuration
+The Ladybug connector is configured for the central ARTEZIQ Feedback service and the **Hand Over Foot** app record (`hand-over-foot`, report prefix `HOF`).
 
 For troubleshooting, add `?ladybug=debug` to the Hand Over Foot URL. The page will identify a missing/failed Ladybug file without breaking the game.
 
 Footer updated to **ARTEZIQ • Hand Over Foot • v3.10.0**.
+
+
+## v3.10.1 Responsive Layout + Live Ladybug
+
+- Configured the Hand Over Foot Ladybug connector with the central ARTEZIQ public Supabase key and the Hand Over Foot **Public ingest key** from the Feedback Dashboard.
+- The floating Ladybug now loads for the active `hand-over-foot` app when the Feedback service is reachable.
+- Made setup and secondary screens vertically scrollable on iPad/tablet browser windows instead of clipping the bottom of the panel.
+- Added short-viewport spacing adjustments so the Play setup usually fits without browser zooming.
+- Made the game board vertically scrollable when browser chrome leaves too little height, while preserving the normal compact board when it fits.
+- Reserved safe space above the fixed ARTEZIQ footer so buttons and content are not hidden behind it.
+- Footer and cache-busting references updated to **v3.10.1**.
