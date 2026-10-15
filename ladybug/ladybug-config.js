@@ -1,18 +1,19 @@
 /*
  * ARTEZIQ Ladybug Feedback — Hand Over Foot public configuration.
  *
- * Fill in the SAME Supabase publishable key used by the other ARTEZIQ Ladybug apps,
- * plus the Hand Over Foot Public ingest key created in the Feedback Dashboard.
+ * Public client configuration for the central ARTEZIQ Feedback service.
+ * The Supabase publishable key is shared by the ARTEZIQ Ladybug apps, and the
+ * appKey below is the Hand Over Foot Public ingest key from the Feedback Dashboard.
  * These are PUBLIC client values. Never place service-role keys, GitHub tokens,
  * passwords, or other private secrets in this file.
  *
- * Until the two REPLACE_* values are filled in, Hand Over Foot runs normally and
- * the Ladybug launcher stays hidden.
+ * These are public client values. Never place service-role keys, GitHub tokens,
+ * passwords, or other private secrets in this file.
  */
 export const LADYBUG_CONFIG = {
   supabaseUrl: 'https://mehsjriwijsyquhmrzkh.supabase.co',
-  publishableKey: 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY',
-  appKey: 'REPLACE_WITH_HAND_OVER_FOOT_PUBLIC_INGEST_KEY',
+  publishableKey: 'sb_publishable_GJzFbU63AAgok24gxPrnSA_FL0H3kfu',
+  appKey: 'd76571fc-9d00-49e4-b368-b426079d919e',
   slug: 'hand-over-foot',
   iconUrl: 'ladybug/assets/ladybug-feedback-icon-256.png',
 
